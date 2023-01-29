@@ -1,23 +1,38 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import Canvas from "./components/Canvas";
+import DrawingTools from "./components/DrawingTools";
+import PrincipalTools from "./components/PrincipalTools";
+import {
+  ContextConfiguration,
+  themeColor,
+} from "./context/ConfigurationProvider";
+import { FittedPaintWrap } from "./utils/styledComponents";
+import { useContext, useEffect } from "react";
+import Header from "./components/Header";
+import CropTools from "./components/CropTools";
 
 function App() {
+  const {
+    isDrawingToolsOpen,
+    isCropToolsOpen,
+    isPrincipalToolsOpen,
+    openOptionPage,
+    headerChildrenState,
+  } = useContext(ContextConfiguration);
+  console.log("APP");
+  useEffect(() => {
+    openOptionPage({ isPrincipalToolsOpen: true });
+  }, [openOptionPage]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div style={{ backgroundColor: themeColor.bodyColor }} className="App">
+      <FittedPaintWrap style={{ color: themeColor.textColor }}>
+        {isDrawingToolsOpen && <Header children={headerChildrenState} />}
+        <Canvas />
+        {isPrincipalToolsOpen && <PrincipalTools />}
+        {isDrawingToolsOpen && <DrawingTools />}
+        {isCropToolsOpen && <CropTools />}
+      </FittedPaintWrap>
     </div>
   );
 }
