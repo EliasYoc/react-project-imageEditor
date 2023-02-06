@@ -5,13 +5,17 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import ToolBoxesProvider from "./context/ToolBoxesProvider";
 import ConfigurationProvider from "./context/ConfigurationProvider";
+import { Provider } from "react-redux";
+import { store } from "./app/store";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <ToolBoxesProvider>
       <ConfigurationProvider>
-        <App />
+        <Provider store={store}>
+          <App />
+        </Provider>
       </ConfigurationProvider>
     </ToolBoxesProvider>
   </React.StrictMode>
