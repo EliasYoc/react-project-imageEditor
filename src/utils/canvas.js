@@ -26,3 +26,6 @@ export const getCalculatedCoordsOfContainCanvas = ({
   );
   return { coordX, coordY };
 };
+export const deleteCanvas = ({ currentCtx, canvasSize }) => {
+  currentCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+};

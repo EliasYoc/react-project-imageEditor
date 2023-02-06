@@ -1,0 +1,19 @@
+.one-thumb-range .range-slider__thumb[data-upper] {
+  height: 0;
+}
+.one-thumb-range .range-slider__thumb[data-lower] {
+  width: 0;
+  height: 0;
+  background: #fff;
+  box-shadow: 0 0 5px -1px rgba(0, 0, 0, 0.514);
+}
+.one-thumb-range[data-vertical] {
+  height: 200px;
+  width: 30px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.range-slider .range-slider__range {
+  background: #fff;
+  box-shadow: 0 0 5px -1px rgba(0, 0, 0, 0.514);
+}

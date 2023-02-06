@@ -12,8 +12,6 @@ const DrawingTools = () => {
     useContext(ContextToolBoxes);
   const { refElement: refDrawingToolBox, elementSize } = useFullSizeElement();
   useEffect(() => {
-    // setChangedHeightForCanvas(elementSize.height);
-    console.log(elementSize);
     if (elementSize) {
       const { height, marginTop, marginBottom } = elementSize;
       handleSumHeightForCanvas(height, marginTop, marginBottom);
@@ -40,13 +38,13 @@ const DrawingTools = () => {
         />
         <ButtonTool
           icon={BiPaint}
-          htmlFor="paint"
-          name="principalTools"
-          active
+          htmlFor="normal"
+          name="drawingTools"
+          selectedButton
         />
-        <ButtonTool icon={BiPaint} htmlFor="crop" name="principalTools" />
-        <ButtonTool icon={BiPaint} htmlFor="text" name="principalTools" />
-        <ButtonTool htmlFor="color" name="principalTools">
+        <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" />
+        <ButtonTool icon={BiPaint} htmlFor="eraser" name="drawingTools" />
+        <ButtonTool htmlFor="color" name="drawingTools">
           <p>a</p>
         </ButtonTool>
       </ToolBox>

@@ -2,7 +2,7 @@ import { createContext, useCallback, useState } from "react";
 
 export const ContextToolBoxes = createContext();
 const ToolBoxesProvider = ({ children }) => {
-  const [toolBoxRadio, setRadioToolBoxes] = useState({});
+  // const [toolBoxRadio, setRadioToolBoxes] = useState({});
   const [activeButtonPosition, setActiveButtonPosition] = useState({
     left: "0px",
     top: "0px",
@@ -10,9 +10,9 @@ const ToolBoxesProvider = ({ children }) => {
     height: "0px",
   });
   const [fullHeightSumForCanvas, setFullHeightSumForCanvas] = useState("0px");
-  const handleChangeSelectToolButton = (e, name) => {
-    setRadioToolBoxes({ ...toolBoxRadio, [name]: e.target.value });
-  };
+  // const handleChangeSelectToolButton = (e, name) => {
+  //   setRadioToolBoxes({ ...toolBoxRadio, [name]: e.target.value });
+  // };
   console.log("ToolBox provid");
   const handleSumHeightForCanvas = useCallback((...fullHeight) => {
     const fullHeightSum = fullHeight.reduce(
@@ -33,9 +33,9 @@ const ToolBoxesProvider = ({ children }) => {
     );
   }, []);
   const data = {
-    toolBoxRadio,
-    setRadioToolBoxes,
-    handleChangeSelectToolButton,
+    // toolBoxRadio,
+    // setRadioToolBoxes,
+    // handleChangeSelectToolButton,
     activeButtonPosition,
     setActiveButtonPosition,
     fullHeightSumForCanvas,
