@@ -27,6 +27,9 @@ const ConfigurationProvider = ({ children }) => {
   const [headerChildrenState, setHeaderChildrenState] = useState(<div></div>);
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
+  const refCanvas = useRef();
+  const $canvas = refCanvas.current;
+  const ctx = $canvas?.getContext("2d");
 
   const openOptionPage = useCallback((openOption) => {
     console.log(openOption);
@@ -45,6 +48,9 @@ const ConfigurationProvider = ({ children }) => {
     headerChildrenState,
     insertElementToHeader,
     refOpenDisplayProperty,
+    refCanvas,
+    $canvas,
+    ctx,
   };
 
   return (

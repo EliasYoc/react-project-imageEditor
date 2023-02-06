@@ -12,7 +12,6 @@ const PrincipalTools = () => {
   const handleAddClassListFade = () => {
     refToolBox.current.classList.add("closeDown");
   };
-  console.log("principal box");
 
   return (
     <>

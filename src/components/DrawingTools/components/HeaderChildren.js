@@ -6,9 +6,11 @@ import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
 import { LayoutToolBox } from "../../../utils/styledComponents";
 import { StyledButton } from "../../ButtonTool/styles";
+import { deleteCanvas } from "../../../utils/canvas";
+import { canvasSize } from "../../Canvas";
 
 const HeaderChildren = () => {
-  const { openOptionPage } = useContext(ContextConfiguration);
+  const { openOptionPage, ctx } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
     const $canvas = document.getElementById("myCanvas");
@@ -31,7 +33,12 @@ const HeaderChildren = () => {
         margin="0"
         position="relative"
       >
-        <StyledButton width="100%" height="auto" borderRadius="1rem">
+        <StyledButton
+          onClick={() => deleteCanvas({ currentCtx: ctx, canvasSize })}
+          width="100%"
+          height="auto"
+          borderRadius="1rem"
+        >
           Borrar Todo
         </StyledButton>
 
