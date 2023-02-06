@@ -52,6 +52,7 @@ const ButtonTool = ({
       console.error("selected button");
       dispatch(setPencilSizeForRangeSlider(pencilSizeForRange));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [htmlFor, pencilType, dispatch, maxValue, minValue]);
 
   return (
