@@ -2,8 +2,7 @@ import { useContext, useEffect, useRef } from "react";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
 import useFullSizeElement from "../../hooks/useFullSizeElement";
-import { LayoutToolBox } from "../../utils/styledComponents";
-import { StyledButton } from "../ButtonTool/styles";
+import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 
 const CropTools = () => {
   const { handleSumHeightForCanvas, setFullHeightSumForCanvas } =
@@ -21,9 +20,9 @@ const CropTools = () => {
   return (
     <div ref={refElement}>
       <LayoutToolBox position="relative">
-        <StyledButton width="auto" height="auto">
+        <GlobalButton width="auto" height="auto">
           more options
-        </StyledButton>
+        </GlobalButton>
       </LayoutToolBox>
       <LayoutToolBox
         display="flex"
@@ -37,7 +36,7 @@ const CropTools = () => {
           }
         }}
       >
-        <StyledButton
+        <GlobalButton
           width="auto"
           height="auto"
           borderRadius="1rem"
@@ -47,10 +46,10 @@ const CropTools = () => {
           }}
         >
           Cancelar
-        </StyledButton>
-        <StyledButton width="auto" height="auto" borderRadius="1rem">
+        </GlobalButton>
+        <GlobalButton width="auto" height="auto" borderRadius="1rem">
           Guardar
-        </StyledButton>
+        </GlobalButton>
       </LayoutToolBox>
     </div>
   );

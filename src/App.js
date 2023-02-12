@@ -10,7 +10,6 @@ import { FittedPaintWrap } from "./utils/styledComponents";
 import { useContext, useEffect } from "react";
 import Header from "./components/Header";
 import CropTools from "./components/CropTools";
-
 function App() {
   const {
     isDrawingToolsOpen,

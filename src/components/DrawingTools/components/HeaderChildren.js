@@ -4,8 +4,7 @@ import { GrUndo } from "react-icons/gr";
 import { BiImageAlt, BiDownload } from "react-icons/bi";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
-import { LayoutToolBox } from "../../../utils/styledComponents";
-import { StyledButton } from "../../ButtonTool/styles";
+import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
 import { deleteCanvas } from "../../../utils/canvas";
 import { canvasSize } from "../../Canvas";
 
@@ -22,9 +21,9 @@ const HeaderChildren = () => {
   };
   return (
     <>
-      <StyledButton>
+      <GlobalButton>
         <GrUndo />
-      </StyledButton>
+      </GlobalButton>
       <LayoutToolBox
         backgroundColor="transparent"
         width="auto"
@@ -33,22 +32,22 @@ const HeaderChildren = () => {
         margin="0"
         position="relative"
       >
-        <StyledButton
+        <GlobalButton
           onClick={() => deleteCanvas({ currentCtx: ctx, canvasSize })}
           width="100%"
           height="auto"
           borderRadius="1rem"
         >
           Borrar Todo
-        </StyledButton>
+        </GlobalButton>
 
-        <StyledButton onClick={downloadImageCanvas} flexShrink="0">
+        <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
           <BiDownload />
-        </StyledButton>
-        <StyledButton flexShrink="0">
+        </GlobalButton>
+        <GlobalButton flexShrink="0">
           <BiImageAlt />
-        </StyledButton>
-        <StyledButton
+        </GlobalButton>
+        <GlobalButton
           flexShrink="0"
           borderRadius="1rem"
           onClick={() => {
@@ -57,7 +56,7 @@ const HeaderChildren = () => {
           }}
         >
           <FiX />
-        </StyledButton>
+        </GlobalButton>
       </LayoutToolBox>
     </>
   );
