@@ -1,9 +1,8 @@
 import React, { useContext, useRef } from "react";
-import { LayoutToolBox } from "../../utils/styledComponents";
+import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 import { IoCrop } from "react-icons/io5";
 import { BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
-import { StyledButton } from "../ButtonTool/styles";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
 const PrincipalTools = () => {
   const { openOptionPage, insertElementToHeader, refOpenDisplayProperty } =
@@ -31,7 +30,7 @@ const PrincipalTools = () => {
           }
         }}
       >
-        <StyledButton
+        <GlobalButton
           onClick={() => {
             insertElementToHeader(<HeaderChildren />);
             handleAddClassListFade();
@@ -39,15 +38,15 @@ const PrincipalTools = () => {
           }}
         >
           <BiPalette />
-        </StyledButton>
-        <StyledButton
+        </GlobalButton>
+        <GlobalButton
           onClick={() => {
             handleAddClassListFade();
             refOpenDisplayProperty.current = "isCropToolsOpen";
           }}
         >
           <IoCrop />
-        </StyledButton>
+        </GlobalButton>
       </LayoutToolBox>
     </>
   );

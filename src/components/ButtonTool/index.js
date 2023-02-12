@@ -8,7 +8,8 @@ import {
   setPencilSizeForRangeSlider,
   setPencilType,
 } from "../../features/paintingSlice";
-import { InputTool, LabelTool, StyledButton } from "./styles";
+import { GlobalButton } from "../../utils/styledComponents";
+import { InputTool, LabelTool } from "./styles";
 
 const ButtonTool = ({
   icon: Icon,
@@ -68,7 +69,7 @@ const ButtonTool = ({
         value={htmlFor}
         title={htmlFor}
       />
-      <StyledButton
+      <GlobalButton
         ref={refToolButton}
         fontSize={fontSize}
         width={width}
@@ -76,7 +77,7 @@ const ButtonTool = ({
       >
         {Icon && <Icon />}
         {children}
-      </StyledButton>
+      </GlobalButton>
     </LabelTool>
   );
 };
