@@ -13,15 +13,15 @@ const initialState = {
   kindOfPencilStyle: {
     normal: {
       size: 30,
-      color: "rgba(211, 13, 13, 0.10)",
+      color: { r: 211, g: 13, b: 13, a: 0.1 },
     },
     chalk: {
       size: 40,
-      color: "yellow",
+      color: { r: 255, g: 255, b: 94, a: 1 },
     },
     eraser: {
       size: 50,
-      color: "green",
+      color: { r: 0, g: 217, b: 105, a: 1 },
     },
   },
 };

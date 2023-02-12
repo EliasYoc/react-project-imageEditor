@@ -90,7 +90,8 @@ const Canvas = () => {
     if (!isDrawingToolsOpen) return;
     console.warn("starting painting");
     const { color, size } = kindOfPencilStyle[pencilType];
-    ctx.strokeStyle = color || "black";
+    const { r, g, b, a } = color;
+    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})` || "black";
     ctx.lineWidth = size || 50;
     ctx.beginPath();
     const xCoordMouseOrTouch = e.clientX || e.touches[0].clientX;

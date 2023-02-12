@@ -5,6 +5,7 @@ export const initialThisDisplayOpen = {
   isDrawingToolsOpen: false,
   isCropToolsOpen: false,
   isTextToolsOpen: false,
+  isColorPickerOpen: false,
 };
 export const themeColor = {
   bodyColor: "#000",
@@ -21,6 +22,7 @@ const ConfigurationProvider = ({ children }) => {
       isDrawingToolsOpen,
       isTextToolsOpen,
       isCropToolsOpen,
+      isColorPickerOpen,
     },
     setDisplayConfig,
   ] = useState(initialThisDisplayOpen);
@@ -43,6 +45,7 @@ const ConfigurationProvider = ({ children }) => {
     isDrawingToolsOpen,
     isTextToolsOpen,
     isCropToolsOpen,
+    isColorPickerOpen,
     setDisplayConfig,
     openOptionPage,
     headerChildrenState,
