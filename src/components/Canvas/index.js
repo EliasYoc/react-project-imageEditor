@@ -35,6 +35,14 @@ const Canvas = () => {
   const { color, size } = kindOfPencilStyle[pencilType];
   const { r, g, b, a } = color;
   let isPainting = false;
+  useEffect(
+    function init() {
+      if (!ctx) return;
+      paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
+      return () => {};
+    },
+    [ctx]
+  );
 
   useEffect(
     function painting() {
@@ -47,7 +55,6 @@ const Canvas = () => {
       // };
       console.log("painting canvas");
       //painting canvas
-      paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
       //creating the text's background
       // ctx.fillStyle = "#fff";
       // ctx.fillRect(
@@ -69,12 +76,20 @@ const Canvas = () => {
         console.log(ctx);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
+        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})` || "black";
+        console.warn(pencilType);
+        if (pencilType === "normal") {
+        }
+        if (pencilType === "chalk") {
+        }
+        if (pencilType === "eraser") {
+        }
       }
       return () => {
         // ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
       };
     },
-    [isDrawingToolsOpen, ctx]
+    [isDrawingToolsOpen, ctx, pencilType, r, g, b, a]
   );
   let { current: PressHoldTimeoutId } = useRef(null);
   let { current: moveCount } = useRef(0);
@@ -92,7 +107,6 @@ const Canvas = () => {
       canvasWidhtPixel: canvasSize.width,
       canvasHeightPixel: canvasSize.height,
     });
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})` || "black";
     ctx.lineWidth = size || 50;
     ctx.beginPath();
     ctx.moveTo(coordX, coordY);

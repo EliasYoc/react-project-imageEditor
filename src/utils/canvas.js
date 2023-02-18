@@ -27,6 +27,7 @@ export const getCalculatedCoordsOfContainCanvas = ({
   return { coordX, coordY };
 };
 export const deleteCanvas = ({ currentCtx, canvasSize }) => {
+  currentCtx.fillStyle = "white";
   currentCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
 };
 export const paintWholeCanvas = (

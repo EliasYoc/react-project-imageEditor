@@ -34,6 +34,7 @@ const DrawingTools = () => {
   }, [elementSize, handleSumHeightForCanvas]);
   console.log("drawing tools");
   const handleOpenCloseModal = () => {
+    if (pencilType === "eraser") return;
     setIsOpenPortalsDrawingModal(!isOpenPortalsDrawingModal);
   };
   return (
