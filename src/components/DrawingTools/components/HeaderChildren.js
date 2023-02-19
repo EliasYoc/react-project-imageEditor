@@ -1,18 +1,17 @@
 import { useContext } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
-import { BiImageAlt, BiDownload } from "react-icons/bi";
+import { BiDownload } from "react-icons/bi";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
 import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
 import { deleteCanvas } from "../../../utils/canvas";
-import { canvasSize } from "../../Canvas";
 
 const HeaderChildren = () => {
-  const { openOptionPage, ctx } = useContext(ContextConfiguration);
+  const { openOptionPage, ctx, canvasSize, $canvas } =
+    useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
-    const $canvas = document.getElementById("myCanvas");
     const anchor = document.createElement("a");
     anchor.href = $canvas.toDataURL("image/png");
     anchor.download = "IMAGE.PNG";
@@ -44,9 +43,7 @@ const HeaderChildren = () => {
         <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
           <BiDownload />
         </GlobalButton>
-        <GlobalButton flexShrink="0">
-          <BiImageAlt />
-        </GlobalButton>
+
         <GlobalButton
           flexShrink="0"
           borderRadius="1rem"

@@ -1,17 +1,35 @@
 import React, { useContext, useRef } from "react";
 import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 import { IoCrop } from "react-icons/io5";
-import { BiPalette } from "react-icons/bi";
+import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
+import { readFile } from "../../utils/helper";
 const PrincipalTools = () => {
-  const { openOptionPage, insertElementToHeader, refOpenDisplayProperty } =
-    useContext(ContextConfiguration);
+  const {
+    openOptionPage,
+    insertElementToHeader,
+    refOpenDisplayProperty,
+    setCanvasSize,
+    setPrincipalImageLoaded,
+  } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
     refToolBox.current.classList.add("closeDown");
   };
-
+  const handleLoadImage = async ({ target: $input }) => {
+    try {
+      const data = await readFile({ file: $input.files[0] });
+      const $img = new Image();
+      $img.src = data.result;
+      $img.onload = () => {
+        setCanvasSize({ width: $img.width, height: $img.height });
+        setPrincipalImageLoaded($img);
+      };
+    } catch (error) {
+      alert(JSON.stringify(error));
+    }
+  };
   return (
     <>
       <LayoutToolBox
@@ -47,6 +65,18 @@ const PrincipalTools = () => {
         >
           <IoCrop />
         </GlobalButton>
+        <label htmlFor="download-img">
+          <input
+            style={{ display: "none" }}
+            type="file"
+            id="download-img"
+            accept=".jpg, .jpeg, .png"
+            onChange={handleLoadImage}
+          />
+          <GlobalButton flexShrink="0">
+            <BiImageAlt />
+          </GlobalButton>
+        </label>
       </LayoutToolBox>
     </>
   );

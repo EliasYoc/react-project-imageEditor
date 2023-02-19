@@ -21,14 +21,16 @@ import PixelRange from "../PixelRange/PixelRange";
 //     }
 //   }
 // };
-export const canvasSize = {
-  width: 1080,
-  height: 1920,
-};
+
 const Canvas = () => {
   const { fullHeightSumForCanvas } = useContext(ContextToolBoxes);
-  const { isDrawingToolsOpen, refCanvas, ctx } =
-    useContext(ContextConfiguration);
+  const {
+    isDrawingToolsOpen,
+    refCanvas,
+    ctx,
+    canvasSize,
+    principalImageLoaded,
+  } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
@@ -38,10 +40,21 @@ const Canvas = () => {
   useEffect(
     function init() {
       if (!ctx) return;
+      if (principalImageLoaded) {
+        ctx.drawImage(
+          principalImageLoaded,
+          0,
+          0,
+          principalImageLoaded.width,
+          principalImageLoaded.height
+        );
+        return;
+      }
+
       paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
       return () => {};
     },
-    [ctx]
+    [ctx, canvasSize, principalImageLoaded]
   );
 
   useEffect(
@@ -104,7 +117,7 @@ const Canvas = () => {
       canvasElement: refCanvas.current,
       xCoord: xCoordMouseOrTouch,
       yCoord: yCoordMouseOrTouch,
-      canvasWidhtPixel: canvasSize.width,
+      canvasWidthPixel: canvasSize.width,
       canvasHeightPixel: canvasSize.height,
     });
     ctx.lineWidth = size || 50;
@@ -136,7 +149,7 @@ const Canvas = () => {
         canvasElement: refCanvas.current,
         xCoord: xCoordMouseOrTouch,
         yCoord: yCoordMouseOrTouch,
-        canvasWidhtPixel: canvasSize.width,
+        canvasWidthPixel: canvasSize.width,
         canvasHeightPixel: canvasSize.height,
       });
       ctx.lineTo(coordX, coordY);
