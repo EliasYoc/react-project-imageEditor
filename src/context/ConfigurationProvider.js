@@ -27,6 +27,11 @@ const ConfigurationProvider = ({ children }) => {
     setDisplayConfig,
   ] = useState(initialThisDisplayOpen);
   const [headerChildrenState, setHeaderChildrenState] = useState(<div></div>);
+  const [canvasSize, setCanvasSize] = useState({
+    width: 500,
+    height: 500,
+  });
+  const [principalImageLoaded, setPrincipalImageLoaded] = useState(null);
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
@@ -53,6 +58,10 @@ const ConfigurationProvider = ({ children }) => {
     refOpenDisplayProperty,
     refCanvas,
     $canvas,
+    canvasSize,
+    setCanvasSize,
+    principalImageLoaded,
+    setPrincipalImageLoaded,
     ctx,
   };
 
