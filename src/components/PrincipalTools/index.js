@@ -70,7 +70,7 @@ const PrincipalTools = () => {
             style={{ display: "none" }}
             type="file"
             id="download-img"
-            accept=".jpg, .jpeg, .png"
+            accept="image/*"
             onChange={handleLoadImage}
           />
           <GlobalButton flexShrink="0">
