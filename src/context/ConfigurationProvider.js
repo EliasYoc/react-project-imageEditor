@@ -28,8 +28,8 @@ const ConfigurationProvider = ({ children }) => {
   ] = useState(initialThisDisplayOpen);
   const [headerChildrenState, setHeaderChildrenState] = useState(<div></div>);
   const [canvasSize, setCanvasSize] = useState({
-    width: 500,
-    height: 500,
+    width: 1080,
+    height: 1920,
   });
   const [principalImageLoaded, setPrincipalImageLoaded] = useState(null);
   console.log("config provider");

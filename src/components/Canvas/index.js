@@ -117,7 +117,7 @@ const Canvas = () => {
       canvasElement: refCanvas.current,
       xCoord: xCoordMouseOrTouch,
       yCoord: yCoordMouseOrTouch,
-      canvasWidhtPixel: canvasSize.width,
+      canvasWidthPixel: canvasSize.width,
       canvasHeightPixel: canvasSize.height,
     });
     ctx.lineWidth = size || 50;
@@ -149,7 +149,7 @@ const Canvas = () => {
         canvasElement: refCanvas.current,
         xCoord: xCoordMouseOrTouch,
         yCoord: yCoordMouseOrTouch,
-        canvasWidhtPixel: canvasSize.width,
+        canvasWidthPixel: canvasSize.width,
         canvasHeightPixel: canvasSize.height,
       });
       ctx.lineTo(coordX, coordY);
