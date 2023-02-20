@@ -12,6 +12,7 @@ const PrincipalTools = () => {
     refOpenDisplayProperty,
     setCanvasSize,
     setPrincipalImageLoaded,
+    canvasSize,
   } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
@@ -23,7 +24,16 @@ const PrincipalTools = () => {
       const $img = new Image();
       $img.src = data.result;
       $img.onload = () => {
-        setCanvasSize({ width: $img.width, height: $img.height });
+        const width =
+          $img.width > canvasSize.width * 2
+            ? Math.round($img.width / 2)
+            : $img.width;
+        const height =
+          $img.height > canvasSize.height * 2
+            ? Math.round($img.height / 2)
+            : $img.height;
+        setCanvasSize({ width, height });
+        console.log($img);
         setPrincipalImageLoaded($img);
       };
     } catch (error) {
