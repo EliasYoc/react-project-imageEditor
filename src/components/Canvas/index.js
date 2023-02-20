@@ -45,8 +45,8 @@ const Canvas = () => {
           principalImageLoaded,
           0,
           0,
-          principalImageLoaded.width,
-          principalImageLoaded.height
+          canvasSize.width,
+          canvasSize.height
         );
         return;
       }
@@ -110,9 +110,12 @@ const Canvas = () => {
   const listenerStartPaiting = (e) => {
     if (!isDrawingToolsOpen) return;
     console.warn("starting painting");
-
-    const xCoordMouseOrTouch = e.clientX || e.touches[0].clientX;
-    const yCoordMouseOrTouch = e.clientY || e.touches[0].clientY;
+    const xCoordMouseOrTouch = isNaN(e.clientX)
+      ? e.touches[0].clientX
+      : e.clientX;
+    const yCoordMouseOrTouch = isNaN(e.clientY)
+      ? e.touches[0].clientY
+      : e.clientY;
     const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
       canvasElement: refCanvas.current,
       xCoord: xCoordMouseOrTouch,
@@ -143,8 +146,12 @@ const Canvas = () => {
         clearTimeout(PressHoldTimeoutId);
         PressHoldTimeoutId = null;
       }
-      const xCoordMouseOrTouch = e.clientX || e.touches[0].clientX;
-      const yCoordMouseOrTouch = e.clientY || e.touches[0].clientY;
+      const xCoordMouseOrTouch = isNaN(e.clientX)
+        ? e.touches[0].clientX
+        : e.clientX;
+      const yCoordMouseOrTouch = isNaN(e.clientY)
+        ? e.touches[0].clientY
+        : e.clientY;
       const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
         canvasElement: refCanvas.current,
         xCoord: xCoordMouseOrTouch,

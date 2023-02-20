@@ -7,17 +7,16 @@ export const getCalculatedCoordsOfContainCanvas = ({
 }) => {
   let realWidth = canvasElement.getBoundingClientRect().width;
   let realHeight = canvasElement.getBoundingClientRect().height;
-  let dominantCellSize;
+  let dominantCellSize = realHeight / canvasHeightPixel;
   // canvasWidhtPixel > canvasHeightPixel
   //   ? realWidth / canvasWidhtPixel
   //   : realHeight / canvasHeightPixel;
+  //when resizing the viewport the least possible to resize the contain canvas there will be troubles for painting
   if (canvasWidthPixel > canvasHeightPixel) {
-    dominantCellSize = realWidth / canvasWidthPixel;
     console.log("rectangulo horizontal");
   }
   if (canvasWidthPixel < canvasHeightPixel) {
     console.log("rectangulo vertical");
-    dominantCellSize = realHeight / canvasHeightPixel;
   }
   if (canvasWidthPixel === canvasHeightPixel) {
     console.log("cuadrado");
