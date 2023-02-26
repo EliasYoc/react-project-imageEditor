@@ -5,40 +5,51 @@ export const getCalculatedCoordsOfContainCanvas = ({
   xCoord,
   yCoord,
 }) => {
-  let realWidth = canvasElement.getBoundingClientRect().width;
-  let realHeight = canvasElement.getBoundingClientRect().height;
-  let dominantCellSize = realHeight / canvasHeightPixel;
-  // canvasWidhtPixel > canvasHeightPixel
-  //   ? realWidth / canvasWidhtPixel
-  //   : realHeight / canvasHeightPixel;
-  //when resizing the viewport the least possible to resize the contain canvas there will be troubles for painting
+  let originalCanvasWidth = canvasElement.getBoundingClientRect().width;
+  let originalCanvasHeight = canvasElement.getBoundingClientRect().height;
+  let dominantCellSize;
+  //when resizing the viewport the least possible, to resize the contain canvas there will be troubles for painting
+  // canvas container horizontal
+  const cellSize = originalCanvasHeight / canvasHeightPixel; //calculating pixel size
+  const maxWidth = cellSize * canvasWidthPixel;
+  // const maxHeight = cellSize * canvasHeightPixel;
   if (canvasWidthPixel > canvasHeightPixel) {
-    console.log("rectangulo horizontal");
-  }
-  if (canvasWidthPixel < canvasHeightPixel) {
-    console.log("rectangulo vertical");
-  }
-  if (canvasWidthPixel === canvasHeightPixel) {
-    console.log("cuadrado");
+    console.log("canvas horizontal");
+    console.log(originalCanvasWidth, originalCanvasHeight);
     dominantCellSize =
-      realWidth > realHeight
-        ? realHeight / canvasHeightPixel
-        : realWidth / canvasWidthPixel;
+      originalCanvasWidth < maxWidth
+        ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
+        : cellSize;
+
+    // const calculatedContainBgHeight =
+    //   originalCanvasWidth < maxWidth
+    //     ? dominantCellSize * canvasHeightPixel
+    //     : maxHeight;
+    // const calculatedContainCanvasWidth =
+    //   originalCanvasWidth < maxWidth
+    //     ? dominantCellSize * canvasWidthPixel
+    //     : maxWidth;
+  } else {
+    //canvas container vertical
+    console.log("canvas vertical");
+    dominantCellSize =
+      originalCanvasWidth < maxWidth
+        ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
+        : cellSize;
   }
-  console.log(dominantCellSize);
+  // investigar este calculo
   let coordX = Math.floor(
     (xCoord -
       canvasElement.offsetLeft -
-      (realWidth - dominantCellSize * canvasWidthPixel) / 2) /
+      (originalCanvasWidth - dominantCellSize * canvasWidthPixel) / 2) /
       dominantCellSize
   );
   let coordY = Math.floor(
     (yCoord -
       canvasElement.offsetTop -
-      (realHeight - dominantCellSize * canvasHeightPixel) / 2) /
+      (originalCanvasHeight - dominantCellSize * canvasHeightPixel) / 2) /
       dominantCellSize
   );
-  console.log(coordX, coordY);
   return { coordX, coordY };
 };
 export const deleteCanvas = ({ currentCtx, canvasSize }) => {
