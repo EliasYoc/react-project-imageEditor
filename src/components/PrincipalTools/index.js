@@ -1,10 +1,15 @@
 import React, { useContext, useRef } from "react";
-import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
+import {
+  FixedContainer,
+  GlobalButton,
+  LayoutToolBox,
+} from "../../utils/styledComponents";
 import { IoCrop } from "react-icons/io5";
 import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
 import { readFile } from "../../utils/helper";
+import LoaderSpinner from "../LoaderSpinner";
 const PrincipalTools = () => {
   const {
     openOptionPage,
@@ -13,25 +18,29 @@ const PrincipalTools = () => {
     setCanvasSize,
     setPrincipalImageLoaded,
     canvasSize,
+    setIsAttachingImage,
+    isAttachingImage,
   } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
     refToolBox.current.classList.add("closeDown");
   };
   const handleLoadImage = async ({ target: $input }) => {
+    setIsAttachingImage(true);
     try {
       const data = await readFile({ file: $input.files[0] });
       const $img = new Image();
       $img.src = data.result;
       $img.onload = () => {
-        const width =
-          $img.width > canvasSize.width * 2
-            ? Math.round($img.width / 2)
-            : $img.width;
-        const height =
-          $img.height > canvasSize.height * 2
-            ? Math.round($img.height / 2)
-            : $img.height;
+        let width;
+        let height;
+        if ($img.width > canvasSize.width * 2) {
+          width = Math.round($img.width / 2);
+          height = Math.round($img.height / 2);
+        } else {
+          width = $img.width;
+          height = $img.height;
+        }
         setCanvasSize({ width, height });
         console.log($img);
         setPrincipalImageLoaded($img);
@@ -88,6 +97,11 @@ const PrincipalTools = () => {
           </GlobalButton>
         </label>
       </LayoutToolBox>
+      {isAttachingImage && (
+        <FixedContainer>
+          <LoaderSpinner />
+        </FixedContainer>
+      )}
     </>
   );
 };
