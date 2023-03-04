@@ -30,6 +30,7 @@ const Canvas = () => {
     ctx,
     canvasSize,
     principalImageLoaded,
+    setIsAttachingImage,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
@@ -48,13 +49,14 @@ const Canvas = () => {
           canvasSize.width,
           canvasSize.height
         );
+        setIsAttachingImage(false);
         return;
       }
 
       paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
       return () => {};
     },
-    [ctx, canvasSize, principalImageLoaded]
+    [ctx, canvasSize, principalImageLoaded, setIsAttachingImage]
   );
 
   useEffect(

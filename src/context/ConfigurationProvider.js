@@ -32,6 +32,7 @@ const ConfigurationProvider = ({ children }) => {
     height: 2560,
   });
   const [principalImageLoaded, setPrincipalImageLoaded] = useState(null);
+  const [isAttachingImage, setIsAttachingImage] = useState(false);
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
@@ -63,6 +64,8 @@ const ConfigurationProvider = ({ children }) => {
     principalImageLoaded,
     setPrincipalImageLoaded,
     ctx,
+    isAttachingImage,
+    setIsAttachingImage,
   };
 
   return (
