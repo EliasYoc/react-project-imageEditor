@@ -14,8 +14,6 @@ export const getCalculatedCoordsOfContainCanvas = ({
   const maxWidth = cellSize * canvasWidthPixel;
   // const maxHeight = cellSize * canvasHeightPixel;
   if (canvasWidthPixel > canvasHeightPixel) {
-    console.log("canvas horizontal");
-    console.log(originalCanvasWidth, originalCanvasHeight);
     dominantCellSize =
       originalCanvasWidth < maxWidth
         ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
@@ -31,7 +29,6 @@ export const getCalculatedCoordsOfContainCanvas = ({
     //     : maxWidth;
   } else {
     //canvas container vertical
-    console.log("canvas vertical");
     dominantCellSize =
       originalCanvasWidth < maxWidth
         ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
