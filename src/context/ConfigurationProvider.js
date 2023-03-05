@@ -38,6 +38,9 @@ const ConfigurationProvider = ({ children }) => {
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
+  // what tasks "painting" "adding image" "transparent eraser"
+  const refGlobalDrawingLogs = useRef([]);
+
   const $canvas = refCanvas.current;
   const ctx = $canvas?.getContext("2d");
 
@@ -70,6 +73,7 @@ const ConfigurationProvider = ({ children }) => {
     setIsAttachingImage,
     lowQualityDataImageLoaded,
     setLowQualityDataImageLoaded,
+    refGlobalDrawingLogs,
   };
 
   return (

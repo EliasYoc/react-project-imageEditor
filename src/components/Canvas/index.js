@@ -30,29 +30,19 @@ const Canvas = () => {
     ctx,
     canvasSize,
     principalImageLoaded,
-    setIsAttachingImage,
     lowQualityDataImageLoaded,
+    refGlobalDrawingLogs,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
   const { color, size } = kindOfPencilStyle[pencilType];
   const { r, g, b, a } = color;
+  const refPaintingLogs = useRef([]);
   let isPainting = false;
   useEffect(
     function init() {
       if (!ctx) return;
-      // if (principalImageLoaded) {
-      //   ctx.drawImage(
-      //     principalImageLoaded,
-      //     0,
-      //     0,
-      //     canvasSize.width,
-      //     canvasSize.height
-      //   );
-      //   setIsAttachingImage(false);
-      //   return;
-      // }
       if (lowQualityDataImageLoaded) {
         ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
         return;
@@ -95,20 +85,35 @@ const Canvas = () => {
         console.log(ctx);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})` || "black";
+        ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
+        ctx.lineWidth = size || 50;
+        ctx.globalCompositeOperation = "source-over";
         console.warn(pencilType);
         if (pencilType === "normal") {
         }
         if (pencilType === "chalk") {
         }
         if (pencilType === "eraser") {
+          console.warn(ctx.globalCompositeOperation);
+          if (principalImageLoaded)
+            ctx.globalCompositeOperation = "destination-out";
         }
       }
       return () => {
         // ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
       };
     },
-    [isDrawingToolsOpen, ctx, pencilType, r, g, b, a]
+    [
+      isDrawingToolsOpen,
+      ctx,
+      pencilType,
+      r,
+      g,
+      b,
+      a,
+      size,
+      principalImageLoaded,
+    ]
   );
   let { current: PressHoldTimeoutId } = useRef(null);
   let { current: moveCount } = useRef(0);
@@ -129,11 +134,11 @@ const Canvas = () => {
       canvasWidthPixel: canvasSize.width,
       canvasHeightPixel: canvasSize.height,
     });
-    ctx.lineWidth = size || 50;
     ctx.beginPath();
     ctx.moveTo(coordX, coordY);
     ctx.lineTo(coordX, coordY);
     ctx.stroke();
+    refPaintingLogs.current.push({ coordX, coordY });
     PressHoldTimeoutId = setTimeout(() => {
       paintWholeCanvas(
         ctx,
@@ -165,6 +170,7 @@ const Canvas = () => {
         canvasWidthPixel: canvasSize.width,
         canvasHeightPixel: canvasSize.height,
       });
+      refPaintingLogs.current.push({ coordX, coordY });
       ctx.lineTo(coordX, coordY);
       ctx.stroke();
     }
@@ -176,6 +182,15 @@ const Canvas = () => {
     clearTimeout(PressHoldTimeoutId);
     moveCount = 0;
     isPainting = false;
+    refGlobalDrawingLogs.current.push({
+      whatTask: "painting",
+      data: refPaintingLogs.current,
+      color: kindOfPencilStyle[pencilType].color,
+      size: kindOfPencilStyle[pencilType].size,
+      transparentEraser: ctx.globalCompositeOperation,
+    });
+    refPaintingLogs.current = [];
+    console.log(refGlobalDrawingLogs.current);
   };
   console.log("render canvas");
   return (

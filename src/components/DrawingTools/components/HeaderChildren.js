@@ -8,14 +8,50 @@ import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
 import { deleteCanvas } from "../../../utils/canvas";
 
 const HeaderChildren = () => {
-  const { openOptionPage, ctx, canvasSize, $canvas } =
-    useContext(ContextConfiguration);
+  const {
+    openOptionPage,
+    ctx,
+    canvasSize,
+    $canvas,
+    principalImageLoaded,
+    refGlobalDrawingLogs,
+  } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
-    // todo  redraw bgimage of canvas in the canvas and redraw paths save im array coords
+    // todo  redraw bgimage of canvas in the canvas and redraw paths saved im array coords
+    if (principalImageLoaded) {
+      // becaus of eraser(destination-out) i need to change the value to source-over
+      ctx.globalCompositeOperation = "source-over";
+      ctx.drawImage(
+        principalImageLoaded,
+        0,
+        0,
+        canvasSize.width,
+        canvasSize.height
+      );
+      for (const action of refGlobalDrawingLogs.current) {
+        console.log(action);
+        ctx.globalCompositeOperation = action.transparentEraser;
+
+        if (action.whatTask === "painting") {
+          const { r, g, b, a } = action.color;
+          ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
+          ctx.lineWidth = action.size || 50;
+          ctx.beginPath();
+          for (const { coordX, coordY } of action.data) {
+            ctx.lineTo(coordX, coordY);
+            ctx.stroke();
+          }
+        }
+        if (action.whatTask === "adding_image") {
+        }
+        if (action.whatTask === "erasing_transparent") {
+        }
+      }
+    }
     const anchor = document.createElement("a");
     anchor.href = $canvas.toDataURL("image/png");
-    anchor.download = "IMAGE.PNG";
+    anchor.download = "IMAGE";
     anchor.click();
     anchor.remove();
   };
