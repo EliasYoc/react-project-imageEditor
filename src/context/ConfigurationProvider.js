@@ -33,6 +33,8 @@ const ConfigurationProvider = ({ children }) => {
   });
   const [principalImageLoaded, setPrincipalImageLoaded] = useState(null);
   const [isAttachingImage, setIsAttachingImage] = useState(false);
+  const [lowQualityDataImageLoaded, setLowQualityDataImageLoaded] =
+    useState(null);
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
@@ -66,6 +68,8 @@ const ConfigurationProvider = ({ children }) => {
     ctx,
     isAttachingImage,
     setIsAttachingImage,
+    lowQualityDataImageLoaded,
+    setLowQualityDataImageLoaded,
   };
 
   return (

@@ -20,6 +20,7 @@ const PrincipalTools = () => {
     canvasSize,
     setIsAttachingImage,
     isAttachingImage,
+    setLowQualityDataImageLoaded,
   } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
@@ -29,6 +30,7 @@ const PrincipalTools = () => {
     setIsAttachingImage(true);
     try {
       const data = await readFile({ file: $input.files[0] });
+
       const $img = new Image();
       $img.src = data.result;
       $img.onload = () => {
@@ -42,11 +44,35 @@ const PrincipalTools = () => {
           height = $img.height;
         }
         setCanvasSize({ width, height });
-        console.log($img);
+        const { newHeight, newWidth } = reduceAspectRatioQualityOfIncomingImage(
+          { imageElement: $img, expectedNewWidth: 1280 }
+        );
+        const $newHiddenCanvas = document.createElement("canvas");
+        $newHiddenCanvas.width = newWidth;
+        $newHiddenCanvas.height = newHeight;
+        const newCtx = $newHiddenCanvas.getContext("2d");
+        newCtx.drawImage($img, 0, 0, newWidth, newHeight);
+        setLowQualityDataImageLoaded($newHiddenCanvas.toDataURL("image/jpeg"));
+        setIsAttachingImage(false);
         setPrincipalImageLoaded($img);
       };
     } catch (error) {
       alert(JSON.stringify(error));
+    }
+  };
+  const reduceAspectRatioQualityOfIncomingImage = ({
+    imageElement,
+    expectedNewWidth,
+  }) => {
+    let ratio;
+    if (imageElement.height < imageElement.width) {
+      ratio = imageElement.height / imageElement.width;
+      const newHeight = expectedNewWidth * ratio;
+      return { newWidth: expectedNewWidth, newHeight };
+    } else {
+      ratio = imageElement.width / imageElement.height;
+      const newWidth = expectedNewWidth * ratio;
+      return { newWidth, newHeight: expectedNewWidth };
     }
   };
   return (

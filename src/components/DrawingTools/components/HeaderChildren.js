@@ -12,6 +12,7 @@ const HeaderChildren = () => {
     useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
+    // todo  redraw bgimage of canvas in the canvas and redraw paths save im array coords
     const anchor = document.createElement("a");
     anchor.href = $canvas.toDataURL("image/png");
     anchor.download = "IMAGE.PNG";
