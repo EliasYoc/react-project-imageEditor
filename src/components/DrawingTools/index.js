@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
 import ButtonTool from "../ButtonTool";
 import { BiPaint } from "react-icons/bi";
+import { BsEraser } from "react-icons/bs";
 import ToolBox from "../ToolBox";
 import useFullSizeElement from "../../hooks/useFullSizeElement";
 import { themeColor } from "../../context/ConfigurationProvider";
@@ -61,7 +62,7 @@ const DrawingTools = () => {
           selectedButton
         />
         <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" />
-        <ButtonTool icon={BiPaint} htmlFor="eraser" name="drawingTools" />
+        <ButtonTool icon={BsEraser} htmlFor="eraser" name="drawingTools" />
         {/* The size of individual squares should be specified in the background-position property that should be twice smaller than background-size. */}
         <GlobalButton
           border={`3px solid ${themeColor.textColor}`}

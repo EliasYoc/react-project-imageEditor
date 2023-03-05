@@ -31,6 +31,7 @@ const Canvas = () => {
     canvasSize,
     principalImageLoaded,
     setIsAttachingImage,
+    lowQualityDataImageLoaded,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
@@ -41,22 +42,25 @@ const Canvas = () => {
   useEffect(
     function init() {
       if (!ctx) return;
-      if (principalImageLoaded) {
-        ctx.drawImage(
-          principalImageLoaded,
-          0,
-          0,
-          canvasSize.width,
-          canvasSize.height
-        );
-        setIsAttachingImage(false);
+      // if (principalImageLoaded) {
+      //   ctx.drawImage(
+      //     principalImageLoaded,
+      //     0,
+      //     0,
+      //     canvasSize.width,
+      //     canvasSize.height
+      //   );
+      //   setIsAttachingImage(false);
+      //   return;
+      // }
+      if (lowQualityDataImageLoaded) {
+        ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
         return;
       }
-
       paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
       return () => {};
     },
-    [ctx, canvasSize, principalImageLoaded, setIsAttachingImage]
+    [ctx, canvasSize, lowQualityDataImageLoaded]
   );
 
   useEffect(
@@ -194,6 +198,10 @@ const Canvas = () => {
         ref={refCanvas}
         className="principal-canvas"
         style={{
+          backgroundImage: `url(${lowQualityDataImageLoaded})`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "contain",
+          backgroundPosition: "center",
           width: "100%",
           height: `calc(100% - ${fullHeightSumForCanvas || "0px"})`,
           objectFit: "contain",
