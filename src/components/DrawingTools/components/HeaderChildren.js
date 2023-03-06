@@ -5,7 +5,10 @@ import { BiDownload } from "react-icons/bi";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
 import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
-import { deleteCanvas } from "../../../utils/canvas";
+import {
+  deleteCanvasWithTransparency,
+  paintWholeCanvas,
+} from "../../../utils/canvas";
 
 const HeaderChildren = () => {
   const {
@@ -72,7 +75,15 @@ const HeaderChildren = () => {
         position="relative"
       >
         <GlobalButton
-          onClick={() => deleteCanvas({ currentCtx: ctx, canvasSize })}
+          onClick={() =>
+            principalImageLoaded
+              ? deleteCanvasWithTransparency({
+                  currentCtx: ctx,
+                  canvasWidth: $canvas.width,
+                  canvasHeight: $canvas.height,
+                })
+              : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height)
+          }
           width="100%"
           height="auto"
           borderRadius="1rem"
