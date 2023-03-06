@@ -32,7 +32,7 @@ const ConfigurationProvider = ({ children }) => {
     height: 2560,
   });
   const [principalImageLoaded, setPrincipalImageLoaded] = useState(null);
-  const [isAttachingImage, setIsAttachingImage] = useState(false);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
   const [lowQualityDataImageLoaded, setLowQualityDataImageLoaded] =
     useState(null);
   console.log("config provider");
@@ -69,8 +69,8 @@ const ConfigurationProvider = ({ children }) => {
     principalImageLoaded,
     setPrincipalImageLoaded,
     ctx,
-    isAttachingImage,
-    setIsAttachingImage,
+    isLoadingImage,
+    setIsLoadingImage,
     lowQualityDataImageLoaded,
     setLowQualityDataImageLoaded,
     refGlobalDrawingLogs,

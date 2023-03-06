@@ -1,15 +1,10 @@
 import React, { useContext, useRef } from "react";
-import {
-  FixedContainer,
-  GlobalButton,
-  LayoutToolBox,
-} from "../../utils/styledComponents";
+import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 import { IoCrop } from "react-icons/io5";
 import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
 import { readFile } from "../../utils/helper";
-import LoaderSpinner from "../LoaderSpinner";
 const PrincipalTools = () => {
   const {
     openOptionPage,
@@ -18,8 +13,7 @@ const PrincipalTools = () => {
     setCanvasSize,
     setPrincipalImageLoaded,
     canvasSize,
-    setIsAttachingImage,
-    isAttachingImage,
+    setIsLoadingImage,
     setLowQualityDataImageLoaded,
   } = useContext(ContextConfiguration);
   const refToolBox = useRef();
@@ -27,7 +21,7 @@ const PrincipalTools = () => {
     refToolBox.current.classList.add("closeDown");
   };
   const handleLoadImage = async ({ target: $input }) => {
-    setIsAttachingImage(true);
+    setIsLoadingImage(true);
     try {
       const data = await readFile({ file: $input.files[0] });
 
@@ -53,7 +47,7 @@ const PrincipalTools = () => {
         const newCtx = $newHiddenCanvas.getContext("2d");
         newCtx.drawImage($img, 0, 0, newWidth, newHeight);
         setLowQualityDataImageLoaded($newHiddenCanvas.toDataURL("image/jpeg"));
-        setIsAttachingImage(false);
+        setIsLoadingImage(false);
         setPrincipalImageLoaded($img);
       };
     } catch (error) {
@@ -123,11 +117,6 @@ const PrincipalTools = () => {
           </GlobalButton>
         </label>
       </LayoutToolBox>
-      {isAttachingImage && (
-        <FixedContainer>
-          <LoaderSpinner />
-        </FixedContainer>
-      )}
     </>
   );
 };
