@@ -35,9 +35,7 @@ const HeaderChildren = () => {
         canvasSize.height
       );
       for (const action of refGlobalDrawingLogs.current) {
-        console.log(action);
-        ctx.globalCompositeOperation = action.transparentEraser;
-
+        // ctx.globalCompositeOperation = action.transparentEraser;
         if (action.whatTask === "painting") {
           // const { r, g, b, a } = action.color;
           // ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
