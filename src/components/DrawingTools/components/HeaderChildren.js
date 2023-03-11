@@ -62,17 +62,23 @@ const HeaderChildren = () => {
   const handleClickUndo = () => {
     if (!refGlobalDrawingLogs.current.length) return;
     refGlobalDrawingLogs.current.pop();
-    paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
+    principalImageLoaded
+      ? deleteCanvasWithTransparency({
+          currentCtx: ctx,
+          canvasWidth: $canvas.width,
+          canvasHeight: $canvas.height,
+        })
+      : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
     refGlobalDrawingLogs.current.forEach((drawingLog) => {
       if (drawingLog.whatTask === "painting") {
         const { r, g, b, a } = drawingLog.color;
         const { coordX, coordY } = drawingLog.data[0];
+        ctx.globalCompositeOperation = drawingLog.transparentEraser;
         ctx.lineWidth = drawingLog.size;
         ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
         ctx.beginPath();
         ctx.moveTo(coordX, coordY);
         drawingLog.data.forEach((coords) => {
-          console.log(coords.coordX, coords.coordY);
           ctx.lineTo(coords.coordX, coords.coordY);
           ctx.stroke();
         });
