@@ -85,7 +85,6 @@ const Canvas = () => {
         console.log(ctx);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
         ctx.lineWidth = size || 50;
         ctx.globalCompositeOperation = "source-over";
         console.warn(pencilType);
@@ -134,6 +133,7 @@ const Canvas = () => {
       canvasWidthPixel: canvasSize.width,
       canvasHeightPixel: canvasSize.height,
     });
+    ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
     ctx.beginPath();
     ctx.moveTo(coordX, coordY);
     ctx.lineTo(coordX, coordY);
