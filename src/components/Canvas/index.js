@@ -32,6 +32,7 @@ const Canvas = () => {
     principalImageLoaded,
     lowQualityDataImageLoaded,
     refGlobalDrawingLogs,
+    setDrawingHistoryLength,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
@@ -39,6 +40,7 @@ const Canvas = () => {
   const { color, size } = kindOfPencilStyle[pencilType];
   const { r, g, b, a } = color;
   const refPaintingLogs = useRef([]);
+  const refWholeCanvasHasBeenPainted = useRef(false);
   let isPainting = false;
   useEffect(
     function init() {
@@ -82,18 +84,14 @@ const Canvas = () => {
       //   canvasStyleText.positionY + canvasStyleText.canvasFontSize
       // );
       if (isDrawingToolsOpen) {
-        console.log(ctx);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.lineWidth = size || 50;
         ctx.globalCompositeOperation = "source-over";
-        console.warn(pencilType);
         if (pencilType === "normal") {
         }
         if (pencilType === "chalk") {
         }
         if (pencilType === "eraser") {
-          console.warn(ctx.globalCompositeOperation);
           if (principalImageLoaded)
             ctx.globalCompositeOperation = "destination-out";
         }
@@ -114,54 +112,49 @@ const Canvas = () => {
       principalImageLoaded,
     ]
   );
-  let { current: PressHoldTimeoutId } = useRef(null);
+  let { current: pressHoldTimeoutId } = useRef(null);
   let { current: moveCount } = useRef(0);
 
   const listenerStartPaiting = (e) => {
     if (!isDrawingToolsOpen) return;
     console.warn("starting painting");
-    const xCoordMouseOrTouch = isNaN(e.clientX)
-      ? e.touches[0].clientX
-      : e.clientX;
-    const yCoordMouseOrTouch = isNaN(e.clientY)
-      ? e.touches[0].clientY
-      : e.clientY;
-    const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
-      canvasElement: refCanvas.current,
-      xCoord: xCoordMouseOrTouch,
-      yCoord: yCoordMouseOrTouch,
-      canvasWidthPixel: canvasSize.width,
-      canvasHeightPixel: canvasSize.height,
-    });
+    ctx.lineWidth = size || 50;
     ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
     ctx.beginPath();
-    ctx.moveTo(coordX, coordY);
-    ctx.lineTo(coordX, coordY);
-    ctx.stroke();
-    refPaintingLogs.current.push({ coordX, coordY });
-    PressHoldTimeoutId = setTimeout(() => {
+
+    pressHoldTimeoutId = setTimeout(() => {
+      const canvasDataForPaintingLogs = {
+        canvasColor: `rgba(${r}, ${g}, ${b}, 1)`,
+        whatTask: "paintingWholeCanvas",
+        transparentEraser: ctx.globalCompositeOperation,
+      };
       paintWholeCanvas(
         ctx,
-        `rgba(${r}, ${g}, ${b}, ${a})`,
+        canvasDataForPaintingLogs.canvasColor,
         canvasSize.width,
         canvasSize.height
       );
+      refGlobalDrawingLogs.current.push(canvasDataForPaintingLogs);
+      refWholeCanvasHasBeenPainted.current = true;
+      refPaintingLogs.current = [];
     }, 700);
+
     isPainting = true;
   };
   const listenerPainting = (e) => {
     if (!isDrawingToolsOpen) return;
     if (isPainting) {
       moveCount = moveCount + 1;
-      if (PressHoldTimeoutId && moveCount > 10) {
-        clearTimeout(PressHoldTimeoutId);
-        PressHoldTimeoutId = null;
+      // avoiding executing paintWholeCanvas while keeping pressed after 10 points
+      if (pressHoldTimeoutId && moveCount > 10) {
+        clearTimeout(pressHoldTimeoutId);
+        pressHoldTimeoutId = null;
       }
       const xCoordMouseOrTouch = isNaN(e.clientX)
-        ? e.touches[0].clientX
+        ? e.changedTouches[0].clientX
         : e.clientX;
       const yCoordMouseOrTouch = isNaN(e.clientY)
-        ? e.touches[0].clientY
+        ? e.changedTouches[0].clientY
         : e.clientY;
       const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
         canvasElement: refCanvas.current,
@@ -175,22 +168,44 @@ const Canvas = () => {
       ctx.stroke();
     }
   };
-  const listenerStopPainting = () => {
+  const listenerStopPainting = (e) => {
     if (!isDrawingToolsOpen) return;
     console.log("up");
     // ctx.stroke();
-    clearTimeout(PressHoldTimeoutId);
+    clearTimeout(pressHoldTimeoutId);
+    if (!refWholeCanvasHasBeenPainted.current) {
+      //add one dot (works on desktop)
+      const xCoordMouseOrTouch = isNaN(e.clientX)
+        ? e.changedTouches[0].clientX
+        : e.clientX;
+      const yCoordMouseOrTouch = isNaN(e.clientY)
+        ? e.changedTouches[0].clientY
+        : e.clientY;
+      const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
+        canvasElement: refCanvas.current,
+        xCoord: xCoordMouseOrTouch,
+        yCoord: yCoordMouseOrTouch,
+        canvasWidthPixel: canvasSize.width,
+        canvasHeightPixel: canvasSize.height,
+      });
+      ctx.moveTo(coordX, coordY);
+      ctx.lineTo(coordX, coordY);
+      ctx.stroke();
+      refPaintingLogs.current.push({ coordX, coordY });
+    }
+    if (refPaintingLogs.current.length) {
+      refGlobalDrawingLogs.current.push({
+        whatTask: "painting",
+        data: refPaintingLogs.current,
+        color: kindOfPencilStyle[pencilType].color,
+        size: kindOfPencilStyle[pencilType].size,
+        transparentEraser: ctx.globalCompositeOperation,
+      });
+    }
+    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
     moveCount = 0;
     isPainting = false;
-    refGlobalDrawingLogs.current.push({
-      whatTask: "painting",
-      data: refPaintingLogs.current,
-      color: kindOfPencilStyle[pencilType].color,
-      size: kindOfPencilStyle[pencilType].size,
-      transparentEraser: ctx.globalCompositeOperation,
-    });
     refPaintingLogs.current = [];
-    console.log(refGlobalDrawingLogs.current);
   };
   console.log("render canvas");
   return (

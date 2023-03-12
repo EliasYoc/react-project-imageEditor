@@ -18,6 +18,8 @@ const HeaderChildren = () => {
     $canvas,
     principalImageLoaded,
     refGlobalDrawingLogs,
+    drawingHistoryLength,
+    setDrawingHistoryLength,
   } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
@@ -83,7 +85,22 @@ const HeaderChildren = () => {
           ctx.stroke();
         });
       }
+      if (drawingLog.whatTask === "paintingWholeCanvas") {
+        drawingLog.transparentEraser === "destination-out"
+          ? deleteCanvasWithTransparency({
+              currentCtx: ctx,
+              canvasWidth: $canvas.width,
+              canvasHeight: $canvas.height,
+            })
+          : paintWholeCanvas(
+              ctx,
+              drawingLog.canvasColor,
+              $canvas.width,
+              $canvas.height
+            );
+      }
     });
+    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
   };
 
   const handleDeleteCanvas = () => {
@@ -95,12 +112,18 @@ const HeaderChildren = () => {
         })
       : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
     refGlobalDrawingLogs.current = [];
+    setDrawingHistoryLength(0);
   };
   return (
     <>
-      <GlobalButton onClick={handleClickUndo}>
-        <GrUndo />
-      </GlobalButton>
+      <div style={{ display: "flex", alignItems: "center" }}>
+        {drawingHistoryLength ? (
+          <GlobalButton onClick={handleClickUndo}>
+            <GrUndo />
+          </GlobalButton>
+        ) : null}
+        <span style={{ fontSize: "14px" }}>{drawingHistoryLength}</span>
+      </div>
       <LayoutToolBox
         backgroundColor="transparent"
         width="auto"
@@ -109,14 +132,17 @@ const HeaderChildren = () => {
         margin="0"
         position="relative"
       >
-        <GlobalButton
-          onClick={handleDeleteCanvas}
-          width="100%"
-          height="auto"
-          borderRadius="1rem"
-        >
-          Borrar Todo
-        </GlobalButton>
+        {drawingHistoryLength ? (
+          <GlobalButton
+            onClick={handleDeleteCanvas}
+            width="100%"
+            height="auto"
+            borderRadius="1rem"
+            fontSize="14px"
+          >
+            Borrar Todo
+          </GlobalButton>
+        ) : null}
 
         <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
           <BiDownload />
