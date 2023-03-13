@@ -80,10 +80,14 @@ const HeaderChildren = () => {
         ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
         ctx.beginPath();
         ctx.moveTo(coordX, coordY);
-        drawingLog.data.forEach((coords) => {
+        for (const coords of drawingLog.data) {
           ctx.lineTo(coords.coordX, coords.coordY);
-          ctx.stroke();
-        });
+        }
+        ctx.stroke();
+        // drawingLog.data.forEach((coords) => {
+        //   ctx.lineTo(coords.coordX, coords.coordY);
+        //   ctx.stroke();
+        // });
       }
       if (drawingLog.whatTask === "paintingWholeCanvas") {
         drawingLog.transparentEraser === "destination-out"
