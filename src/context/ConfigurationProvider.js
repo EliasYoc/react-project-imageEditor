@@ -35,6 +35,7 @@ const ConfigurationProvider = ({ children }) => {
   const [isLoadingImage, setIsLoadingImage] = useState(false);
   const [lowQualityDataImageLoaded, setLowQualityDataImageLoaded] =
     useState(null);
+  const [drawingHistoryLength, setDrawingHistoryLength] = useState(0);
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
@@ -74,6 +75,8 @@ const ConfigurationProvider = ({ children }) => {
     lowQualityDataImageLoaded,
     setLowQualityDataImageLoaded,
     refGlobalDrawingLogs,
+    drawingHistoryLength,
+    setDrawingHistoryLength,
   };
 
   return (

@@ -18,6 +18,8 @@ const HeaderChildren = () => {
     $canvas,
     principalImageLoaded,
     refGlobalDrawingLogs,
+    drawingHistoryLength,
+    setDrawingHistoryLength,
   } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
@@ -60,24 +62,47 @@ const HeaderChildren = () => {
     anchor.remove();
   };
   const handleClickUndo = () => {
+    console.log(refGlobalDrawingLogs.current);
     if (!refGlobalDrawingLogs.current.length) return;
     refGlobalDrawingLogs.current.pop();
-    paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
+    ctx.globalCompositeOperation = "source-over";
+    principalImageLoaded
+      ? deleteCanvasWithTransparency({
+          currentCtx: ctx,
+          canvasWidth: $canvas.width,
+          canvasHeight: $canvas.height,
+        })
+      : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
     refGlobalDrawingLogs.current.forEach((drawingLog) => {
       if (drawingLog.whatTask === "painting") {
         const { r, g, b, a } = drawingLog.color;
         const { coordX, coordY } = drawingLog.data[0];
+        ctx.globalCompositeOperation = drawingLog.transparentEraser;
         ctx.lineWidth = drawingLog.size;
         ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
         ctx.beginPath();
         ctx.moveTo(coordX, coordY);
-        drawingLog.data.forEach((coords) => {
-          console.log(coords.coordX, coords.coordY);
+        for (const coords of drawingLog.data) {
           ctx.lineTo(coords.coordX, coords.coordY);
-          ctx.stroke();
-        });
+        }
+        ctx.stroke();
+      }
+      if (drawingLog.whatTask === "paintingWholeCanvas") {
+        drawingLog.transparentEraser === "destination-out"
+          ? deleteCanvasWithTransparency({
+              currentCtx: ctx,
+              canvasWidth: $canvas.width,
+              canvasHeight: $canvas.height,
+            })
+          : paintWholeCanvas(
+              ctx,
+              drawingLog.canvasColor,
+              $canvas.width,
+              $canvas.height
+            );
       }
     });
+    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
   };
 
   const handleDeleteCanvas = () => {
@@ -89,12 +114,20 @@ const HeaderChildren = () => {
         })
       : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
     refGlobalDrawingLogs.current = [];
+    setDrawingHistoryLength(0);
   };
   return (
     <>
-      <GlobalButton onClick={handleClickUndo}>
-        <GrUndo />
-      </GlobalButton>
+      <div
+        style={{ display: "flex", alignItems: "center", userSelect: "none" }}
+      >
+        {drawingHistoryLength ? (
+          <GlobalButton onClick={handleClickUndo}>
+            <GrUndo />
+          </GlobalButton>
+        ) : null}
+        <span style={{ fontSize: "14px" }}>{drawingHistoryLength}</span>
+      </div>
       <LayoutToolBox
         backgroundColor="transparent"
         width="auto"
@@ -103,14 +136,17 @@ const HeaderChildren = () => {
         margin="0"
         position="relative"
       >
-        <GlobalButton
-          onClick={handleDeleteCanvas}
-          width="100%"
-          height="auto"
-          borderRadius="1rem"
-        >
-          Borrar Todo
-        </GlobalButton>
+        {drawingHistoryLength ? (
+          <GlobalButton
+            onClick={handleDeleteCanvas}
+            width="100%"
+            height="auto"
+            borderRadius="1rem"
+            fontSize="14px"
+          >
+            Borrar Todo
+          </GlobalButton>
+        ) : null}
 
         <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
           <BiDownload />
