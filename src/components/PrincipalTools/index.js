@@ -1,17 +1,74 @@
 import React, { useContext, useRef } from "react";
 import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 import { IoCrop } from "react-icons/io5";
-import { BiPalette } from "react-icons/bi";
+import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
+import { readFile } from "../../utils/helper";
 const PrincipalTools = () => {
-  const { openOptionPage, insertElementToHeader, refOpenDisplayProperty } =
-    useContext(ContextConfiguration);
+  const {
+    openOptionPage,
+    insertElementToHeader,
+    refOpenDisplayProperty,
+    setCanvasSize,
+    setPrincipalImageLoaded,
+    canvasSize,
+    setIsLoadingImage,
+    setLowQualityDataImageLoaded,
+  } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
     refToolBox.current.classList.add("closeDown");
   };
+  const handleLoadImage = async ({ target: $input }) => {
+    setIsLoadingImage(true);
+    try {
+      const data = await readFile({ file: $input.files[0] });
 
+      const $img = new Image();
+      $img.src = data.result;
+      $img.onload = () => {
+        let width;
+        let height;
+        if ($img.width > canvasSize.width * 2) {
+          width = Math.round($img.width / 2);
+          height = Math.round($img.height / 2);
+        } else {
+          width = $img.width;
+          height = $img.height;
+        }
+        setCanvasSize({ width, height });
+        const { newHeight, newWidth } = reduceAspectRatioQualityOfIncomingImage(
+          { imageElement: $img, expectedNewWidth: 1280 }
+        );
+        const $newHiddenCanvas = document.createElement("canvas");
+        $newHiddenCanvas.width = newWidth;
+        $newHiddenCanvas.height = newHeight;
+        const newCtx = $newHiddenCanvas.getContext("2d");
+        newCtx.drawImage($img, 0, 0, newWidth, newHeight);
+        setLowQualityDataImageLoaded($newHiddenCanvas.toDataURL("image/jpeg"));
+        setIsLoadingImage(false);
+        setPrincipalImageLoaded($img);
+      };
+    } catch (error) {
+      alert(JSON.stringify(error));
+    }
+  };
+  const reduceAspectRatioQualityOfIncomingImage = ({
+    imageElement,
+    expectedNewWidth,
+  }) => {
+    let ratio;
+    if (imageElement.height < imageElement.width) {
+      ratio = imageElement.height / imageElement.width;
+      const newHeight = expectedNewWidth * ratio;
+      return { newWidth: expectedNewWidth, newHeight };
+    } else {
+      ratio = imageElement.width / imageElement.height;
+      const newWidth = expectedNewWidth * ratio;
+      return { newWidth, newHeight: expectedNewWidth };
+    }
+  };
   return (
     <>
       <LayoutToolBox
@@ -47,6 +104,18 @@ const PrincipalTools = () => {
         >
           <IoCrop />
         </GlobalButton>
+        <label htmlFor="download-img">
+          <input
+            style={{ display: "none" }}
+            type="file"
+            id="download-img"
+            accept="image/*"
+            onChange={handleLoadImage}
+          />
+          <GlobalButton flexShrink="0">
+            <BiImageAlt />
+          </GlobalButton>
+        </label>
       </LayoutToolBox>
     </>
   );

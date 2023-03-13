@@ -12,9 +12,12 @@ const PortalsSwipeableMenuLayout = ({
   adviseText,
 }) => {
   const refFixedContainer = useRef();
+  const refSwipeableMenu = useRef();
   const handleStopPropagation = (e) => e.stopPropagation();
-  const hanldeCloseElement = () =>
+  const hanldeCloseElement = () => {
+    refSwipeableMenu.current.classList.add("close");
     refFixedContainer.current.classList.add("close");
+  };
   if (!isOpen) return;
   return createPortal(
     <FixedContainer
@@ -23,6 +26,7 @@ const PortalsSwipeableMenuLayout = ({
       onTransitionEnd={onClose}
     >
       <SwipeableMenu
+        ref={refSwipeableMenu}
         onTransitionEnd={handleStopPropagation}
         onClick={handleStopPropagation}
       >

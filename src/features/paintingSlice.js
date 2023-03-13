@@ -21,7 +21,7 @@ const initialState = {
     },
     eraser: {
       size: 50,
-      color: { r: 0, g: 217, b: 105, a: 1 },
+      color: { r: 255, g: 255, b: 255, a: 1 },
     },
   },
 };

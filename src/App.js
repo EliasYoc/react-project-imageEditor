@@ -6,10 +6,12 @@ import {
   ContextConfiguration,
   themeColor,
 } from "./context/ConfigurationProvider";
-import { FittedPaintWrap } from "./utils/styledComponents";
+import { FittedPaintWrap, FixedContainer } from "./utils/styledComponents";
 import { useContext, useEffect } from "react";
 import Header from "./components/Header";
 import CropTools from "./components/CropTools";
+import LoaderSpinner from "./components/LoaderSpinner";
+
 function App() {
   const {
     isDrawingToolsOpen,
@@ -17,6 +19,7 @@ function App() {
     isPrincipalToolsOpen,
     openOptionPage,
     headerChildrenState,
+    isLoadingImage,
   } = useContext(ContextConfiguration);
   console.log("APP");
   useEffect(() => {
@@ -32,6 +35,11 @@ function App() {
         {isDrawingToolsOpen && <DrawingTools />}
         {isCropToolsOpen && <CropTools />}
       </FittedPaintWrap>
+      {isLoadingImage && (
+        <FixedContainer>
+          <LoaderSpinner />
+        </FixedContainer>
+      )}
     </div>
   );
 }

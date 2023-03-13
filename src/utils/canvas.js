@@ -1,33 +1,60 @@
 export const getCalculatedCoordsOfContainCanvas = ({
   canvasElement,
-  canvasWidhtPixel,
+  canvasWidthPixel,
   canvasHeightPixel,
   xCoord,
   yCoord,
 }) => {
-  let realWidth = canvasElement.getBoundingClientRect().width;
-  let realHeight = canvasElement.getBoundingClientRect().height;
-  let dominantCellSize =
-    canvasWidhtPixel > canvasHeightPixel
-      ? realWidth / canvasWidhtPixel
-      : realHeight / canvasHeightPixel;
+  let originalCanvasWidth = canvasElement.getBoundingClientRect().width;
+  let originalCanvasHeight = canvasElement.getBoundingClientRect().height;
+  let dominantCellSize;
+  //when resizing the viewport the least possible, to resize the contain canvas there will be troubles for painting
+  // canvas container horizontal
+  const cellSize = originalCanvasHeight / canvasHeightPixel; //calculating pixel size
+  const maxWidth = cellSize * canvasWidthPixel;
+  // const maxHeight = cellSize * canvasHeightPixel;
+  if (canvasWidthPixel > canvasHeightPixel) {
+    dominantCellSize =
+      originalCanvasWidth < maxWidth
+        ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
+        : cellSize;
 
+    // const calculatedContainBgHeight =
+    //   originalCanvasWidth < maxWidth
+    //     ? dominantCellSize * canvasHeightPixel
+    //     : maxHeight;
+    // const calculatedContainCanvasWidth =
+    //   originalCanvasWidth < maxWidth
+    //     ? dominantCellSize * canvasWidthPixel
+    //     : maxWidth;
+  } else {
+    //canvas container vertical
+    dominantCellSize =
+      originalCanvasWidth < maxWidth
+        ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
+        : cellSize;
+  }
+  // investigar este calculo
   let coordX = Math.floor(
     (xCoord -
       canvasElement.offsetLeft -
-      (realWidth - dominantCellSize * canvasWidhtPixel) / 2) /
+      (originalCanvasWidth - dominantCellSize * canvasWidthPixel) / 2) /
       dominantCellSize
   );
   let coordY = Math.floor(
     (yCoord -
       canvasElement.offsetTop -
-      (realHeight - dominantCellSize * canvasHeightPixel) / 2) /
+      (originalCanvasHeight - dominantCellSize * canvasHeightPixel) / 2) /
       dominantCellSize
   );
   return { coordX, coordY };
 };
-export const deleteCanvas = ({ currentCtx, canvasSize }) => {
-  currentCtx.fillRect(0, 0, canvasSize.width, canvasSize.height);
+export const deleteCanvasWithTransparency = ({
+  currentCtx,
+  canvasWidth,
+  canvasHeight,
+}) => {
+  currentCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 };
 export const paintWholeCanvas = (
   ctx,

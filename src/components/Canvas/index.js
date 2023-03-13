@@ -21,20 +21,40 @@ import PixelRange from "../PixelRange/PixelRange";
 //     }
 //   }
 // };
-export const canvasSize = {
-  width: 1080,
-  height: 1920,
-};
+
 const Canvas = () => {
   const { fullHeightSumForCanvas } = useContext(ContextToolBoxes);
-  const { isDrawingToolsOpen, refCanvas, ctx } =
-    useContext(ContextConfiguration);
+  const {
+    isDrawingToolsOpen,
+    refCanvas,
+    ctx,
+    canvasSize,
+    principalImageLoaded,
+    lowQualityDataImageLoaded,
+    refGlobalDrawingLogs,
+    setDrawingHistoryLength,
+    drawingHistoryLength,
+  } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
   const { color, size } = kindOfPencilStyle[pencilType];
   const { r, g, b, a } = color;
+  const refPaintingLogs = useRef([]);
+  const refWholeCanvasHasBeenPainted = useRef(false);
   let isPainting = false;
+  useEffect(
+    function init() {
+      if (!ctx) return;
+      if (lowQualityDataImageLoaded) {
+        ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
+        return;
+      }
+      paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
+      return () => {};
+    },
+    [ctx, canvasSize, lowQualityDataImageLoaded]
+  );
 
   useEffect(
     function painting() {
@@ -47,7 +67,6 @@ const Canvas = () => {
       // };
       console.log("painting canvas");
       //painting canvas
-      paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
       //creating the text's background
       // ctx.fillStyle = "#fff";
       // ctx.fillRect(
@@ -65,77 +84,131 @@ const Canvas = () => {
       //   canvasStyleText.positionX,
       //   canvasStyleText.positionY + canvasStyleText.canvasFontSize
       // );
-      if (isDrawingToolsOpen) {
-        console.log(ctx);
+      if (isDrawingToolsOpen || drawingHistoryLength === 0) {
+        //config
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
+        ctx.globalCompositeOperation = "source-over";
+        if (pencilType === "normal") {
+        }
+        if (pencilType === "chalk") {
+        }
+        if (pencilType === "eraser") {
+          if (principalImageLoaded)
+            ctx.globalCompositeOperation = "destination-out";
+        }
       }
       return () => {
         // ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
       };
     },
-    [isDrawingToolsOpen, ctx]
+    [
+      isDrawingToolsOpen,
+      ctx,
+      pencilType,
+      r,
+      g,
+      b,
+      a,
+      size,
+      principalImageLoaded,
+      drawingHistoryLength,
+    ]
   );
-  let { current: PressHoldTimeoutId } = useRef(null);
+  let { current: pressHoldTimeoutId } = useRef(null);
   let { current: moveCount } = useRef(0);
 
   const listenerStartPaiting = (e) => {
     if (!isDrawingToolsOpen) return;
     console.warn("starting painting");
-
-    const xCoordMouseOrTouch = e.clientX || e.touches[0].clientX;
-    const yCoordMouseOrTouch = e.clientY || e.touches[0].clientY;
-    const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
-      canvasElement: refCanvas.current,
-      xCoord: xCoordMouseOrTouch,
-      yCoord: yCoordMouseOrTouch,
-      canvasWidhtPixel: canvasSize.width,
-      canvasHeightPixel: canvasSize.height,
-    });
-    ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${a})` || "black";
     ctx.lineWidth = size || 50;
+    ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
     ctx.beginPath();
-    ctx.moveTo(coordX, coordY);
-    ctx.lineTo(coordX, coordY);
-    ctx.stroke();
-    PressHoldTimeoutId = setTimeout(() => {
+
+    pressHoldTimeoutId = setTimeout(() => {
+      const canvasDataForPaintingLogs = {
+        canvasColor: `rgba(${r}, ${g}, ${b}, 1)`,
+        whatTask: "paintingWholeCanvas",
+        transparentEraser: ctx.globalCompositeOperation,
+      };
       paintWholeCanvas(
         ctx,
-        `rgba(${r}, ${g}, ${b}, ${a})`,
+        canvasDataForPaintingLogs.canvasColor,
         canvasSize.width,
         canvasSize.height
       );
+      refGlobalDrawingLogs.current.push(canvasDataForPaintingLogs);
+      refWholeCanvasHasBeenPainted.current = true;
+      refPaintingLogs.current = [];
     }, 700);
+
     isPainting = true;
   };
   const listenerPainting = (e) => {
     if (!isDrawingToolsOpen) return;
     if (isPainting) {
       moveCount = moveCount + 1;
-      if (PressHoldTimeoutId && moveCount > 10) {
-        clearTimeout(PressHoldTimeoutId);
-        PressHoldTimeoutId = null;
+      // avoiding executing paintWholeCanvas while keeping pressed after 10 points
+      if (pressHoldTimeoutId && moveCount > 10) {
+        clearTimeout(pressHoldTimeoutId);
+        pressHoldTimeoutId = null;
       }
-      const xCoordMouseOrTouch = e.clientX || e.touches[0].clientX;
-      const yCoordMouseOrTouch = e.clientY || e.touches[0].clientY;
+      const xCoordMouseOrTouch = isNaN(e.clientX)
+        ? e.changedTouches[0].clientX
+        : e.clientX;
+      const yCoordMouseOrTouch = isNaN(e.clientY)
+        ? e.changedTouches[0].clientY
+        : e.clientY;
       const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
         canvasElement: refCanvas.current,
         xCoord: xCoordMouseOrTouch,
         yCoord: yCoordMouseOrTouch,
-        canvasWidhtPixel: canvasSize.width,
+        canvasWidthPixel: canvasSize.width,
         canvasHeightPixel: canvasSize.height,
       });
+      refPaintingLogs.current.push({ coordX, coordY });
       ctx.lineTo(coordX, coordY);
       ctx.stroke();
     }
   };
-  const listenerStopPainting = () => {
+  const listenerStopPainting = (e) => {
     if (!isDrawingToolsOpen) return;
     console.log("up");
     // ctx.stroke();
-    clearTimeout(PressHoldTimeoutId);
+    clearTimeout(pressHoldTimeoutId);
+    if (!refWholeCanvasHasBeenPainted.current) {
+      //add one dot (works on desktop)
+      const xCoordMouseOrTouch = isNaN(e.clientX)
+        ? e.changedTouches[0].clientX
+        : e.clientX;
+      const yCoordMouseOrTouch = isNaN(e.clientY)
+        ? e.changedTouches[0].clientY
+        : e.clientY;
+      const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
+        canvasElement: refCanvas.current,
+        xCoord: xCoordMouseOrTouch,
+        yCoord: yCoordMouseOrTouch,
+        canvasWidthPixel: canvasSize.width,
+        canvasHeightPixel: canvasSize.height,
+      });
+      ctx.moveTo(coordX, coordY);
+      ctx.lineTo(coordX, coordY);
+      ctx.stroke();
+      refPaintingLogs.current.push({ coordX, coordY });
+    }
+    if (refPaintingLogs.current.length) {
+      refGlobalDrawingLogs.current.push({
+        whatTask: "painting",
+        data: refPaintingLogs.current,
+        color: kindOfPencilStyle[pencilType].color,
+        size: kindOfPencilStyle[pencilType].size,
+        transparentEraser: ctx.globalCompositeOperation,
+      });
+    }
+    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
     moveCount = 0;
     isPainting = false;
+    refPaintingLogs.current = [];
   };
   console.log("render canvas");
   return (
@@ -158,6 +231,10 @@ const Canvas = () => {
         ref={refCanvas}
         className="principal-canvas"
         style={{
+          backgroundImage: `url(${lowQualityDataImageLoaded})`,
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "contain",
+          backgroundPosition: "center",
           width: "100%",
           height: `calc(100% - ${fullHeightSumForCanvas || "0px"})`,
           objectFit: "contain",
