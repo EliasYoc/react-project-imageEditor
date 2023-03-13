@@ -33,6 +33,7 @@ const Canvas = () => {
     lowQualityDataImageLoaded,
     refGlobalDrawingLogs,
     setDrawingHistoryLength,
+    drawingHistoryLength,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
@@ -83,7 +84,8 @@ const Canvas = () => {
       //   canvasStyleText.positionX,
       //   canvasStyleText.positionY + canvasStyleText.canvasFontSize
       // );
-      if (isDrawingToolsOpen) {
+      if (isDrawingToolsOpen || drawingHistoryLength === 0) {
+        //config
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
         ctx.globalCompositeOperation = "source-over";
@@ -110,6 +112,7 @@ const Canvas = () => {
       a,
       size,
       principalImageLoaded,
+      drawingHistoryLength,
     ]
   );
   let { current: pressHoldTimeoutId } = useRef(null);

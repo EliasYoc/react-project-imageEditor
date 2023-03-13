@@ -62,8 +62,10 @@ const HeaderChildren = () => {
     anchor.remove();
   };
   const handleClickUndo = () => {
+    console.log(refGlobalDrawingLogs.current);
     if (!refGlobalDrawingLogs.current.length) return;
     refGlobalDrawingLogs.current.pop();
+    ctx.globalCompositeOperation = "source-over";
     principalImageLoaded
       ? deleteCanvasWithTransparency({
           currentCtx: ctx,
