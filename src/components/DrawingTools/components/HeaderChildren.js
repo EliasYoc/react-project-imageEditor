@@ -84,10 +84,6 @@ const HeaderChildren = () => {
           ctx.lineTo(coords.coordX, coords.coordY);
         }
         ctx.stroke();
-        // drawingLog.data.forEach((coords) => {
-        //   ctx.lineTo(coords.coordX, coords.coordY);
-        //   ctx.stroke();
-        // });
       }
       if (drawingLog.whatTask === "paintingWholeCanvas") {
         drawingLog.transparentEraser === "destination-out"
@@ -120,7 +116,9 @@ const HeaderChildren = () => {
   };
   return (
     <>
-      <div style={{ display: "flex", alignItems: "center" }}>
+      <div
+        style={{ display: "flex", alignItems: "center", userSelect: "none" }}
+      >
         {drawingHistoryLength ? (
           <GlobalButton onClick={handleClickUndo}>
             <GrUndo />
