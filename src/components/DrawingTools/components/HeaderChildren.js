@@ -68,7 +68,7 @@ const HeaderChildren = () => {
     ctx.globalCompositeOperation = "source-over";
     principalImageLoaded
       ? deleteCanvasWithTransparency({
-          currentCtx: ctx,
+          canvasCtx: ctx,
           canvasWidth: $canvas.width,
           canvasHeight: $canvas.height,
         })
@@ -90,7 +90,7 @@ const HeaderChildren = () => {
       if (drawingLog.whatTask === "paintingWholeCanvas") {
         drawingLog.transparentEraser === "destination-out"
           ? deleteCanvasWithTransparency({
-              currentCtx: ctx,
+              canvasCtx: ctx,
               canvasWidth: $canvas.width,
               canvasHeight: $canvas.height,
             })
@@ -108,7 +108,7 @@ const HeaderChildren = () => {
   const handleDeleteCanvas = () => {
     principalImageLoaded
       ? deleteCanvasWithTransparency({
-          currentCtx: ctx,
+          canvasCtx: ctx,
           canvasWidth: $canvas.width,
           canvasHeight: $canvas.height,
         })

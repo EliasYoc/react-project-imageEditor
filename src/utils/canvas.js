@@ -49,13 +49,15 @@ export const getCalculatedCoordsOfContainCanvas = ({
   );
   return { coordX, coordY };
 };
+
 export const deleteCanvasWithTransparency = ({
-  currentCtx,
+  canvasCtx,
   canvasWidth,
   canvasHeight,
 }) => {
-  currentCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+  canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 };
+
 export const paintWholeCanvas = (
   ctx,
   color = "white",
@@ -64,4 +66,25 @@ export const paintWholeCanvas = (
 ) => {
   ctx.fillStyle = color;
   ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+};
+
+export const drawCanvasCoordsCallback = (
+  mouseTouchEvent,
+  canvasElement,
+  callback
+) => {
+  const xCoordMouseOrTouch = isNaN(mouseTouchEvent.clientX)
+    ? mouseTouchEvent.changedTouches[0].clientX
+    : mouseTouchEvent.clientX;
+  const yCoordMouseOrTouch = isNaN(mouseTouchEvent.clientY)
+    ? mouseTouchEvent.changedTouches[0].clientY
+    : mouseTouchEvent.clientY;
+  const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
+    canvasElement: canvasElement,
+    xCoord: xCoordMouseOrTouch,
+    yCoord: yCoordMouseOrTouch,
+    canvasWidthPixel: canvasElement.width,
+    canvasHeightPixel: canvasElement.height,
+  });
+  callback(coordX, coordY);
 };
