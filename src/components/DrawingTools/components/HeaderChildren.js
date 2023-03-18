@@ -65,7 +65,6 @@ const HeaderChildren = () => {
     console.log(refGlobalDrawingLogs.current);
     if (!refGlobalDrawingLogs.current.length) return;
     refGlobalDrawingLogs.current.pop();
-    ctx.globalCompositeOperation = "source-over";
     principalImageLoaded
       ? deleteCanvasWithTransparency({
           canvasCtx: ctx,
@@ -74,10 +73,10 @@ const HeaderChildren = () => {
         })
       : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
     refGlobalDrawingLogs.current.forEach((drawingLog) => {
+      ctx.globalCompositeOperation = drawingLog.transparentEraser;
       if (drawingLog.whatTask === "painting") {
         const { r, g, b, a } = drawingLog.color;
         const { coordX, coordY } = drawingLog.data[0];
-        ctx.globalCompositeOperation = drawingLog.transparentEraser;
         ctx.lineWidth = drawingLog.size;
         ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
         ctx.beginPath();

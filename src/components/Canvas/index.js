@@ -192,6 +192,7 @@ const Canvas = () => {
     moveCount = 0;
     isPainting = false;
     refPaintingLogs.current = [];
+    console.log(refGlobalDrawingLogs.current);
   };
 
   console.log("render canvas");
