@@ -96,14 +96,14 @@ const PrincipalTools = () => {
         >
           <BiPalette />
         </GlobalButton>
-        <GlobalButton
+        {/* <GlobalButton
           onClick={() => {
             handleAddClassListFade();
             refOpenDisplayProperty.current = "isCropToolsOpen";
           }}
         >
           <IoCrop />
-        </GlobalButton>
+        </GlobalButton> */}
         <label htmlFor="download-img">
           <input
             style={{ display: "none" }}
