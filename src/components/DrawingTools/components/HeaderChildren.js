@@ -8,6 +8,7 @@ import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
 import {
   deleteCanvasWithTransparency,
   paintWholeCanvas,
+  redrawGlobalDrawingLogs,
 } from "../../../utils/canvas";
 
 const HeaderChildren = () => {
@@ -65,42 +66,12 @@ const HeaderChildren = () => {
     console.log(refGlobalDrawingLogs.current);
     if (!refGlobalDrawingLogs.current.length) return;
     refGlobalDrawingLogs.current.pop();
-    principalImageLoaded
-      ? deleteCanvasWithTransparency({
-          canvasCtx: ctx,
-          canvasWidth: $canvas.width,
-          canvasHeight: $canvas.height,
-        })
-      : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
-    refGlobalDrawingLogs.current.forEach((drawingLog) => {
-      ctx.globalCompositeOperation = drawingLog.transparentEraser;
-      if (drawingLog.whatTask === "painting") {
-        const { r, g, b, a } = drawingLog.color;
-        const { coordX, coordY } = drawingLog.data[0];
-        ctx.lineWidth = drawingLog.size;
-        ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
-        ctx.beginPath();
-        ctx.moveTo(coordX, coordY);
-        for (const coords of drawingLog.data) {
-          ctx.lineTo(coords.coordX, coords.coordY);
-        }
-        ctx.stroke();
-      }
-      if (drawingLog.whatTask === "paintingWholeCanvas") {
-        drawingLog.transparentEraser === "destination-out"
-          ? deleteCanvasWithTransparency({
-              canvasCtx: ctx,
-              canvasWidth: $canvas.width,
-              canvasHeight: $canvas.height,
-            })
-          : paintWholeCanvas(
-              ctx,
-              drawingLog.canvasColor,
-              $canvas.width,
-              $canvas.height
-            );
-      }
-    });
+    redrawGlobalDrawingLogs(
+      principalImageLoaded,
+      $canvas,
+      ctx,
+      refGlobalDrawingLogs
+    );
     setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
   };
 

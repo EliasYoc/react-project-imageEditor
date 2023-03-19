@@ -12,6 +12,7 @@ import {
   deleteCanvasWithTransparency,
   drawCanvasCoordsCallback,
   paintWholeCanvas,
+  redrawGlobalDrawingLogs,
 } from "../../utils/canvas";
 import PixelRange from "../PixelRange/PixelRange";
 // const paintPixelByPixelCanvasExample = (canvasSize, ctx) => {
@@ -45,7 +46,7 @@ const Canvas = () => {
   const refPaintingLogs = useRef([]);
   const refWholeCanvasHasBeenPainted = useRef(false);
   let { current: pressHoldTimeoutId } = useRef(null);
-  let { current: moveCount } = useRef(0);
+  let { current: pointCounter } = useRef(0);
   const refAllowOneDot = useRef(false);
 
   let isPainting = false;
@@ -155,8 +156,8 @@ const Canvas = () => {
   const listenerPainting = (e) => {
     if (!isDrawingToolsOpen) return;
     if (isPainting) {
-      moveCount = moveCount + 1;
-      if (pressHoldTimeoutId && moveCount > 10) {
+      pointCounter = pointCounter + 1;
+      if (pressHoldTimeoutId && pointCounter > 10) {
         // avoiding executing paintWholeCanvas while keeping pressed after 10 points
         clearTimeout(pressHoldTimeoutId);
         pressHoldTimeoutId = null;
@@ -171,7 +172,13 @@ const Canvas = () => {
             size: kindOfPencilStyle[pencilType].size,
             transparentEraser: ctx.globalCompositeOperation,
           };
-          redrawDrawingLogs();
+
+          redrawGlobalDrawingLogs(
+            principalImageLoaded,
+            $canvas,
+            ctx,
+            refGlobalDrawingLogs
+          );
         } else {
           ctx.lineTo(coordX, coordY);
           ctx.stroke();
@@ -179,50 +186,6 @@ const Canvas = () => {
       });
     }
     if (refAllowOneDot.current) refAllowOneDot.current = false;
-  };
-
-  const redrawDrawingLogs = () => {
-    principalImageLoaded
-      ? deleteCanvasWithTransparency({
-          canvasCtx: ctx,
-          canvasWidth: canvasSize.width,
-          canvasHeight: canvasSize.height,
-        })
-      : paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
-    for (let i = 0; i < refGlobalDrawingLogs.current.length; i++) {
-      const drawingLog = refGlobalDrawingLogs.current[i];
-      if (drawingLog.whatTask === "painting") {
-        const path = drawingLog.data;
-        if (!path.length) continue;
-
-        const { r, g, b, a } = drawingLog.color;
-        const { coordX, coordY } = drawingLog.data[0];
-        ctx.globalCompositeOperation = drawingLog.transparentEraser;
-        ctx.lineWidth = drawingLog.size;
-        ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
-        ctx.beginPath();
-        ctx.moveTo(coordX, coordY);
-        for (const coords of drawingLog.data) {
-          ctx.lineTo(coords.coordX, coords.coordY);
-        }
-        ctx.stroke();
-      }
-      if (drawingLog.whatTask === "paintingWholeCanvas") {
-        ctx.globalCompositeOperation = drawingLog.transparentEraser;
-        drawingLog.transparentEraser === "destination-out"
-          ? deleteCanvasWithTransparency({
-              canvasCtx: ctx,
-              canvasWidth: $canvas.width,
-              canvasHeight: $canvas.height,
-            })
-          : paintWholeCanvas(
-              ctx,
-              drawingLog.canvasColor,
-              $canvas.width,
-              $canvas.height
-            );
-      }
-    }
   };
 
   const listenerStopPainting = (e) => {
@@ -238,10 +201,10 @@ const Canvas = () => {
         refPaintingLogs.current.push({ coordX, coordY });
       });
     }
-    if (
-      (refPaintingLogs.current.length && alpha === 1) ||
-      refAllowOneDot.current
-    ) {
+
+    const thereAreOpaquePaths = refPaintingLogs.current.length && alpha === 1;
+
+    if (thereAreOpaquePaths || refAllowOneDot.current) {
       refGlobalDrawingLogs.current.push({
         whatTask: "painting",
         data: refPaintingLogs.current,
@@ -253,7 +216,7 @@ const Canvas = () => {
     console.log(refGlobalDrawingLogs.current);
 
     setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
-    moveCount = 0;
+    pointCounter = 0;
     isPainting = false;
     refPaintingLogs.current = [];
     refWholeCanvasHasBeenPainted.current = false;

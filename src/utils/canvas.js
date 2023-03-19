@@ -88,3 +88,52 @@ export const drawCanvasCoordsCallback = (
   });
   callback(coordX, coordY);
 };
+
+export const redrawGlobalDrawingLogs = (
+  canvasHasImage = false,
+  canvasElement,
+  ctx,
+  refGlobalDrawingLogs
+) => {
+  canvasHasImage
+    ? deleteCanvasWithTransparency({
+        canvasCtx: ctx,
+        canvasWidth: canvasElement.width,
+        canvasHeight: canvasElement.height,
+      })
+    : paintWholeCanvas(ctx, "white", canvasElement.width, canvasElement.height);
+  for (let i = 0; i < refGlobalDrawingLogs.current.length; i++) {
+    const drawingLog = refGlobalDrawingLogs.current[i];
+    if (drawingLog.whatTask === "painting") {
+      const path = drawingLog.data;
+      if (!path.length) continue;
+
+      const { r, g, b, a } = drawingLog.color;
+      const { coordX, coordY } = drawingLog.data[0];
+      ctx.globalCompositeOperation = drawingLog.transparentEraser;
+      ctx.lineWidth = drawingLog.size;
+      ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
+      ctx.beginPath();
+      ctx.moveTo(coordX, coordY);
+      for (const coords of drawingLog.data) {
+        ctx.lineTo(coords.coordX, coords.coordY);
+      }
+      ctx.stroke();
+    }
+    if (drawingLog.whatTask === "paintingWholeCanvas") {
+      ctx.globalCompositeOperation = drawingLog.transparentEraser;
+      drawingLog.transparentEraser === "destination-out"
+        ? deleteCanvasWithTransparency({
+            canvasCtx: ctx,
+            canvasWidth: canvasElement.width,
+            canvasHeight: canvasElement.height,
+          })
+        : paintWholeCanvas(
+            ctx,
+            drawingLog.canvasColor,
+            canvasElement.width,
+            canvasElement.height
+          );
+    }
+  }
+};
