@@ -9,7 +9,6 @@ import {
   selectPencilType,
 } from "../../features/paintingSlice";
 import {
-  deleteCanvasWithTransparency,
   drawCanvasCoordsCallback,
   paintWholeCanvas,
   redrawGlobalDrawingLogs,

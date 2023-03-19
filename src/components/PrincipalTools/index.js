@@ -1,6 +1,5 @@
 import React, { useContext, useRef } from "react";
 import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
-import { IoCrop } from "react-icons/io5";
 import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
