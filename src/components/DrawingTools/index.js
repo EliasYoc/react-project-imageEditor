@@ -1,10 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
 import ButtonTool from "../ButtonTool";
 import { BiPaint } from "react-icons/bi";
 import { BsEraser } from "react-icons/bs";
 import ToolBox from "../ToolBox";
-import useFullSizeElement from "../../hooks/useFullSizeElement";
 import { themeColor } from "../../context/ConfigurationProvider";
 import PortalsSwipeableMenuLayout from "../Layout/PortalsSwipeableMenuLayout";
 import ColorPickerMenu from "../ColorPickerMenu/ColorPickerMenu";
@@ -19,27 +18,20 @@ import {
 } from "../../features/paintingSlice";
 
 const DrawingTools = () => {
-  const { activeButtonPosition, handleSumHeightForCanvas } =
-    useContext(ContextToolBoxes);
+  const { activeButtonPosition } = useContext(ContextToolBoxes);
   const [isOpenPortalsDrawingModal, setIsOpenPortalsDrawingModal] =
     useState(false);
   const kindOfPencil = useSelector(selectKindOfPencil);
   const pencilType = useSelector(selectPencilType);
   const { r, g, b, a } = kindOfPencil[pencilType].color;
-  const { refElement: refDrawingToolBox, elementSize } = useFullSizeElement();
-  useEffect(() => {
-    if (elementSize) {
-      const { height, marginTop, marginBottom } = elementSize;
-      handleSumHeightForCanvas(height, marginTop, marginBottom);
-    }
-  }, [elementSize, handleSumHeightForCanvas]);
+
   console.log("drawing tools");
   const handleOpenCloseModal = () => {
     if (pencilType === "eraser") return;
     setIsOpenPortalsDrawingModal(!isOpenPortalsDrawingModal);
   };
   return (
-    <div ref={refDrawingToolBox}>
+    <>
       <ToolBox
         display="flex"
         justifyContent="space-around"
@@ -92,7 +84,7 @@ const DrawingTools = () => {
       >
         <ColorPickerMenu />
       </PortalsSwipeableMenuLayout>
-    </div>
+    </>
   );
 };
 

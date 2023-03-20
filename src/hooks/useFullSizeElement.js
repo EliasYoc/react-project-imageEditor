@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-
-const useFullSizeElement = () => {
+// Devuelve el tamaño de un elemento si este contiene,
+// Si el elemento contiene elementos con conditional render, esos condicinales deberan ir al array de dependencias para calcular cuando se muestren los elementos
+const useFullSizeElement = (arrayDepenencies = []) => {
   const [elementSize, setElementSize] = useState(undefined);
   const refElement = useRef();
   console.log(refElement);
@@ -26,10 +27,8 @@ const useFullSizeElement = () => {
         width,
       });
     }
-    // con el fullSize como dependencia da loop infinito,
-    // entonces desde el elemento padre la funcion que se pase a ese fullSize
-    // debe estar en un callback
-  }, [refElement]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refElement, ...arrayDepenencies]);
 
   return { refElement, elementSize };
 };
