@@ -102,6 +102,10 @@ export const redrawGlobalDrawingLogs = (
         canvasHeight: canvasElement.height,
       })
     : paintWholeCanvas(ctx, "white", canvasElement.width, canvasElement.height);
+
+  // para dibujar los ultimos paths y evitar lentitud (pendiente por si es necesario), aplica solo cuando pintas todo el canvas manteniendo presionado
+  // let globalDrawingLogs = refGlobalDrawingLogs.current;
+  // const indexToStartDrawing = redrawGlobalDrawingLogs.current.findLastIndex(el=> el.color.a < 1 && el.whatTask === "paintingWholeCanvas" )
   for (let i = 0; i < refGlobalDrawingLogs.current.length; i++) {
     const drawingLog = refGlobalDrawingLogs.current[i];
     if (drawingLog.whatTask === "painting") {
@@ -121,6 +125,7 @@ export const redrawGlobalDrawingLogs = (
       ctx.stroke();
     }
     if (drawingLog.whatTask === "paintingWholeCanvas") {
+      const { r, g, b, a } = drawingLog.canvasColor;
       ctx.globalCompositeOperation = drawingLog.transparentEraser;
       drawingLog.transparentEraser === "destination-out"
         ? deleteCanvasWithTransparency({
@@ -130,7 +135,7 @@ export const redrawGlobalDrawingLogs = (
           })
         : paintWholeCanvas(
             ctx,
-            drawingLog.canvasColor,
+            `rgba(${r}, ${g}, ${b}, ${a})`,
             canvasElement.width,
             canvasElement.height
           );

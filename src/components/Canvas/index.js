@@ -132,13 +132,13 @@ const Canvas = () => {
 
     pressHoldTimeoutId = setTimeout(() => {
       const canvasDataForPaintingLogs = {
-        canvasColor: `rgba(${r}, ${g}, ${b}, ${alpha})`,
+        canvasColor: { r, g, b, a: alpha },
         whatTask: "paintingWholeCanvas",
         transparentEraser: ctx.globalCompositeOperation,
       };
       paintWholeCanvas(
         ctx,
-        canvasDataForPaintingLogs.canvasColor,
+        `rgba(${r}, ${g}, ${b}, ${alpha})`,
         canvasSize.width,
         canvasSize.height
       );
