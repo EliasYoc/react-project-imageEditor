@@ -1,16 +1,17 @@
 import React, { useEffect, useRef } from "react";
 import { useContext } from "react";
 import { useSelector } from "react-redux";
+import PixelRange from "../PixelRange/PixelRange";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
   selectKindOfPencil,
+  selectPencilSizeForRange,
   selectPencilType,
 } from "../../features/paintingSlice";
 import {
   deleteCanvasWithTransparency,
   drawCanvasCoordsCallback,
   paintWholeCanvas,
-  redrawGlobalDrawingLogs,
 } from "../../utils/canvas";
 
 const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
@@ -28,6 +29,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
+  const pencilSizeForRange = useSelector(selectPencilSizeForRange);
 
   const $frontalCanvas = refFrontalCanvas.current;
   const frontalCanvasCtx = $frontalCanvas?.getContext("2d");
@@ -128,9 +130,8 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     if (!isDrawingToolsOpen) return;
     console.warn("starting painting");
     ctx.lineWidth = frontalCanvasCtx.lineWidth = size || 50;
-    ctx.strokeStyle = frontalCanvasCtx.strokeStyle = `rgba(${r || 0}, ${
-      g || 0
-    }, ${b || 0}, ${alpha || 0})`;
+    ctx.strokeStyle =
+      frontalCanvasCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
     frontalCanvasCtx.beginPath();
     ctx.beginPath();
 
@@ -188,7 +189,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     console.log("up");
     clearTimeout(pressHoldTimeoutId);
     if (!refWholeCanvasHasBeenPainted.current) {
-      //draw one dot (works on desktop)
       drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
         ctx.moveTo(coordX, coordY);
         ctx.lineTo(coordX, coordY);
@@ -204,8 +204,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       size: kindOfPencilStyle[pencilType].size,
       transparentEraser: frontalCanvasCtx.globalCompositeOperation,
     });
-
-    console.log(refGlobalDrawingLogs.current);
     if (alpha < 1) {
       deleteCanvasWithTransparency({
         canvasCtx: frontalCanvasCtx,
@@ -214,6 +212,9 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       });
       redrawLastPath(ctx);
     }
+    console.log(refPaintingLogs.current);
+    console.log(refGlobalDrawingLogs.current);
+
     setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
     pointCounter = 0;
     isPainting = false;
@@ -222,8 +223,8 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     refAllowOneDot.current = false;
   };
 
+  //good for redrawing semi transparent path
   const redrawLastPath = (targetCtx) => {
-    console.log("redraw Last path", refPaintingLogs.current);
     if (!refPaintingLogs.current.length) return;
     const { coordX: x, coordY: y } = refPaintingLogs.current[0];
     targetCtx.beginPath();
@@ -234,28 +235,37 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     }
     targetCtx.stroke();
   };
+  console.log("frontal canvas");
   return (
-    <canvas
-      onMouseDown={listenerStartPaiting}
-      onTouchStart={listenerStartPaiting}
-      onMouseMove={listenerPainting}
-      onTouchMove={listenerPainting}
-      onMouseUp={listenerStopPainting}
-      onTouchEnd={listenerStopPainting}
-      width={canvasSize.width}
-      height={canvasSize.height}
-      ref={refFrontalCanvas}
-      style={{
-        width: "100%",
-        marginTop: `${headerHeight}px`,
-        height: `calc(100% - ${headerHeight + footerHeight}px)`,
-        position: "absolute",
-        objectFit: "contain",
-      }}
-    >
-      {/* <div style={{ height: headerSize.height }}></div> */}
-      Este navegador no es compatible
-    </canvas>
+    <>
+      <canvas
+        onMouseDown={listenerStartPaiting}
+        onTouchStart={listenerStartPaiting}
+        onMouseMove={listenerPainting}
+        onTouchMove={listenerPainting}
+        onMouseUp={listenerStopPainting}
+        onTouchEnd={listenerStopPainting}
+        width={canvasSize.width}
+        height={canvasSize.height}
+        ref={refFrontalCanvas}
+        style={{
+          width: "100%",
+          marginTop: `${headerHeight}px`,
+          height: `calc(100% - ${headerHeight + footerHeight}px)`,
+          position: "absolute",
+          objectFit: "contain",
+        }}
+      >
+        Este navegador no es compatible
+      </canvas>
+      {isDrawingToolsOpen && (
+        <PixelRange
+          pixelSize={pencilSizeForRange}
+          minValue={15}
+          maxValue={200}
+        />
+      )}
+    </>
   );
 };
 

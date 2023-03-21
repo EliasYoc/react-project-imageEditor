@@ -103,7 +103,7 @@ export const redrawGlobalDrawingLogs = (
       })
     : paintWholeCanvas(ctx, "white", canvasElement.width, canvasElement.height);
 
-  // para dibujar los ultimos paths y evitar lentitud (pendiente por si es necesario), aplica solo cuando pintas todo el canvas manteniendo presionado
+  // para dibujar los ultimos paths y evitar lentitud (pendiente por si es necesario), aplica solo cuando pinto todo el canvas manteniendo presionado,
   // let globalDrawingLogs = refGlobalDrawingLogs.current;
   // const indexToStartDrawing = redrawGlobalDrawingLogs.current.findLastIndex(el=> el.color.a < 1 && el.whatTask === "paintingWholeCanvas" )
   for (let i = 0; i < refGlobalDrawingLogs.current.length; i++) {

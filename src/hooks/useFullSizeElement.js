@@ -4,10 +4,8 @@ import { useEffect, useRef, useState } from "react";
 const useFullSizeElement = (arrayDepenencies = []) => {
   const [elementSize, setElementSize] = useState(undefined);
   const refElement = useRef();
-  console.log(refElement);
   useEffect(() => {
     if (refElement?.current) {
-      console.log("current");
       const {
         margin,
         marginTop,
