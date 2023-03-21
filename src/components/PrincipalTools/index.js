@@ -50,7 +50,8 @@ const PrincipalTools = () => {
         setPrincipalImageLoaded($img);
       };
     } catch (error) {
-      alert(JSON.stringify(error));
+      console.log(JSON.stringify(error));
+      setIsLoadingImage(false);
     }
   };
   const reduceAspectRatioQualityOfIncomingImage = ({
