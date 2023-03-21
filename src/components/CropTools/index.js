@@ -1,24 +1,15 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useRef } from "react";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
-import useFullSizeElement from "../../hooks/useFullSizeElement";
 import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 
 const CropTools = () => {
-  const { handleSumHeightForCanvas, setFullHeightSumForCanvas } =
-    useContext(ContextToolBoxes);
+  const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const { openOptionPage } = useContext(ContextConfiguration);
   const refOptionBox = useRef();
-  const { elementSize, refElement } = useFullSizeElement();
-  useEffect(() => {
-    console.log(elementSize);
-    if (elementSize) {
-      const { height, marginTop, marginBottom } = elementSize;
-      handleSumHeightForCanvas(height, marginTop, marginBottom);
-    }
-  }, [elementSize, handleSumHeightForCanvas]);
+
   return (
-    <div ref={refElement}>
+    <>
       <LayoutToolBox position="relative">
         <GlobalButton width="auto" height="auto">
           more options
@@ -51,7 +42,7 @@ const CropTools = () => {
           Guardar
         </GlobalButton>
       </LayoutToolBox>
-    </div>
+    </>
   );
 };
 
