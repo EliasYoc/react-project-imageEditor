@@ -39,6 +39,7 @@ const ConfigurationProvider = ({ children }) => {
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
+  const refFrontalCanvas = useRef();
   // what tasks "painting" "adding image" "transparent eraser"
   const refGlobalDrawingLogs = useRef([]);
 
@@ -77,6 +78,7 @@ const ConfigurationProvider = ({ children }) => {
     refGlobalDrawingLogs,
     drawingHistoryLength,
     setDrawingHistoryLength,
+    refFrontalCanvas,
   };
 
   return (

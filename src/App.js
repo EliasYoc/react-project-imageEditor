@@ -13,6 +13,7 @@ import CropTools from "./components/CropTools";
 import LoaderSpinner from "./components/LoaderSpinner";
 import useFullSizeElement from "./hooks/useFullSizeElement";
 import { ContextToolBoxes } from "./context/ToolBoxesProvider";
+import InvisibleFrontalCanvas from "./components/InvisibleFrontalCanvas";
 
 function App() {
   const {
@@ -63,6 +64,12 @@ function App() {
           {isDrawingToolsOpen && <DrawingTools />}
           {isCropToolsOpen && <CropTools />}
         </div>
+        {isDrawingToolsOpen && (
+          <InvisibleFrontalCanvas
+            headerSize={headerSize}
+            footerSize={footerSize}
+          />
+        )}
       </FittedPaintWrap>
       {isLoadingImage && (
         <FixedContainer>
