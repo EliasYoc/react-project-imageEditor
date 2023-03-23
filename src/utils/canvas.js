@@ -115,6 +115,7 @@ export const redrawGlobalDrawingLogs = (
       const { r, g, b, a } = drawingLog.color;
       const { coordX, coordY } = drawingLog.data[0];
       ctx.globalCompositeOperation = drawingLog.transparentEraser;
+      ctx.filter = drawingLog.filter;
       ctx.lineWidth = drawingLog.size;
       ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
       ctx.beginPath();
