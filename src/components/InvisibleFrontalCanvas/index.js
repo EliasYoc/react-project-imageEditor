@@ -98,9 +98,14 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         ctx.lineJoin = frontalCanvasCtx.lineJoin = "round";
         ctx.globalCompositeOperation =
           frontalCanvasCtx.globalCompositeOperation = "source-over";
+        ctx.filter = frontalCanvasCtx.filter = "none";
+
         if (pencilType === "normal") {
         }
         if (pencilType === "chalk") {
+        }
+        if (pencilType === "spray") {
+          ctx.filter = frontalCanvasCtx.filter = "blur(15px)";
         }
         if (pencilType === "eraser") {
           if (principalImageLoaded)
@@ -168,7 +173,8 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       }
       drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
         refPaintingLogs.current.push({ coordX, coordY });
-        if (alpha < 1) {
+        if (alpha < 1 || pencilType === "spray") {
+          console.log("not opacity");
           deleteCanvasWithTransparency({
             canvasCtx: frontalCanvasCtx,
             canvasHeight: canvasSize.height,
@@ -203,8 +209,9 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       color: kindOfPencilStyle[pencilType].color,
       size: kindOfPencilStyle[pencilType].size,
       transparentEraser: frontalCanvasCtx.globalCompositeOperation,
+      filter: frontalCanvasCtx.filter,
     });
-    if (alpha < 1) {
+    if (alpha < 1 || pencilType === "spray") {
       deleteCanvasWithTransparency({
         canvasCtx: frontalCanvasCtx,
         canvasWidth: canvasSize.width,

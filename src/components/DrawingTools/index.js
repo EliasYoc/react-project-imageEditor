@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
 import ButtonTool from "../ButtonTool";
-import { BiPaint } from "react-icons/bi";
+import { BiPaint, BiSprayCan } from "react-icons/bi";
 import { BsEraser } from "react-icons/bs";
 import ToolBox from "../ToolBox";
 import { themeColor } from "../../context/ConfigurationProvider";
@@ -53,6 +53,7 @@ const DrawingTools = () => {
           name="drawingTools"
           selectedButton
         />
+        <ButtonTool icon={BiSprayCan} htmlFor="spray" name="drawingTools" />
         <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" />
         <ButtonTool icon={BsEraser} htmlFor="eraser" name="drawingTools" />
         {/* The size of individual squares should be specified in the background-position property that should be twice smaller than background-size. */}
