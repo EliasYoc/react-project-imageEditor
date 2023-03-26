@@ -145,13 +145,13 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     ctx.lineWidth = frontalCanvasCtx.lineWidth = size || 50;
     ctx.strokeStyle =
       frontalCanvasCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    frontalCanvasCtx.beginPath();
-    ctx.beginPath();
+
     drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
       if (pencilType === "normal") {
-        ctx.moveTo(coordX, coordY);
-        ctx.lineTo(coordX, coordY);
-        ctx.stroke();
+        frontalCanvasCtx.beginPath();
+        frontalCanvasCtx.moveTo(coordX, coordY);
+        frontalCanvasCtx.lineTo(coordX, coordY);
+        frontalCanvasCtx.stroke();
         refPaintingLogs.current.push({ coordX, coordY });
       }
     });
