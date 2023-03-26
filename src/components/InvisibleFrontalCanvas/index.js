@@ -331,7 +331,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         height={canvasSize.height}
         ref={refFrontalCanvas}
         style={{
-          background: "rgba(0,0,0,.3)",
+          // background: "rgba(0,0,0,.3)",
           width: "100%",
           marginTop: `${headerHeight}px`,
           height: `calc(100% - ${headerHeight + footerHeight}px)`,
