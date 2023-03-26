@@ -44,9 +44,11 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const refGradientCircleRadius = useRef(0);
   const refPercentageOffForSecondCircle = useRef(89 / 100);
   const refSecondCircleRadius = useRef();
+  let { current: allowOneDotAfterPaintingWholeCanvas } = useRef(false);
   // let { current: sprayLastPoints } = useRef({});
-
+  const isNormalSemiTransparentPencil = alpha < 1 && pencilType === "normal";
   let isPainting = false;
+
   useEffect(
     function init() {
       if (!frontalCanvasCtx) return;
@@ -141,20 +143,11 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   );
   const listenerStartPaiting = (e) => {
     if (!isDrawingToolsOpen) return;
-    console.warn("starting painting");
     ctx.lineWidth = frontalCanvasCtx.lineWidth = size || 50;
     ctx.strokeStyle =
       frontalCanvasCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-
-    drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
-      if (pencilType === "normal") {
-        frontalCanvasCtx.beginPath();
-        frontalCanvasCtx.moveTo(coordX, coordY);
-        frontalCanvasCtx.lineTo(coordX, coordY);
-        frontalCanvasCtx.stroke();
-        refPaintingLogs.current.push({ coordX, coordY });
-      }
-    });
+    frontalCanvasCtx.beginPath();
+    ctx.beginPath();
 
     pressHoldTimeoutId = setTimeout(() => {
       const canvasDataForPaintingLogs = {
@@ -162,6 +155,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         whatTask: "paintingWholeCanvas",
         transparentEraser: frontalCanvasCtx.globalCompositeOperation,
       };
+      console.log("setimeout start");
       paintWholeCanvas(
         ctx,
         `rgba(${r}, ${g}, ${b}, ${alpha})`,
@@ -171,18 +165,18 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       refGlobalDrawingLogs.current.push(canvasDataForPaintingLogs);
       refWholeCanvasHasBeenPainted.current = true;
       refPaintingLogs.current = [];
-    }, 700);
+      allowOneDotAfterPaintingWholeCanvas = false;
+    }, 500);
 
     isPainting = true;
+    allowOneDotAfterPaintingWholeCanvas = true;
   };
-
-  const isNormalSemiTransparentPencil = alpha < 1 && pencilType === "normal";
 
   const listenerPainting = (e) => {
     if (!isDrawingToolsOpen) return;
     if (isPainting) {
       pointCounter = pointCounter + 1;
-      if (pressHoldTimeoutId && pointCounter > 10) {
+      if (pressHoldTimeoutId && pointCounter > 8) {
         // smarthphone avoiding executing paintWholeCanvas while keeping pressed after 10 points
         clearTimeout(pressHoldTimeoutId);
         pressHoldTimeoutId = null;
@@ -195,14 +189,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           return;
         }
         if (pencilType === "spray") {
-          // TODO
-          // if (!sprayLastPoints.coordX)
-          //   sprayLastPoints = refPaintingLogs.current[0];
-          // const sprayCurrentPoints = { coordX, coordY };
-          // const distance = distanceBetween(sprayLastPoints, sprayCurrentPoints);
-          // console.log("Spray", sprayLastPoints);
-          // console.log("Spray current:", sprayCurrentPoints);
-          // console.log(distance);
           redrawSprayPoints(
             ctx,
             coordX,
@@ -215,26 +201,33 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
             b,
             alpha
           );
-          // sprayLastPoints = { coordX, coordY };
           return;
         }
         if (isNormalSemiTransparentPencil) {
           console.log("not opacity");
-          deleteCanvasWithTransparency({
-            canvasCtx: frontalCanvasCtx,
-            canvasHeight: canvasSize.height,
-            canvasWidth: canvasSize.width,
-          });
-          redrawLastPath(frontalCanvasCtx);
+
+          if (!allowOneDotAfterPaintingWholeCanvas) {
+            deleteCanvasWithTransparency({
+              canvasCtx: frontalCanvasCtx,
+              canvasHeight: canvasSize.height,
+              canvasWidth: canvasSize.width,
+            });
+            redrawLastPath(frontalCanvasCtx);
+          }
           console.log("redrwing");
-        } else {
+          return;
+        }
+        if (pencilType === "normal") {
           console.log("drawing");
 
           frontalCanvasCtx.lineTo(coordX, coordY);
           frontalCanvasCtx.stroke();
+          return;
         }
       });
     }
+    if (allowOneDotAfterPaintingWholeCanvas)
+      allowOneDotAfterPaintingWholeCanvas = false;
   };
 
   const listenerStopPainting = (e) => {
@@ -257,34 +250,47 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
             alpha
           );
           refPaintingLogs.current.push({ coordX, coordY });
-        } else {
+        }
+        if (pencilType === "normal") {
+          // alert(refWholeCanvasHasBeenPainted.current);
+
+          ctx.lineTo(coordX, coordY);
+          ctx.stroke();
+          refPaintingLogs.current.push({ coordX, coordY });
+        }
+        if (pencilType === "eraser") {
+          ctx.lineTo(coordX, coordY);
+          ctx.stroke();
+          refPaintingLogs.current.push({ coordX, coordY });
         }
       });
     }
 
-    if (pencilType === "spray") {
-      refGlobalDrawingLogs.current.push({
-        whatTask: "sprayPainting",
-        data: refPaintingLogs.current,
-        color: kindOfPencilStyle[pencilType].color,
-        size: kindOfPencilStyle[pencilType].size,
-        startCircleRadius: refGradientCircleRadius.current,
-        endCircleRadius: refSecondCircleRadius.current,
-      });
-    } else {
-      refGlobalDrawingLogs.current.push({
-        whatTask: "painting",
-        data: refPaintingLogs.current,
-        color: kindOfPencilStyle[pencilType].color,
-        size: kindOfPencilStyle[pencilType].size,
-        transparentEraser: frontalCanvasCtx.globalCompositeOperation,
-      });
-      deleteCanvasWithTransparency({
-        canvasCtx: frontalCanvasCtx,
-        canvasWidth: canvasSize.width,
-        canvasHeight: canvasSize.height,
-      });
-      redrawLastPath(ctx);
+    if (refPaintingLogs.current.length) {
+      if (pencilType === "spray") {
+        refGlobalDrawingLogs.current.push({
+          whatTask: "sprayPainting",
+          data: refPaintingLogs.current,
+          color: kindOfPencilStyle[pencilType].color,
+          size: kindOfPencilStyle[pencilType].size,
+          startCircleRadius: refGradientCircleRadius.current,
+          endCircleRadius: refSecondCircleRadius.current,
+        });
+      } else {
+        refGlobalDrawingLogs.current.push({
+          whatTask: "painting",
+          data: refPaintingLogs.current,
+          color: kindOfPencilStyle[pencilType].color,
+          size: kindOfPencilStyle[pencilType].size,
+          transparentEraser: frontalCanvasCtx.globalCompositeOperation,
+        });
+        deleteCanvasWithTransparency({
+          canvasCtx: frontalCanvasCtx,
+          canvasWidth: canvasSize.width,
+          canvasHeight: canvasSize.height,
+        });
+        redrawLastPath(ctx);
+      }
     }
 
     console.log(refPaintingLogs.current);
@@ -295,6 +301,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     isPainting = false;
     refPaintingLogs.current = [];
     refWholeCanvasHasBeenPainted.current = false;
+    allowOneDotAfterPaintingWholeCanvas = false;
   };
 
   //good for redrawing semi transparent path
@@ -303,6 +310,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     const { coordX: x, coordY: y } = refPaintingLogs.current[0];
     targetCtx.beginPath();
     targetCtx.moveTo(x, y);
+    targetCtx.lineTo(x, y);
     for (let i = 1; i < refPaintingLogs.current.length; i++) {
       const { coordX, coordY } = refPaintingLogs.current[i];
       targetCtx.lineTo(coordX, coordY);
