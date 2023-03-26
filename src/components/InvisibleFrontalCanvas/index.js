@@ -148,10 +148,12 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     frontalCanvasCtx.beginPath();
     ctx.beginPath();
     drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
-      ctx.moveTo(coordX, coordY);
-      ctx.lineTo(coordX, coordY);
-      ctx.stroke();
-      refPaintingLogs.current.push({ coordX, coordY });
+      if (pencilType === "normal") {
+        ctx.moveTo(coordX, coordY);
+        ctx.lineTo(coordX, coordY);
+        ctx.stroke();
+        refPaintingLogs.current.push({ coordX, coordY });
+      }
     });
 
     pressHoldTimeoutId = setTimeout(() => {
