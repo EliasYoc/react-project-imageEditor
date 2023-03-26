@@ -54,7 +54,7 @@ const DrawingTools = () => {
           selectedButton
         />
         <ButtonTool icon={BiSprayCan} htmlFor="spray" name="drawingTools" />
-        <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" />
+        {/* <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" /> */}
         <ButtonTool icon={BsEraser} htmlFor="eraser" name="drawingTools" />
         {/* The size of individual squares should be specified in the background-position property that should be twice smaller than background-size. */}
         <GlobalButton
