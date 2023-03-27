@@ -19,3 +19,17 @@ export const readFile = ({ file }) => {
     });
   });
 };
+
+export const distanceBetween = (
+  coordsPoint1 = { coordX: 0, coordY: 0 },
+  coordsPoint2 = { coordX: 0, coordY: 0 }
+) =>
+  Math.sqrt(
+    Math.pow(coordsPoint2.coordX - coordsPoint1.coordX, 2) +
+      Math.pow(coordsPoint2.coordY - coordsPoint1.coordY, 2)
+  );
+
+export const middlePointBetween = (p1, p2) => ({
+  coordX: p1.coordX + (p2.coordX - p1.coordX) / 2,
+  coordY: p1.coordY + (p2.coordY - p1.coordY) / 2,
+});
