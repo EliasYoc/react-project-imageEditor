@@ -1,29 +1,103 @@
 import { useContext } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
-import { BiImageAlt, BiDownload } from "react-icons/bi";
+import { BiDownload } from "react-icons/bi";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
 import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
-import { deleteCanvas } from "../../../utils/canvas";
-import { canvasSize } from "../../Canvas";
+import {
+  deleteCanvasWithTransparency,
+  paintWholeCanvas,
+  redrawGlobalDrawingLogs,
+} from "../../../utils/canvas";
 
 const HeaderChildren = () => {
-  const { openOptionPage, ctx } = useContext(ContextConfiguration);
+  const {
+    openOptionPage,
+    ctx,
+    canvasSize,
+    $canvas,
+    principalImageLoaded,
+    refGlobalDrawingLogs,
+    drawingHistoryLength,
+    setDrawingHistoryLength,
+  } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const downloadImageCanvas = () => {
-    const $canvas = document.getElementById("myCanvas");
+    const $canvasLayer = document.createElement("canvas");
+    if (principalImageLoaded) {
+      $canvasLayer.width = canvasSize.width;
+      $canvasLayer.height = canvasSize.height;
+      const layerCtx = $canvasLayer.getContext("2d");
+      // ctx.globalCompositeOperation = "source-over";
+      layerCtx.drawImage(
+        principalImageLoaded,
+        0,
+        0,
+        canvasSize.width,
+        canvasSize.height
+      );
+      for (const action of refGlobalDrawingLogs.current) {
+        // ctx.globalCompositeOperation = action.transparentEraser;
+        if (action.whatTask === "painting") {
+          // const { r, g, b, a } = action.color;
+          // ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
+          // ctx.lineWidth = action.size || 50;
+          // ctx.beginPath();
+          // for (const { coordX, coordY } of action.data) {
+          //   ctx.lineTo(coordX, coordY);
+          //   ctx.stroke();
+          // }
+        }
+        if (action.whatTask === "adding_image") {
+        }
+      }
+      layerCtx.drawImage($canvas, 0, 0, canvasSize.width, canvasSize.height);
+    }
     const anchor = document.createElement("a");
-    anchor.href = $canvas.toDataURL("image/png");
-    anchor.download = "IMAGE.PNG";
+    anchor.href = principalImageLoaded
+      ? $canvasLayer.toDataURL("image/png")
+      : $canvas.toDataURL("image/png");
+    anchor.download = "IMAGE";
     anchor.click();
     anchor.remove();
   };
+  const handleClickUndo = () => {
+    console.log(refGlobalDrawingLogs.current);
+    if (!refGlobalDrawingLogs.current.length) return;
+    refGlobalDrawingLogs.current.pop();
+    redrawGlobalDrawingLogs(
+      principalImageLoaded,
+      $canvas,
+      ctx,
+      refGlobalDrawingLogs
+    );
+    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
+  };
+
+  const handleDeleteCanvas = () => {
+    principalImageLoaded
+      ? deleteCanvasWithTransparency({
+          canvasCtx: ctx,
+          canvasWidth: $canvas.width,
+          canvasHeight: $canvas.height,
+        })
+      : paintWholeCanvas(ctx, "white", $canvas.width, $canvas.height);
+    refGlobalDrawingLogs.current = [];
+    setDrawingHistoryLength(0);
+  };
   return (
     <>
-      <GlobalButton>
-        <GrUndo />
-      </GlobalButton>
+      <div
+        style={{ display: "flex", alignItems: "center", userSelect: "none" }}
+      >
+        {drawingHistoryLength ? (
+          <GlobalButton onClick={handleClickUndo}>
+            <GrUndo />
+          </GlobalButton>
+        ) : null}
+        <span style={{ fontSize: "14px" }}>{drawingHistoryLength}</span>
+      </div>
       <LayoutToolBox
         backgroundColor="transparent"
         width="auto"
@@ -32,21 +106,22 @@ const HeaderChildren = () => {
         margin="0"
         position="relative"
       >
-        <GlobalButton
-          onClick={() => deleteCanvas({ currentCtx: ctx, canvasSize })}
-          width="100%"
-          height="auto"
-          borderRadius="1rem"
-        >
-          Borrar Todo
-        </GlobalButton>
+        {drawingHistoryLength ? (
+          <GlobalButton
+            onClick={handleDeleteCanvas}
+            width="100%"
+            height="auto"
+            borderRadius="1rem"
+            fontSize="14px"
+          >
+            Borrar Todo
+          </GlobalButton>
+        ) : null}
 
         <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
           <BiDownload />
         </GlobalButton>
-        <GlobalButton flexShrink="0">
-          <BiImageAlt />
-        </GlobalButton>
+
         <GlobalButton
           flexShrink="0"
           borderRadius="1rem"

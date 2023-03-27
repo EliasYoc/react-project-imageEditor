@@ -1,10 +1,21 @@
 import styled from "styled-components";
+import { showUp } from "../../utils/styledComponents";
 
 export const SwipeableMenu = styled.section`
   width: 100%;
   background: #282828;
   border-radius: 1rem;
   color: #fff;
+  animation: ${showUp} 0.3s ease;
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  translate: -50% 0;
+  &.close {
+    transition: transform 0.3s ease;
+    transform: translateY(100%);
+  }
+
   & .react-colorful {
     width: 100%;
     padding: 0 1rem 1rem;

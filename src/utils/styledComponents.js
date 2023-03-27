@@ -1,5 +1,21 @@
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { themeColor } from "../context/ConfigurationProvider";
+
+export const showUp = keyframes`
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+`;
+export const fadeIn = keyframes`
+  0%{
+    opacity:0;
+  }100{
+    opacity:1;
+  }
+`;
 
 export const LayoutToolBox = styled.div`
   display: ${({ display }) => display || "block"};
@@ -29,6 +45,7 @@ export const FittedPaintWrap = styled.div`
   height: 100%;
   display: flex;
   flex-direction: column;
+  position: relative;
 `;
 
 export const GlobalButton = styled.span`
@@ -66,27 +83,16 @@ export const GlobalButton = styled.span`
 
 export const FixedContainer = styled.div`
   position: fixed;
-  bottom: 0;
+  background: #00000091;
+  top: 0;
   width: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: end;
-  overflow: scroll;
   z-index: 10;
-  animation: showUp 0.3s ease;
-  @keyframes showUp {
-    0% {
-      transform: translateY(100%);
-    }
-    100% {
-      transform: translateY(0);
-    }
-  }
+  animation: ${fadeIn} 0.3s ease;
+
   &.close {
-    transition: transform 0.3s ease;
-    transform: translateY(100%);
+    transition: opacity 0.3s ease;
+    opacity: 0;
   }
 `;
 

@@ -1,9 +1,9 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
 import ButtonTool from "../ButtonTool";
-import { BiPaint } from "react-icons/bi";
+import { BiPaint, BiSprayCan } from "react-icons/bi";
+import { BsEraser } from "react-icons/bs";
 import ToolBox from "../ToolBox";
-import useFullSizeElement from "../../hooks/useFullSizeElement";
 import { themeColor } from "../../context/ConfigurationProvider";
 import PortalsSwipeableMenuLayout from "../Layout/PortalsSwipeableMenuLayout";
 import ColorPickerMenu from "../ColorPickerMenu/ColorPickerMenu";
@@ -18,26 +18,20 @@ import {
 } from "../../features/paintingSlice";
 
 const DrawingTools = () => {
-  const { activeButtonPosition, handleSumHeightForCanvas } =
-    useContext(ContextToolBoxes);
+  const { activeButtonPosition } = useContext(ContextToolBoxes);
   const [isOpenPortalsDrawingModal, setIsOpenPortalsDrawingModal] =
     useState(false);
   const kindOfPencil = useSelector(selectKindOfPencil);
   const pencilType = useSelector(selectPencilType);
   const { r, g, b, a } = kindOfPencil[pencilType].color;
-  const { refElement: refDrawingToolBox, elementSize } = useFullSizeElement();
-  useEffect(() => {
-    if (elementSize) {
-      const { height, marginTop, marginBottom } = elementSize;
-      handleSumHeightForCanvas(height, marginTop, marginBottom);
-    }
-  }, [elementSize, handleSumHeightForCanvas]);
+
   console.log("drawing tools");
   const handleOpenCloseModal = () => {
+    if (pencilType === "eraser") return;
     setIsOpenPortalsDrawingModal(!isOpenPortalsDrawingModal);
   };
   return (
-    <div ref={refDrawingToolBox}>
+    <>
       <ToolBox
         display="flex"
         justifyContent="space-around"
@@ -59,10 +53,12 @@ const DrawingTools = () => {
           name="drawingTools"
           selectedButton
         />
-        <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" />
-        <ButtonTool icon={BiPaint} htmlFor="eraser" name="drawingTools" />
+        <ButtonTool icon={BiSprayCan} htmlFor="spray" name="drawingTools" />
+        {/* <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" /> */}
+        <ButtonTool icon={BsEraser} htmlFor="eraser" name="drawingTools" />
         {/* The size of individual squares should be specified in the background-position property that should be twice smaller than background-size. */}
         <GlobalButton
+          border={`3px solid ${themeColor.textColor}`}
           backgroundColor="#eee"
           backgroundImage="linear-gradient(45deg, rgba(0,0,0,.25) 25%,
                   transparent 0, transparent 75%, rgba(0,0,0,.25) 0),
@@ -74,6 +70,10 @@ const DrawingTools = () => {
           padding="0"
         >
           <PencilBackgroundColor
+            style={{
+              border: `4px solid black`,
+              borderRadius: "50px",
+            }}
             backgroundColor={`rgba(${r}, ${g},${b},${a} )`}
           />
         </GlobalButton>
@@ -85,7 +85,7 @@ const DrawingTools = () => {
       >
         <ColorPickerMenu />
       </PortalsSwipeableMenuLayout>
-    </div>
+    </>
   );
 };
 

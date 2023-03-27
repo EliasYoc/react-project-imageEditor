@@ -12,16 +12,20 @@ const initialState = {
   },
   kindOfPencilStyle: {
     normal: {
-      size: 30,
-      color: { r: 211, g: 13, b: 13, a: 0.1 },
+      size: 50,
+      color: { r: 0, g: 0, b: 0, a: 1 },
     },
     chalk: {
-      size: 40,
+      size: 50,
       color: { r: 255, g: 255, b: 94, a: 1 },
     },
     eraser: {
       size: 50,
-      color: { r: 0, g: 217, b: 105, a: 1 },
+      color: { r: 255, g: 255, b: 255, a: 1 },
+    },
+    spray: {
+      size: 100,
+      color: { r: 211, g: 13, b: 13, a: 0.45 },
     },
   },
 };

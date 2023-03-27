@@ -14,6 +14,10 @@ export const themeColor = {
   activeTextColor: "#c4c4c4",
   textColor: "#a6a6a6bf",
 };
+export const initialCanvasSize = {
+  width: 1440,
+  height: 2560,
+};
 export const ContextConfiguration = createContext();
 const ConfigurationProvider = ({ children }) => {
   const [
@@ -27,9 +31,19 @@ const ConfigurationProvider = ({ children }) => {
     setDisplayConfig,
   ] = useState(initialThisDisplayOpen);
   const [headerChildrenState, setHeaderChildrenState] = useState(<div></div>);
+  const [canvasSize, setCanvasSize] = useState(initialCanvasSize);
+  const [principalImageLoaded, setPrincipalImageLoaded] = useState(null);
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const [lowQualityDataImageLoaded, setLowQualityDataImageLoaded] =
+    useState(null);
+  const [drawingHistoryLength, setDrawingHistoryLength] = useState(0);
   console.log("config provider");
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
+  const refFrontalCanvas = useRef();
+  // what tasks "painting" "adding image" "transparent eraser"
+  const refGlobalDrawingLogs = useRef([]);
+
   const $canvas = refCanvas.current;
   const ctx = $canvas?.getContext("2d");
 
@@ -53,7 +67,19 @@ const ConfigurationProvider = ({ children }) => {
     refOpenDisplayProperty,
     refCanvas,
     $canvas,
+    canvasSize,
+    setCanvasSize,
+    principalImageLoaded,
+    setPrincipalImageLoaded,
     ctx,
+    isLoadingImage,
+    setIsLoadingImage,
+    lowQualityDataImageLoaded,
+    setLowQualityDataImageLoaded,
+    refGlobalDrawingLogs,
+    drawingHistoryLength,
+    setDrawingHistoryLength,
+    refFrontalCanvas,
   };
 
   return (
