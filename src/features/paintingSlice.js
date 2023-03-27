@@ -25,7 +25,7 @@ const initialState = {
     },
     spray: {
       size: 100,
-      color: { r: 211, g: 13, b: 13, a: 0.99 },
+      color: { r: 211, g: 13, b: 13, a: 0.45 },
     },
   },
 };
