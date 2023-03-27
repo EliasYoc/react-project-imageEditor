@@ -1,3 +1,5 @@
+import { middlePointBetween } from "./helper";
+
 export const getCalculatedCoordsOfContainCanvas = ({
   canvasElement,
   canvasWidthPixel,
@@ -113,17 +115,11 @@ export const redrawGlobalDrawingLogs = (
       if (!path.length) continue;
 
       const { r, g, b, a } = drawingLog.color;
-      const { coordX, coordY } = drawingLog.data[0];
       ctx.globalCompositeOperation = drawingLog.transparentEraser;
 
       ctx.lineWidth = drawingLog.size;
       ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
-      ctx.beginPath();
-      ctx.moveTo(coordX, coordY);
-      for (const coords of drawingLog.data) {
-        ctx.lineTo(coords.coordX, coords.coordY);
-      }
-      ctx.stroke();
+      redrawLastPath(ctx, drawingLog.data);
     }
     if (drawingLog.whatTask === "sprayPainting") {
       const { r, g, b, a } = drawingLog.color;
@@ -197,4 +193,30 @@ export const redrawSprayPoints = (
     size,
     size
   );
+};
+
+export const redrawLastPath = (targetCtx, paintingLogs) => {
+  if (!paintingLogs.length) return;
+  let p1 = paintingLogs[0];
+  let p2 = paintingLogs[1];
+  // console.log(refPaintingLogs.current);
+  // console.log(`p1: ${JSON.stringify(p1)},
+  // p2: ${JSON.stringify(p2)}
+  // `);
+  targetCtx.beginPath();
+  targetCtx.moveTo(p1.coordX, p1.coordY);
+  targetCtx.lineTo(p1.coordX, p1.coordY);
+  for (let i = 1; i < paintingLogs.length; i++) {
+    const middlePoint = middlePointBetween(p1, p2);
+    targetCtx.quadraticCurveTo(
+      p1.coordX,
+      p1.coordY,
+      middlePoint.coordX,
+      middlePoint.coordY
+    );
+    p1 = paintingLogs[i];
+    p2 = paintingLogs[i + 1];
+  }
+  targetCtx.lineTo(p1.coordX, p1.coordY);
+  targetCtx.stroke();
 };

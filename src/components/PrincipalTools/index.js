@@ -11,7 +11,6 @@ const PrincipalTools = () => {
     refOpenDisplayProperty,
     setCanvasSize,
     setPrincipalImageLoaded,
-    canvasSize,
     setIsLoadingImage,
     setLowQualityDataImageLoaded,
   } = useContext(ContextConfiguration);
@@ -25,13 +24,14 @@ const PrincipalTools = () => {
       const data = await readFile({ file: $input.files[0] });
 
       const $img = new Image();
+      const heavyPixels = 4000;
       $img.src = data.result;
       $img.onload = () => {
         let width;
         let height;
-        if ($img.width > canvasSize.width * 2) {
-          width = Math.round($img.width / 2);
-          height = Math.round($img.height / 2);
+        if ($img.width > heavyPixels || $img.height > heavyPixels) {
+          width = Math.round($img.width / 1.5);
+          height = Math.round($img.height / 1.5);
         } else {
           width = $img.width;
           height = $img.height;

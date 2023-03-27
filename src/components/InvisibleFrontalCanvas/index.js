@@ -12,6 +12,7 @@ import {
   deleteCanvasWithTransparency,
   drawCanvasCoordsCallback,
   paintWholeCanvas,
+  redrawLastPath,
   redrawSprayPoints,
 } from "../../utils/canvas";
 
@@ -46,7 +47,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const refSecondCircleRadius = useRef();
   let { current: allowOneDotAfterPaintingWholeCanvas } = useRef(false);
   // let { current: sprayLastPoints } = useRef({});
-  const isNormalSemiTransparentPencil = alpha < 1 && pencilType === "normal";
   let isPainting = false;
 
   useEffect(
@@ -203,26 +203,13 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           );
           return;
         }
-        if (isNormalSemiTransparentPencil) {
-          console.log("not opacity");
-
-          if (!allowOneDotAfterPaintingWholeCanvas) {
-            deleteCanvasWithTransparency({
-              canvasCtx: frontalCanvasCtx,
-              canvasHeight: canvasSize.height,
-              canvasWidth: canvasSize.width,
-            });
-            redrawLastPath(frontalCanvasCtx);
-          }
-          console.log("redrwing");
-          return;
-        }
-        if (pencilType === "normal") {
-          console.log("drawing");
-
-          frontalCanvasCtx.lineTo(coordX, coordY);
-          frontalCanvasCtx.stroke();
-          return;
+        if (!allowOneDotAfterPaintingWholeCanvas) {
+          deleteCanvasWithTransparency({
+            canvasCtx: frontalCanvasCtx,
+            canvasHeight: canvasSize.height,
+            canvasWidth: canvasSize.width,
+          });
+          redrawLastPath(frontalCanvasCtx, refPaintingLogs.current);
         }
       });
     }
@@ -251,7 +238,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           );
           refPaintingLogs.current.push({ coordX, coordY });
         }
-        if (pencilType === "normal") {
+        if (pencilType === "normal" && allowOneDotAfterPaintingWholeCanvas) {
           // alert(refWholeCanvasHasBeenPainted.current);
 
           ctx.lineTo(coordX, coordY);
@@ -289,7 +276,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           canvasWidth: canvasSize.width,
           canvasHeight: canvasSize.height,
         });
-        redrawLastPath(ctx);
+        redrawLastPath(ctx, refPaintingLogs.current);
       }
     }
 
@@ -304,19 +291,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     allowOneDotAfterPaintingWholeCanvas = false;
   };
 
-  //good for redrawing semi transparent path
-  const redrawLastPath = (targetCtx) => {
-    if (!refPaintingLogs.current.length) return;
-    const { coordX: x, coordY: y } = refPaintingLogs.current[0];
-    targetCtx.beginPath();
-    targetCtx.moveTo(x, y);
-    targetCtx.lineTo(x, y);
-    for (let i = 1; i < refPaintingLogs.current.length; i++) {
-      const { coordX, coordY } = refPaintingLogs.current[i];
-      targetCtx.lineTo(coordX, coordY);
-    }
-    targetCtx.stroke();
-  };
   console.log("frontal canvas");
   return (
     <>
