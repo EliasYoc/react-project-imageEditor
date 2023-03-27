@@ -13,6 +13,8 @@ const PrincipalTools = () => {
     setPrincipalImageLoaded,
     setIsLoadingImage,
     setLowQualityDataImageLoaded,
+    refGlobalDrawingLogs,
+    setDrawingHistoryLength,
   } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
@@ -48,6 +50,8 @@ const PrincipalTools = () => {
         setLowQualityDataImageLoaded($newHiddenCanvas.toDataURL("image/jpeg"));
         setIsLoadingImage(false);
         setPrincipalImageLoaded($img);
+        refGlobalDrawingLogs.current = [];
+        setDrawingHistoryLength(0);
       };
     } catch (error) {
       console.log(JSON.stringify(error));
