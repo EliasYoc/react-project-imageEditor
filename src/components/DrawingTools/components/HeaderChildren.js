@@ -92,8 +92,6 @@ const HeaderChildren = () => {
       dataURL = null;
     }, 500);
   };
-  // example to download, it works because has content-length
-  // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
 
   const readImageProgressFromDataURLBlob = async (dataURLBlob) => {
     const eventTarget = new EventTarget();
@@ -135,6 +133,9 @@ const HeaderChildren = () => {
     read();
     return eventTarget;
   };
+
+  // example to download, it works because has content-length
+  // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
 
   // parseInt(res.headers.get("Content-Length"), 10);
   // console.log(blob);
