@@ -24,7 +24,6 @@ const Canvas = () => {
         return;
       }
       paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
-      return () => {};
     },
     [ctx, canvasSize, lowQualityDataImageLoaded]
   );

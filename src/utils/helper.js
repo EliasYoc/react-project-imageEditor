@@ -33,3 +33,14 @@ export const middlePointBetween = (p1, p2) => ({
   coordX: p1.coordX + (p2.coordX - p1.coordX) / 2,
   coordY: p1.coordY + (p2.coordY - p1.coordY) / 2,
 });
+
+export const dataUrlToBlob = async (url) => {
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    console.log("blob: ", blob);
+    return blob;
+  } catch (error) {
+    console.error(error);
+  }
+};

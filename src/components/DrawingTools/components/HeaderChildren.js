@@ -1,69 +1,207 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
 import { BiDownload } from "react-icons/bi";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
-import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
+import {
+  GlobalButton,
+  LayoutToolBox,
+  ProgressBar,
+} from "../../../utils/styledComponents";
 import {
   deleteCanvasWithTransparency,
   paintWholeCanvas,
   redrawGlobalDrawingLogs,
 } from "../../../utils/canvas";
+import { dataUrlToBlob } from "../../../utils/helper";
+import { useEffect } from "react";
 
 const HeaderChildren = () => {
   const {
     openOptionPage,
     ctx,
-    canvasSize,
     $canvas,
     principalImageLoaded,
     refGlobalDrawingLogs,
     drawingHistoryLength,
     setDrawingHistoryLength,
+    setIsLoadingImage,
+    isLoadingImage,
+    imageFile,
   } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
-  const downloadImageCanvas = () => {
-    const $canvasLayer = document.createElement("canvas");
-    if (principalImageLoaded) {
-      $canvasLayer.width = canvasSize.width;
-      $canvasLayer.height = canvasSize.height;
-      const layerCtx = $canvasLayer.getContext("2d");
-      // ctx.globalCompositeOperation = "source-over";
-      layerCtx.drawImage(
-        principalImageLoaded,
-        0,
-        0,
-        canvasSize.width,
-        canvasSize.height
-      );
-      for (const action of refGlobalDrawingLogs.current) {
-        // ctx.globalCompositeOperation = action.transparentEraser;
-        if (action.whatTask === "painting") {
-          // const { r, g, b, a } = action.color;
-          // ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
-          // ctx.lineWidth = action.size || 50;
-          // ctx.beginPath();
-          // for (const { coordX, coordY } of action.data) {
-          //   ctx.lineTo(coordX, coordY);
-          //   ctx.stroke();
-          // }
+  const [dataURLBlob, setDataURLBlob] = useState(null);
+  const [percentDownloading, setPercentDownloading] = useState(0);
+
+  useEffect(() => {
+    async function progressDownload() {
+      const anchor = document.createElement("a");
+      const eventTarget = await readImageProgressFromDataURLBlob(dataURLBlob);
+
+      eventTarget.addEventListener("progress", function (event) {
+        const percent = Math.round(event.detail.percent);
+        if (event.detail.image) {
+          // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
+          const url = event.detail.image.src;
+          anchor.href = url;
+          anchor.download = imageFile?.name || "IMAGE";
+          anchor.click();
+          anchor.remove();
+          setDataURLBlob(null);
+          setTimeout(() => setPercentDownloading(0), 400);
         }
-        if (action.whatTask === "adding_image") {
-        }
-      }
-      layerCtx.drawImage($canvas, 0, 0, canvasSize.width, canvasSize.height);
+        setPercentDownloading(percent);
+      });
     }
-    const anchor = document.createElement("a");
-    anchor.href = principalImageLoaded
-      ? $canvasLayer.toDataURL("image/png")
-      : $canvas.toDataURL("image/png");
-    anchor.download = "IMAGE";
-    anchor.click();
-    anchor.remove();
+    if (dataURLBlob) progressDownload();
+  }, [dataURLBlob, imageFile?.name]);
+
+  const downloadImageCanvas = () => {
+    setIsLoadingImage(true);
+    setTimeout(async () => {
+      const $canvasLayer = document.createElement("canvas");
+      if (principalImageLoaded) {
+        $canvasLayer.width = principalImageLoaded.width;
+        $canvasLayer.height = principalImageLoaded.height;
+        const layerCtx = $canvasLayer.getContext("2d");
+
+        layerCtx.drawImage(
+          principalImageLoaded,
+          0,
+          0,
+          principalImageLoaded.width,
+          principalImageLoaded.height
+        );
+
+        layerCtx.drawImage(
+          $canvas,
+          0,
+          0,
+          principalImageLoaded.width,
+          principalImageLoaded.height
+        );
+      }
+      let dataURL = principalImageLoaded
+        ? $canvasLayer.toDataURL(imageFile.type)
+        : $canvas.toDataURL("image/png");
+      const dataBlob = await dataUrlToBlob(dataURL);
+
+      setIsLoadingImage(false);
+      setDataURLBlob(dataBlob);
+      dataURL = null;
+    }, 500);
   };
+  // example to download, it works because has content-length
+  // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
+
+  const readImageProgressFromDataURLBlob = async (dataURLBlob) => {
+    const eventTarget = new EventTarget();
+    const reader = dataURLBlob.stream().getReader();
+
+    let downloadedBytes = 0;
+    let totalBytes = dataURLBlob.size;
+    let chunks = [];
+
+    function read() {
+      reader.read().then(function (result) {
+        if (result.done) {
+          const url = URL.createObjectURL(dataURLBlob);
+          const $image = new Image();
+          $image.src = url;
+          $image.onload = function () {
+            eventTarget.dispatchEvent(
+              new CustomEvent("progress", {
+                detail: {
+                  percent: 100,
+                  blobChunks: new Blob(chunks, { type: dataURLBlob.type }),
+                  image: $image,
+                },
+              })
+            );
+            URL.revokeObjectURL(url);
+          };
+          return;
+        }
+        chunks.push(result.value);
+        downloadedBytes += result.value.length;
+        let percentage = totalBytes ? (downloadedBytes / totalBytes) * 100 : 0;
+        eventTarget.dispatchEvent(
+          new CustomEvent("progress", { detail: { percent: percentage } })
+        );
+        setTimeout(read, 150);
+      });
+    }
+    read();
+    return eventTarget;
+  };
+
+  // parseInt(res.headers.get("Content-Length"), 10);
+  // console.log(blob);
+  // fetch(URL.createObjectURL(blob))
+  //   .then(function (res) {
+  //     console.log(res.body); //readablaStream
+  //     console.log(Array.from(res.headers));
+  //     const reader = res.body.getReader();
+  //     return new ReadableStream({
+  //       start: function (controller) {
+  //         console.log("controller: ", controller);
+  //         function read() {
+  //           reader.read(1024).then(function (result) {
+  //             console.log("result: ", result);
+  //             if (result.done) {
+  //               controller.close();
+  //               eventTarget.dispatchEvent(
+  //                 new CustomEvent("progress", { detail: { percent: 100 } })
+  //               );
+  //               return;
+  //             }
+  //             downloadedBytes += result.value.length;
+  //             let percentage = totalBytes
+  //               ? (downloadedBytes / totalBytes) * 100
+  //               : 0;
+  //             console.log("progreso: ", percentage);
+  //             controller.enqueue(result.value);
+  //             eventTarget.dispatchEvent(
+  //               new CustomEvent("progress", {
+  //                 detail: { percent: percentage },
+  //               })
+  //             );
+  //             read();
+  //           });
+  //         }
+  //         read();
+  //       },
+  //     });
+  //   })
+  //   .then(function (stream) {
+  //     const chunks = [];
+  //     const reader = stream.getReader();
+  //     function process() {
+  //       reader.read().then(function (result) {
+  //         console.log("chunks: ", chunks);
+  //         if (result.done) {
+  //           let blob = new Blob(chunks);
+  //           let url = URL.createObjectURL(blob);
+  //           const $img = new Image();
+  //           $img.onload = function () {
+  //             eventTarget.dispatchEvent(
+  //               new CustomEvent("loaded", { detail: { img: $img } })
+  //             );
+  //             URL.revokeObjectURL(url);
+  //           };
+  //           $img.src = url;
+  //           return;
+  //         }
+  //         chunks.push(result.value);
+
+  //         process();
+  //       });
+  //     }
+  //     process();
+  //   });
+
   const handleClickUndo = () => {
-    console.log(refGlobalDrawingLogs.current);
     if (!refGlobalDrawingLogs.current.length) return;
     refGlobalDrawingLogs.current.pop();
     redrawGlobalDrawingLogs(
@@ -86,8 +224,10 @@ const HeaderChildren = () => {
     refGlobalDrawingLogs.current = [];
     setDrawingHistoryLength(0);
   };
+
   return (
     <>
+      <ProgressBar width={`${percentDownloading}%`} />
       <div
         style={{ display: "flex", alignItems: "center", userSelect: "none" }}
       >
@@ -118,9 +258,25 @@ const HeaderChildren = () => {
           </GlobalButton>
         ) : null}
 
-        <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
-          <BiDownload />
-        </GlobalButton>
+        {isLoadingImage ? (
+          <GlobalButton
+            width="auto"
+            height="auto"
+            borderRadius="1rem"
+            fontSize="14px"
+            flexShrink="0"
+          >
+            <span>Cargando...</span>
+          </GlobalButton>
+        ) : percentDownloading ? (
+          <GlobalButton fontSize="14px" flexShrink="0">
+            <span>{percentDownloading}%</span>
+          </GlobalButton>
+        ) : (
+          <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
+            <BiDownload />
+          </GlobalButton>
+        )}
 
         <GlobalButton
           flexShrink="0"
