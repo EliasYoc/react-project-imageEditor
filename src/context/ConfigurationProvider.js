@@ -37,7 +37,7 @@ const ConfigurationProvider = ({ children }) => {
   const [lowQualityDataImageLoaded, setLowQualityDataImageLoaded] =
     useState(null);
   const [drawingHistoryLength, setDrawingHistoryLength] = useState(0);
-  console.log("config provider");
+  const [imageFile, setImageFile] = useState(null);
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
   const refFrontalCanvas = useRef();
@@ -48,7 +48,6 @@ const ConfigurationProvider = ({ children }) => {
   const ctx = $canvas?.getContext("2d");
 
   const openOptionPage = useCallback((openOption) => {
-    console.log(openOption);
     setDisplayConfig({ ...initialThisDisplayOpen, ...openOption });
   }, []);
   const insertElementToHeader = (children = <div></div>) => {
@@ -80,6 +79,8 @@ const ConfigurationProvider = ({ children }) => {
     drawingHistoryLength,
     setDrawingHistoryLength,
     refFrontalCanvas,
+    imageFile,
+    setImageFile,
   };
 
   return (

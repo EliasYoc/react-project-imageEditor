@@ -153,7 +153,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       const canvasDataForPaintingLogs = {
         canvasColor: { r, g, b, a: alpha },
         whatTask: "paintingWholeCanvas",
-        transparentEraser: frontalCanvasCtx.globalCompositeOperation,
+        globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
       };
       console.log("setimeout start");
       paintWholeCanvas(
@@ -254,22 +254,23 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     }
 
     if (refPaintingLogs.current.length) {
+      const defaultGlobalLogProperties = {
+        data: refPaintingLogs.current,
+        color: kindOfPencilStyle[pencilType].color,
+        size: kindOfPencilStyle[pencilType].size,
+        globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
+      };
       if (pencilType === "spray") {
         refGlobalDrawingLogs.current.push({
+          ...defaultGlobalLogProperties,
           whatTask: "sprayPainting",
-          data: refPaintingLogs.current,
-          color: kindOfPencilStyle[pencilType].color,
-          size: kindOfPencilStyle[pencilType].size,
           startCircleRadius: refGradientCircleRadius.current,
           endCircleRadius: refSecondCircleRadius.current,
         });
       } else {
         refGlobalDrawingLogs.current.push({
+          ...defaultGlobalLogProperties,
           whatTask: "painting",
-          data: refPaintingLogs.current,
-          color: kindOfPencilStyle[pencilType].color,
-          size: kindOfPencilStyle[pencilType].size,
-          transparentEraser: frontalCanvasCtx.globalCompositeOperation,
         });
         deleteCanvasWithTransparency({
           canvasCtx: frontalCanvasCtx,
