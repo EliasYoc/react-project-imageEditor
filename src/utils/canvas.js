@@ -115,16 +115,18 @@ export const redrawGlobalDrawingLogs = (
       if (!path.length) continue;
 
       const { r, g, b, a } = drawingLog.color;
-      ctx.globalCompositeOperation = drawingLog.transparentEraser;
-
+      ctx.globalCompositeOperation = drawingLog.globalCompositeOperation;
       ctx.lineWidth = drawingLog.size;
       ctx.strokeStyle = `rgba(${r || 0}, ${g || 0}, ${b || 0}, ${a || 0})`;
+
       redrawLastPath(ctx, drawingLog.data);
     }
     if (drawingLog.whatTask === "sprayPainting") {
       const { r, g, b, a } = drawingLog.color;
       const startCircleRadius = drawingLog.startCircleRadius;
       const endCircleRadius = drawingLog.endCircleRadius;
+      ctx.globalCompositeOperation = drawingLog.globalCompositeOperation;
+
       for (const { coordX, coordY } of drawingLog.data) {
         redrawSprayPoints(
           ctx,
@@ -142,8 +144,8 @@ export const redrawGlobalDrawingLogs = (
     }
     if (drawingLog.whatTask === "paintingWholeCanvas") {
       const { r, g, b, a } = drawingLog.canvasColor;
-      ctx.globalCompositeOperation = drawingLog.transparentEraser;
-      drawingLog.transparentEraser === "destination-out"
+      ctx.globalCompositeOperation = drawingLog.globalCompositeOperation;
+      drawingLog.globalCompositeOperation === "destination-out"
         ? deleteCanvasWithTransparency({
             canvasCtx: ctx,
             canvasWidth: canvasElement.width,

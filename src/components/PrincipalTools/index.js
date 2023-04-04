@@ -15,38 +15,47 @@ const PrincipalTools = () => {
     setLowQualityDataImageLoaded,
     refGlobalDrawingLogs,
     setDrawingHistoryLength,
+    setImageFile,
   } = useContext(ContextConfiguration);
   const refToolBox = useRef();
   const handleAddClassListFade = () => {
     refToolBox.current.classList.add("closeDown");
   };
   const handleLoadImage = async ({ target: $input }) => {
+    if (!$input.files[0]) return;
     setIsLoadingImage(true);
+    setImageFile($input.files[0]);
+
     try {
       const data = await readFile({ file: $input.files[0] });
-
       const $img = new Image();
-      const heavyPixels = 4000;
+      const heavyPixels = 2800;
       $img.src = data.result;
+
       $img.onload = () => {
         let width;
         let height;
+
         if ($img.width > heavyPixels || $img.height > heavyPixels) {
-          width = Math.round($img.width / 1.5);
-          height = Math.round($img.height / 1.5);
+          const { newHeight, newWidth } =
+            reduceAspectRatioQualityOfIncomingImage({
+              imageElement: $img,
+              expectedMaxPixelsSize: 2048,
+            });
+
+          width = newWidth;
+          height = newHeight;
         } else {
           width = $img.width;
           height = $img.height;
         }
         setCanvasSize({ width, height });
-        const { newHeight, newWidth } = reduceAspectRatioQualityOfIncomingImage(
-          { imageElement: $img, expectedNewWidth: 1280 }
-        );
+
         const $newHiddenCanvas = document.createElement("canvas");
-        $newHiddenCanvas.width = newWidth;
-        $newHiddenCanvas.height = newHeight;
+        $newHiddenCanvas.width = width;
+        $newHiddenCanvas.height = height;
         const newCtx = $newHiddenCanvas.getContext("2d");
-        newCtx.drawImage($img, 0, 0, newWidth, newHeight);
+        newCtx.drawImage($img, 0, 0, width, height);
         setLowQualityDataImageLoaded($newHiddenCanvas.toDataURL("image/jpeg"));
         setIsLoadingImage(false);
         setPrincipalImageLoaded($img);
@@ -54,25 +63,27 @@ const PrincipalTools = () => {
         setDrawingHistoryLength(0);
       };
     } catch (error) {
-      console.log(JSON.stringify(error));
+      console.error(error);
       setIsLoadingImage(false);
     }
   };
+
   const reduceAspectRatioQualityOfIncomingImage = ({
     imageElement,
-    expectedNewWidth,
+    expectedMaxPixelsSize,
   }) => {
     let ratio;
     if (imageElement.height < imageElement.width) {
       ratio = imageElement.height / imageElement.width;
-      const newHeight = expectedNewWidth * ratio;
-      return { newWidth: expectedNewWidth, newHeight };
+      const newHeight = expectedMaxPixelsSize * ratio;
+      return { newWidth: expectedMaxPixelsSize, newHeight };
     } else {
       ratio = imageElement.width / imageElement.height;
-      const newWidth = expectedNewWidth * ratio;
-      return { newWidth, newHeight: expectedNewWidth };
+      const newWidth = expectedMaxPixelsSize * ratio;
+      return { newWidth, newHeight: expectedMaxPixelsSize };
     }
   };
+
   return (
     <>
       <LayoutToolBox
@@ -86,7 +97,6 @@ const PrincipalTools = () => {
         ref={refToolBox}
         onTransitionEnd={(e) => {
           if (e.propertyName === "transform") {
-            console.log("transition", refOpenDisplayProperty.current);
             openOptionPage({ [refOpenDisplayProperty.current]: true });
           }
         }}
