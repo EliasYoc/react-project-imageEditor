@@ -60,6 +60,7 @@ export const GlobalButton = styled.span`
     backgroundColor || "transparent"};
   border: ${({ border }) => border || "none"};
   display: ${({ display }) => display || "flex"};
+  gap: ${({ gap }) => gap || "0"};
   align-items: ${({ alignItems }) => alignItems || "center"};
   justify-content: ${({ justifyContent }) => justifyContent || "center"};
   border-radius: ${({ borderRadius }) => borderRadius || "100px"};
@@ -75,12 +76,19 @@ export const GlobalButton = styled.span`
   flex-grow: ${({ flexGrow }) => flexGrow || "0"};
   transition: left 0.4s cubic-bezier(0.42, -0.04, 0.56, 1.22);
   user-select: none;
+
+  &:hover {
+    background: rgba(166, 166, 166, 0.1);
+  }
+
   &:active {
     background: ${themeColor.activeBgColor};
     transition: background 0.4s ease;
   }
 `;
 
+// sin el pointer events y al abrir y cerrar rapidamente se colapsa el diseño y no volvera a abrir el modal
+// uso pointer evente porque el componente usa transisionEnd, asi se evitará el evento click
 export const FixedContainer = styled.div`
   position: fixed;
   background: #00000091;
@@ -89,10 +97,11 @@ export const FixedContainer = styled.div`
   height: 100%;
   z-index: 10;
   animation: ${fadeIn} 0.3s ease;
-
+  color: rgba(166, 166, 166, 0.75);
   &.close {
     transition: opacity 0.3s ease;
     opacity: 0;
+    pointer-events: none;
   }
 `;
 

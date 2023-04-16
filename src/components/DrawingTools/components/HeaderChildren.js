@@ -1,7 +1,8 @@
 import { useContext, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
-import { BiDownload } from "react-icons/bi";
+import { BiDotsVerticalRounded, BiDownload } from "react-icons/bi";
+import { MdOutlineGradient } from "react-icons/md";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
 import {
@@ -16,6 +17,9 @@ import {
 } from "../../../utils/canvas";
 import { dataUrlToBlob } from "../../../utils/helper";
 import { useEffect } from "react";
+import ListOptionsLayout from "../../ListOptionsLayout";
+import Option from "../../ListOptionsLayout/components/Option";
+import PortalNormalModal from "../../Layout/PortalNormalModal";
 
 const HeaderChildren = () => {
   const {
@@ -33,6 +37,7 @@ const HeaderChildren = () => {
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
   const [dataURLBlob, setDataURLBlob] = useState(null);
   const [percentDownloading, setPercentDownloading] = useState(0);
+  const [isOptionsOpen, setIsOptionsOpen] = useState(false);
 
   useEffect(() => {
     async function progressDownload() {
@@ -133,6 +138,8 @@ const HeaderChildren = () => {
     read();
     return eventTarget;
   };
+
+  const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
   // example to download, it works because has content-length
   // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
@@ -274,22 +281,36 @@ const HeaderChildren = () => {
             <span>{percentDownloading}%</span>
           </GlobalButton>
         ) : (
-          <GlobalButton onClick={downloadImageCanvas} flexShrink="0">
-            <BiDownload />
+          <GlobalButton
+            flexShrink="0"
+            onClick={() => {
+              setFullHeightSumForCanvas("0px");
+              openOptionPage({ isPrincipalToolsOpen: true });
+            }}
+          >
+            <FiX />
           </GlobalButton>
         )}
 
-        <GlobalButton
-          flexShrink="0"
-          borderRadius="1rem"
-          onClick={() => {
-            setFullHeightSumForCanvas("0px");
-            openOptionPage({ isPrincipalToolsOpen: true });
-          }}
-        >
-          <FiX />
+        <GlobalButton onClick={handleOpenOptions} flexShrink="0">
+          <BiDotsVerticalRounded />
         </GlobalButton>
       </LayoutToolBox>
+      <PortalNormalModal isOpen={isOptionsOpen} onClose={handleOpenOptions}>
+        <ListOptionsLayout
+          background="#2e2e2ee0"
+          position="absolute"
+          top="60px"
+          right=".5rem"
+        >
+          <Option
+            onClick={downloadImageCanvas}
+            icon={BiDownload}
+            text="Descargar"
+          />
+          <Option icon={MdOutlineGradient} text="Fondos" />
+        </ListOptionsLayout>
+      </PortalNormalModal>
     </>
   );
 };
