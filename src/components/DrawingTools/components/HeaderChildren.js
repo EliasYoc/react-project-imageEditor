@@ -20,6 +20,8 @@ import { useEffect } from "react";
 import ListOptionsLayout from "../../ListOptionsLayout";
 import Option from "../../ListOptionsLayout/components/Option";
 import PortalNormalModal from "../../Layout/PortalNormalModal";
+import PortalsSwipeableMenuLayout from "../../Layout/PortalsSwipeableMenuLayout";
+import GradientBox from "../../GradientBox";
 
 const HeaderChildren = () => {
   const {
@@ -38,6 +40,7 @@ const HeaderChildren = () => {
   const [dataURLBlob, setDataURLBlob] = useState(null);
   const [percentDownloading, setPercentDownloading] = useState(0);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
+  const [isOpenGradientBox, setIsOpenGradientBox] = useState(false);
 
   useEffect(() => {
     async function progressDownload() {
@@ -141,6 +144,7 @@ const HeaderChildren = () => {
 
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
+  const handleOpenGradientBox = (isOpen) => setIsOpenGradientBox(isOpen);
   // example to download, it works because has content-length
   // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
 
@@ -308,9 +312,20 @@ const HeaderChildren = () => {
             icon={BiDownload}
             text="Descargar"
           />
-          <Option icon={MdOutlineGradient} text="Fondos" />
+          <Option
+            onClick={() => handleOpenGradientBox(true)}
+            icon={MdOutlineGradient}
+            text="Fondos"
+          />
         </ListOptionsLayout>
       </PortalNormalModal>
+      <PortalsSwipeableMenuLayout
+        title="Escoge un color individual"
+        isOpen={isOpenGradientBox}
+        onClose={() => handleOpenGradientBox(false)}
+      >
+        <GradientBox />
+      </PortalsSwipeableMenuLayout>
     </>
   );
 };

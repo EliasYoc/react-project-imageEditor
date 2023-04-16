@@ -44,3 +44,19 @@ export const dataUrlToBlob = async (url) => {
     console.error(error);
   }
 };
+
+export const reduceAspectRatioQualityOfIncomingImage = ({
+  options,
+  expectedMaxPixelsSize,
+}) => {
+  let ratio;
+  if (options.height < options.width) {
+    ratio = options.height / options.width;
+    const newHeight = expectedMaxPixelsSize * ratio;
+    return { newWidth: expectedMaxPixelsSize, newHeight };
+  } else {
+    ratio = options.width / options.height;
+    const newWidth = expectedMaxPixelsSize * ratio;
+    return { newWidth, newHeight: expectedMaxPixelsSize };
+  }
+};
