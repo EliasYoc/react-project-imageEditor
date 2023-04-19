@@ -222,3 +222,47 @@ export const redrawLastPath = (targetCtx, paintingLogs) => {
   targetCtx.lineTo(p1.coordX, p1.coordY);
   targetCtx.stroke();
 };
+
+export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
+  var dist = Math.sqrt(w * w + h * h) / 2; // get the diagonal length
+  var diagAngle = Math.asin(h / 2 / dist); // get the diagonal angle
+
+  // Do the symmetry on the angle (move to first quad
+  var a1 = ((angle % (Math.PI * 2)) + Math.PI * 4) % (Math.PI * 2);
+  if (a1 > Math.PI) {
+    a1 -= Math.PI;
+  }
+  if (a1 > Math.PI / 2 && a1 <= Math.PI) {
+    a1 = Math.PI / 2 - (a1 - Math.PI / 2);
+  }
+  // get angles from center to edges for along and right of gradient
+  var ang1 = Math.PI / 2 - diagAngle - Math.abs(a1);
+  var ang2 = Math.abs(diagAngle - Math.abs(a1));
+
+  // get distance from center to horizontal and vertical edges
+  var dist1 = Math.cos(ang1) * h;
+  var dist2 = Math.cos(ang2) * w;
+
+  // get the max distance
+  var scale = Math.max(dist2, dist1) / 1.79;
+
+  // get the vector to the start and end of gradient
+  var dx = Math.cos(angle) * scale;
+  var dy = Math.sin(angle) * scale;
+
+  // create the gradient
+  const gradient = ctx.createLinearGradient(
+    w / 2 + dx, // start pos
+    h / 2 + dy,
+    w / 2 - dx, // end pos
+    h / 2 - dy
+  );
+  // add colours
+
+  colorList.forEach(
+    (color, i) =>
+      color && gradient.addColorStop(color.opacity, color.backgroundString)
+  );
+
+  return gradient;
+}

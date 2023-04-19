@@ -14,6 +14,7 @@ export const SwipeableMenu = styled.section`
   &.close {
     transition: transform 0.3s ease;
     transform: translateY(100%);
+    pointer-events: none;
   }
 
   & .react-colorful {

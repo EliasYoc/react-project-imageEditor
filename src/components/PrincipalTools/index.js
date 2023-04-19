@@ -3,7 +3,10 @@ import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
 import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import HeaderChildren from "../DrawingTools/components/HeaderChildren";
-import { readFile } from "../../utils/helper";
+import {
+  readFile,
+  reduceAspectRatioQualityOfIncomingImage,
+} from "../../utils/helper";
 const PrincipalTools = () => {
   const {
     openOptionPage,
@@ -39,7 +42,7 @@ const PrincipalTools = () => {
         if ($img.width > heavyPixels || $img.height > heavyPixels) {
           const { newHeight, newWidth } =
             reduceAspectRatioQualityOfIncomingImage({
-              imageElement: $img,
+              options: $img,
               expectedMaxPixelsSize: 2048,
             });
 
@@ -65,22 +68,6 @@ const PrincipalTools = () => {
     } catch (error) {
       console.error(error);
       setIsLoadingImage(false);
-    }
-  };
-
-  const reduceAspectRatioQualityOfIncomingImage = ({
-    imageElement,
-    expectedMaxPixelsSize,
-  }) => {
-    let ratio;
-    if (imageElement.height < imageElement.width) {
-      ratio = imageElement.height / imageElement.width;
-      const newHeight = expectedMaxPixelsSize * ratio;
-      return { newWidth: expectedMaxPixelsSize, newHeight };
-    } else {
-      ratio = imageElement.width / imageElement.height;
-      const newWidth = expectedMaxPixelsSize * ratio;
-      return { newWidth, newHeight: expectedMaxPixelsSize };
     }
   };
 
