@@ -122,3 +122,23 @@ export const ProgressBar = styled.div`
   left: 0;
   transition: width 0.2s ease;
 `;
+
+export const GlobalSpinner = styled.span`
+  width: ${({ width }) => width || "48px"};
+  height: ${({ height }) => height || "48px"};
+  border: ${({ border }) => border || "5px solid #fff"};
+
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+  @keyframes rotation {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;

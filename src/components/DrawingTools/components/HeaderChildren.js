@@ -91,7 +91,7 @@ const HeaderChildren = () => {
         );
       }
       let dataURL = principalImageLoaded
-        ? $canvasLayer.toDataURL(imageFile.type)
+        ? $canvasLayer.toDataURL((imageFile && imageFile.type) || "image/png")
         : $canvas.toDataURL("image/png");
       const dataBlob = await dataUrlToBlob(dataURL);
 
@@ -320,11 +320,11 @@ const HeaderChildren = () => {
         </ListOptionsLayout>
       </PortalNormalModal>
       <PortalsSwipeableMenuLayout
-        title="Escoge un color individual"
+        title="Crea un fondo difuminado"
         isOpen={isOpenGradientBox}
         onClose={() => handleOpenGradientBox(false)}
       >
-        <GradientBox />
+        <GradientBox handleOpenGradientBox={handleOpenGradientBox} />
       </PortalsSwipeableMenuLayout>
     </>
   );
