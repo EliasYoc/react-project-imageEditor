@@ -31,7 +31,7 @@ const PortalsSwipeableMenuLayout = ({
         onClick={handleStopPropagation}
       >
         <SwipeableMenuHeader>
-          <p>{title}</p>
+          <p style={{ userSelect: "none" }}>{title}</p>
           <GlobalButton onClick={hanldeCloseElement}>
             <FiX />
           </GlobalButton>
