@@ -225,7 +225,9 @@ export const redrawLastPath = (targetCtx, paintingLogs) => {
 
 export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
   var dist = Math.sqrt(w * w + h * h) / 2; // get the diagonal length
-  var diagAngle = Math.asin(h / 2 / dist); // get the diagonal angle
+
+  const shortestLength = h < w ? h : w;
+  var diagAngle = Math.asin(shortestLength / 2 / dist); // get the diagonal angle
 
   // Do the symmetry on the angle (move to first quad
   var a1 = ((angle % (Math.PI * 2)) + Math.PI * 4) % (Math.PI * 2);
@@ -244,7 +246,7 @@ export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
   var dist2 = Math.cos(ang2) * w;
 
   // get the max distance
-  var scale = Math.max(dist2, dist1) / 1.79;
+  var scale = Math.max(dist2, dist1) / 1.7;
 
   // get the vector to the start and end of gradient
   var dx = Math.cos(angle) * scale;
