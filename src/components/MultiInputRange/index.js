@@ -5,7 +5,7 @@ const MultiInputRange = ({
   onChange = () => {},
   onClickThumb = () => {},
   onClickLine = () => {},
-  onTouchStartThumb = () => {},
+  onMouseTouchStartThumb = () => {},
   inputPropListObj = {},
   lineCursor,
   thumbCursor,
@@ -16,9 +16,11 @@ const MultiInputRange = ({
   thumbBackground,
   min,
   max,
+  style,
 }) => {
   return (
     <WrapperMultiRangeInput
+      style={style}
       lineCursor={lineCursor}
       onClick={() => {
         onClickLine();
@@ -32,7 +34,8 @@ const MultiInputRange = ({
               e.stopPropagation();
               onClickThumb(inputProp.id);
             }}
-            onTouchStart={onTouchStartThumb}
+            onTouchStart={onMouseTouchStartThumb}
+            onMouseDown={onMouseTouchStartThumb}
             thumbCursor={thumbCursor}
             onChange={onChange}
             type="range"

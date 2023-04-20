@@ -5,6 +5,12 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* avoiding refres when swipe down on old browsers*/
+
+  touch-action: none;
+  -webkit-overflow-scrolling: none;
+  overflow: hidden;
+  /* avoiding refres when swipe down */
   overscroll-behavior: none;
 }
 
