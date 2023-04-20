@@ -8,6 +8,7 @@ export const GradientPreviewContainer = styled.div`
 
 export const WrapperGradientOptions = styled.div`
   display: flex;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 0;
 `;

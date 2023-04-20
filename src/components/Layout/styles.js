@@ -44,3 +44,9 @@ export const SwipeableMenuHeader = styled.header`
   align-items: center;
   padding: 0 1rem;
 `;
+
+export const AdivseText = styled.p`
+  padding: 0 1rem 0.5rem;
+  font-size: 12px;
+  color: lightgray;
+`;

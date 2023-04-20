@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { createPortal } from "react-dom";
 import { FiX } from "react-icons/fi";
 import { FixedContainer, GlobalButton } from "../../utils/styledComponents";
-import { SwipeableMenu, SwipeableMenuHeader } from "./styles";
+import { AdivseText, SwipeableMenu, SwipeableMenuHeader } from "./styles";
 
 const PortalsSwipeableMenuLayout = ({
   children,
@@ -36,6 +36,7 @@ const PortalsSwipeableMenuLayout = ({
             <FiX />
           </GlobalButton>
         </SwipeableMenuHeader>
+        {adviseText && <AdivseText>{adviseText}</AdivseText>}
         {children}
       </SwipeableMenu>
     </FixedContainer>,

@@ -321,6 +321,7 @@ const HeaderChildren = () => {
       </PortalNormalModal>
       <PortalsSwipeableMenuLayout
         title="Crea un fondo difuminado"
+        adviseText="Agrega hasta 8 thumbs para aplicar diferentes colores, presiona la línea de los multiples thumbs para agregar uno nuevo"
         isOpen={isOpenGradientBox}
         onClose={() => handleOpenGradientBox(false)}
       >
