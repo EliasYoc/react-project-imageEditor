@@ -13,6 +13,10 @@ const ToolBoxesProvider = ({ children }) => {
   // const handleChangeSelectToolButton = (e, name) => {
   //   setRadioToolBoxes({ ...toolBoxRadio, [name]: e.target.value });
   // };
+  const [parentDrawinToolboxSize, setParentDrawinToolboxSize] = useState({
+    width: null,
+    height: null,
+  });
   console.log("ToolBox provid");
   const handleSumHeightForCanvas = useCallback((...fullHeight) => {
     const fullHeightSum = fullHeight.reduce(
@@ -42,6 +46,8 @@ const ToolBoxesProvider = ({ children }) => {
     setFullHeightSumForCanvas,
     handleSumHeightForCanvas,
     handleSubstractHeightForCanvas,
+    parentDrawinToolboxSize,
+    setParentDrawinToolboxSize,
   };
   console.log("rendering context drawing");
   return (

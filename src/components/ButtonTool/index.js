@@ -50,7 +50,6 @@ const ButtonTool = ({
     if (pencilType === htmlFor) {
       const pencilSizeForRange =
         maxValue + minValue - kindOfPencilStyle[pencilType].size;
-      console.error("selected button");
       dispatch(setPencilSizeForRangeSlider(pencilSizeForRange));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
