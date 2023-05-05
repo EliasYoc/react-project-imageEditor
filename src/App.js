@@ -6,7 +6,11 @@ import {
   ContextConfiguration,
   themeColor,
 } from "./context/ConfigurationProvider";
-import { FittedPaintWrap, FixedContainer } from "./utils/styledComponents";
+import {
+  FittedPaintWrap,
+  FixedContainer,
+  GlobalButton,
+} from "./utils/styledComponents";
 import { useContext, useEffect } from "react";
 import Header from "./components/Header";
 import CropTools from "./components/CropTools";
@@ -14,6 +18,9 @@ import LoaderSpinner from "./components/LoaderSpinner";
 import useFullSizeElement from "./hooks/useFullSizeElement";
 import { ContextToolBoxes } from "./context/ToolBoxesProvider";
 import InvisibleFrontalCanvas from "./components/InvisibleFrontalCanvas";
+import ToolBox from "./components/ToolBox";
+import DrawingNavigation from "./components/DrawingNavigation";
+import EditingTools from "./components/DrawingTools/components/EditingTools";
 
 function App() {
   const {
@@ -23,8 +30,11 @@ function App() {
     openOptionPage,
     headerChildrenState,
     isLoadingImage,
+    isDrawing,
+    isEditingText,
   } = useContext(ContextConfiguration);
-  const { handleSumHeightForCanvas } = useContext(ContextToolBoxes);
+  const { handleSumHeightForCanvas, parentDrawinToolboxSize } =
+    useContext(ContextToolBoxes);
   const { refElement: refFooter, elementSize: footerSize } = useFullSizeElement(
     [isCropToolsOpen, isDrawingToolsOpen]
   );
@@ -61,7 +71,23 @@ function App() {
         <Canvas />
         {isPrincipalToolsOpen && <PrincipalTools />}
         <div ref={refFooter}>
-          {isDrawingToolsOpen && <DrawingTools />}
+          {isDrawingToolsOpen && (
+            <>
+              <ToolBox
+                width={parentDrawinToolboxSize.width}
+                height={parentDrawinToolboxSize.height}
+                display="flex"
+                borderRadius="50px"
+                position="relative"
+                margin="10px auto 0"
+                overflow="hidden"
+              >
+                {isDrawing && <DrawingTools />}
+                {isEditingText && <EditingTools />}
+              </ToolBox>
+              <DrawingNavigation />
+            </>
+          )}
           {isCropToolsOpen && <CropTools />}
         </div>
         {isDrawingToolsOpen && (

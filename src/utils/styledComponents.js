@@ -16,7 +16,7 @@ export const fadeIn = keyframes`
     opacity:1;
   }
 `;
-
+// clamp(300px, 90% ,500px)
 export const LayoutToolBox = styled.div`
   display: ${({ display }) => display || "block"};
   gap: ${({ gap }) => gap || "0px"};
@@ -25,7 +25,7 @@ export const LayoutToolBox = styled.div`
   background-color: ${({ backgroundColor }) =>
     backgroundColor || themeColor.boxesColor};
   border-radius: ${({ borderRadius }) => borderRadius || "1rem"};
-  width: ${({ width }) => width || "clamp(300px, 90% ,500px)"};
+  width: ${({ width }) => width || "fit-content"};
   height: ${({ height }) => height || "auto"};
   margin: ${({ margin }) => margin || "auto"};
   padding: ${({ padding }) => padding || "0"};
@@ -34,8 +34,10 @@ export const LayoutToolBox = styled.div`
   right: ${({ right }) => right || "0"};
   left: ${({ left }) => left || "0"};
   bottom: ${({ bottom }) => bottom || "auto"};
+  font-size: ${({ fontSize }) => fontSize || "12px"};
+  overflow: ${({ overflow }) => overflow || "visible"};
   flex-shrink: 0;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, height 0.3s ease, width 0.3s ease;
   &.closeDown {
     transform: translateY(calc(100% + 10px));
   }
@@ -78,12 +80,17 @@ export const GlobalButton = styled.span`
   user-select: none;
 
   &:hover {
-    background: rgba(166, 166, 166, 0.1);
+    background: none;
   }
 
   &:active {
     background: ${themeColor.activeBgColor};
     transition: background 0.4s ease;
+  }
+  @media only screen and (min-width: 600px) {
+    &:hover {
+      background: rgba(166, 166, 166, 0.1);
+    }
   }
 `;
 
@@ -95,7 +102,7 @@ export const FixedContainer = styled.div`
   top: 0;
   width: 100%;
   height: 100%;
-  z-index: 10;
+  z-index: ${({ zIndex }) => zIndex || "10"};
   animation: ${fadeIn} 0.3s ease;
   color: rgba(166, 166, 166, 0.75);
   &.close {

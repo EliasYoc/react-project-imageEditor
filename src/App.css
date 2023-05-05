@@ -23,3 +23,18 @@
     transform: translateY(0);
   }
 }
+.moveable-line {
+  background: transparent !important;
+  border-top: 4px dashed #4af;
+  border-left: 3px dashed #4af;
+}
+
+.moveable-control {
+  width: 16px !important;
+  height: 16px !important;
+  border: 1px dashed #fff !important;
+}
+
+.rCS7rstfg {
+  z-index: 50 !important;
+}

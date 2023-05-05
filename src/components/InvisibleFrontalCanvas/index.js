@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
 import { useSelector } from "react-redux";
 import PixelRange from "../PixelRange/PixelRange";
@@ -15,6 +15,9 @@ import {
   redrawLastPath,
   redrawSprayPoints,
 } from "../../utils/canvas";
+import ElementEditable from "../Text/ElementEditable";
+import PortalNormalModal from "../Layout/PortalNormalModal";
+import { debounce } from "../../utils/helper";
 
 const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const {
@@ -33,6 +36,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
 
+  const [checkInput, setCheckInput] = useState(false);
   const $frontalCanvas = refFrontalCanvas.current;
   const frontalCanvasCtx = $frontalCanvas?.getContext("2d");
   const { color, size } = kindOfPencilStyle[pencilType];
@@ -46,7 +50,8 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const refPercentageOffForSecondCircle = useRef(89 / 100);
   const refSecondCircleRadius = useRef();
   let { current: allowOneDotAfterPaintingWholeCanvas } = useRef(false);
-  // let { current: sprayLastPoints } = useRef({});
+  const refContainer = useRef();
+
   let isPainting = false;
 
   useEffect(
@@ -79,25 +84,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       //   positionX: 0,
       //   positionY: 0,
       // };
-      console.log("painting canvas");
-      //painting canvas
-      //creating the text's background
-      // ctx.fillStyle = "#fff";
-      // ctx.fillRect(
-      //   canvasStyleText.positionX,
-      //   canvasStyleText.positionY,
-      //   40,
-      //   canvasStyleText.canvasFontSize
-      // );
-
-      //designing text
-      // ctx.font = `${canvasStyleText.canvasFontSize}px Comic Sans Ms`;
-      // ctx.fillStyle = "#000";
-      // ctx.fillText(
-      //   "Elías Yoc",
-      //   canvasStyleText.positionX,
-      //   canvasStyleText.positionY + canvasStyleText.canvasFontSize
-      // );
       if (isDrawingToolsOpen || drawingHistoryLength === 0) {
         //config
         ctx.lineCap = frontalCanvasCtx.lineCap = "round";
@@ -155,7 +141,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         whatTask: "paintingWholeCanvas",
         globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
       };
-      console.log("setimeout start");
       paintWholeCanvas(
         ctx,
         `rgba(${r}, ${g}, ${b}, ${alpha})`,
@@ -219,7 +204,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
 
   const listenerStopPainting = (e) => {
     if (!isDrawingToolsOpen) return;
-    console.log("up");
     clearTimeout(pressHoldTimeoutId);
     if (!refWholeCanvasHasBeenPainted.current) {
       drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
@@ -293,8 +277,77 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   };
 
   console.log("frontal canvas");
+
+  const updateDraggingLog = debounce((e) => {
+    console.log("debouncelog", e);
+    const modifiedGlobalLogs = refGlobalDrawingLogs.current.map((moveable) => {
+      if (moveable.id === e.target.id) {
+        return {
+          ...moveable,
+          translate: e.translate || moveable.translate,
+          scale: e.scale || moveable.scale,
+          offsetLeft: e.target.offsetLeft,
+          offsetTop: e.target.offsetTop,
+          realWidth: e.moveable.state.pos4[0],
+          realHeight: e.moveable.state.pos4[1],
+          realTop: e.moveable.state.moveableClientRect.top,
+          realLeft: e.moveable.state.moveableClientRect.left,
+        };
+      } else {
+        return moveable;
+      }
+    });
+    refGlobalDrawingLogs.current = modifiedGlobalLogs;
+    console.log(refGlobalDrawingLogs);
+  }, 300);
+
   return (
-    <>
+    <div
+      className="scrollable"
+      ref={refContainer}
+      style={{
+        width: "100%",
+        height: `calc(100% - ${headerHeight + footerHeight}px)`,
+        background: "#ff00005c",
+        position: "absolute",
+        marginTop: `${headerHeight}px`,
+        overflow: "hidden",
+        left: 0,
+      }}
+    >
+      <PortalNormalModal
+        isOpen={checkInput}
+        onClose={() => setCheckInput(false)}
+      />
+      {refGlobalDrawingLogs.current
+        .filter(
+          (log) =>
+            log.whatTask === "draggableText" ||
+            log.whatTask === "draggableSticker"
+        )
+        .map((draggable) => {
+          if (draggable.whatTask === "draggableText")
+            return (
+              <ElementEditable
+                key={draggable.id}
+                parentNode={refContainer.current}
+                setCheckInput={setCheckInput}
+                // checkInput={checkInput}
+                id={draggable.id}
+                onRender={(e) => {
+                  // updateLog(e);
+                  console.log("render");
+                  e.target.style.cssText += e.cssText;
+                  refContainer.current.scrollTo(0, 0);
+                }}
+                onScale={updateDraggingLog}
+                onDrag={updateDraggingLog}
+                refGlobalDrawingLogs={refGlobalDrawingLogs}
+              />
+            );
+          return draggable;
+        })}
+
       <canvas
         onMouseDown={listenerStartPaiting}
         onTouchStart={listenerStartPaiting}
@@ -306,11 +359,11 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         height={canvasSize.height}
         ref={refFrontalCanvas}
         style={{
-          // background: "rgba(0,0,0,.3)",
-          width: "100%",
-          marginTop: `${headerHeight}px`,
-          height: `calc(100% - ${headerHeight + footerHeight}px)`,
           position: "absolute",
+          zIndex: "1",
+          background: "rgba(90,255,78,.3)",
+          width: "100%",
+          height: "100%",
           objectFit: "contain",
           imageRendering: "crisp-edges",
         }}
@@ -324,7 +377,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           maxValue={200}
         />
       )}
-    </>
+    </div>
   );
 };
 

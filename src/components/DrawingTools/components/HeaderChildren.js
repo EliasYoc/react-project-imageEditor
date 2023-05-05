@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
 import { BiDotsVerticalRounded, BiDownload } from "react-icons/bi";
@@ -12,8 +12,10 @@ import {
 } from "../../../utils/styledComponents";
 import {
   deleteCanvasWithTransparency,
+  getCalculatedCoordsOfContainCanvas,
   paintWholeCanvas,
   redrawGlobalDrawingLogs,
+  transformElementSizeIntoCanvasElementSize,
 } from "../../../utils/canvas";
 import { dataUrlToBlob } from "../../../utils/helper";
 import { useEffect } from "react";
@@ -22,6 +24,7 @@ import Option from "../../ListOptionsLayout/components/Option";
 import PortalNormalModal from "../../Layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../Layout/PortalsSwipeableMenuLayout";
 import GradientBox from "../../GradientBox";
+import html2canvas from "html2canvas";
 
 const HeaderChildren = () => {
   const {
@@ -41,23 +44,30 @@ const HeaderChildren = () => {
   const [percentDownloading, setPercentDownloading] = useState(0);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isOpenGradientBox, setIsOpenGradientBox] = useState(false);
+  const anchor = useRef();
 
   useEffect(() => {
     async function progressDownload() {
-      const anchor = document.createElement("a");
       const eventTarget = await readImageProgressFromDataURLBlob(dataURLBlob);
+      anchor.current = document.createElement("a");
 
       eventTarget.addEventListener("progress", function (event) {
         const percent = Math.round(event.detail.percent);
         if (event.detail.image) {
           // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
           const url = event.detail.image.src;
-          anchor.href = url;
-          anchor.download = imageFile?.name || "IMAGE";
-          anchor.click();
-          anchor.remove();
-          setDataURLBlob(null);
-          setTimeout(() => setPercentDownloading(0), 400);
+          console.log(url);
+          anchor.current.href = url;
+          anchor.current.download = imageFile?.name || "IMAGE";
+          anchor.current.onclick = () => console.log("click");
+          anchor.current.click();
+          console.dir(anchor);
+          console.log("downloaded");
+
+          setTimeout(() => {
+            setDataURLBlob(null);
+            setPercentDownloading(0);
+          }, 400);
         }
         setPercentDownloading(percent);
       });
@@ -65,14 +75,23 @@ const HeaderChildren = () => {
     if (dataURLBlob) progressDownload();
   }, [dataURLBlob, imageFile?.name]);
 
-  const downloadImageCanvas = () => {
+  const configureImageCanvasBeforeDownloading = async () => {
     setIsLoadingImage(true);
+    const $canvasLayerWithImage = document.createElement("canvas");
+    const $canvasLayerCopy = document.createElement("canvas");
+    $canvasLayerCopy.width = $canvas.width;
+    $canvasLayerCopy.height = $canvas.height;
+
+    const layerCtxCopy = $canvasLayerCopy.getContext("2d");
+
+    layerCtxCopy.drawImage($canvas, 0, 0, $canvas.width, $canvas.height);
+    await draggableItemIntoCanvas(layerCtxCopy);
+
     setTimeout(async () => {
-      const $canvasLayer = document.createElement("canvas");
       if (principalImageLoaded) {
-        $canvasLayer.width = principalImageLoaded.width;
-        $canvasLayer.height = principalImageLoaded.height;
-        const layerCtx = $canvasLayer.getContext("2d");
+        $canvasLayerWithImage.width = principalImageLoaded.width;
+        $canvasLayerWithImage.height = principalImageLoaded.height;
+        const layerCtx = $canvasLayerWithImage.getContext("2d");
 
         layerCtx.drawImage(
           principalImageLoaded,
@@ -83,16 +102,22 @@ const HeaderChildren = () => {
         );
 
         layerCtx.drawImage(
-          $canvas,
+          $canvasLayerCopy,
           0,
           0,
           principalImageLoaded.width,
           principalImageLoaded.height
         );
       }
+
+      console.log("converting to data");
       let dataURL = principalImageLoaded
-        ? $canvasLayer.toDataURL((imageFile && imageFile.type) || "image/png")
-        : $canvas.toDataURL("image/png");
+        ? $canvasLayerWithImage.toDataURL(
+            (imageFile && imageFile.type) || "image/png"
+          )
+        : $canvasLayerCopy.toDataURL("image/png");
+      console.log(dataURL);
+      // i need the blob in order to do the progress bar
       const dataBlob = await dataUrlToBlob(dataURL);
 
       setIsLoadingImage(false);
@@ -100,6 +125,73 @@ const HeaderChildren = () => {
       dataURL = null;
     }, 500);
   };
+
+  const draggableItemIntoCanvas = async (targetContext) => {
+    for (const log of refGlobalDrawingLogs.current) {
+      if (
+        log.whatTask === "draggableText" ||
+        log.whatTask === "draggableSticker"
+      ) {
+        const $draggableElement = document.getElementById(log.id);
+        const img = new Image();
+        try {
+          const canvas = await html2canvas($draggableElement, {
+            backgroundColor: null,
+          });
+          img.src = canvas.toDataURL("image/png");
+          let x = log.realLeft;
+          let y = log.realTop;
+          const { width, height } = getComputedStyle($canvas);
+          const floatCanvasWidth = parseFloat(width.slice(0, -2));
+          const floatCanvasHeight = parseFloat(height.slice(0, -2));
+
+          const { newElementWidth, newElementHeight } =
+            transformElementSizeIntoCanvasElementSize(
+              log.realWidth,
+              log.realHeight,
+              floatCanvasWidth,
+              floatCanvasHeight,
+              $canvas.width,
+              $canvas.height
+            );
+
+          const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
+            canvasElement: $canvas,
+            canvasWidthPixel: $canvas.width,
+            canvasHeightPixel: $canvas.height,
+            xCoord: x,
+            yCoord: y,
+          });
+
+          const msg = await imageOnLoad(img);
+          console.log(`${msg}: 
+                ${img}
+                x: ${coordX}
+                y: ${coordY}
+                w: ${newElementWidth}
+                h: ${newElementHeight}
+              `);
+          targetContext.drawImage(
+            img,
+            coordX,
+            coordY,
+            newElementWidth,
+            newElementHeight
+          );
+
+          // canvas.getContext("2d", { willReadFrequently: true });
+        } catch (error) {
+          alert(error);
+        }
+      }
+    }
+  };
+
+  const imageOnLoad = (image) =>
+    new Promise((resolve, reject) => {
+      image.onload = () => resolve("image loaded");
+      image.onerror = () => reject("error");
+    });
 
   const readImageProgressFromDataURLBlob = async (dataURLBlob) => {
     const eventTarget = new EventTarget();
@@ -300,7 +392,11 @@ const HeaderChildren = () => {
           <BiDotsVerticalRounded />
         </GlobalButton>
       </LayoutToolBox>
-      <PortalNormalModal isOpen={isOptionsOpen} onClose={handleOpenOptions}>
+      <PortalNormalModal
+        isOpen={isOptionsOpen}
+        onClose={handleOpenOptions}
+        zIndex="100"
+      >
         <ListOptionsLayout
           background="#2e2e2ee0"
           position="absolute"
@@ -308,7 +404,7 @@ const HeaderChildren = () => {
           right=".5rem"
         >
           <Option
-            onClick={downloadImageCanvas}
+            onClick={configureImageCanvasBeforeDownloading}
             icon={BiDownload}
             text="Descargar"
           />

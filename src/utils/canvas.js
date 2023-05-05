@@ -201,10 +201,7 @@ export const redrawLastPath = (targetCtx, paintingLogs) => {
   if (!paintingLogs.length) return;
   let p1 = paintingLogs[0];
   let p2 = paintingLogs[1];
-  // console.log(refPaintingLogs.current);
-  // console.log(`p1: ${JSON.stringify(p1)},
-  // p2: ${JSON.stringify(p2)}
-  // `);
+
   targetCtx.beginPath();
   targetCtx.moveTo(p1.coordX, p1.coordY);
   targetCtx.lineTo(p1.coordX, p1.coordY);
@@ -268,3 +265,23 @@ export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
 
   return gradient;
 }
+
+export const transformElementSizeIntoCanvasElementSize = (
+  elementWidth = 0,
+  elementHeight = 0,
+  canvasStyleWidth = 0,
+  canvasStyleHeigth = 0,
+  canvasWidth = 0,
+  canvasHeight = 0
+) => {
+  let newElementWidth;
+  let newElementHeight;
+  if (canvasWidth > canvasHeight) {
+    newElementWidth = (elementWidth * canvasWidth) / canvasStyleWidth;
+    newElementHeight = (elementHeight * canvasWidth) / canvasStyleWidth;
+  } else {
+    newElementWidth = (elementWidth * canvasHeight) / canvasStyleHeigth;
+    newElementHeight = (elementHeight * canvasHeight) / canvasStyleHeigth;
+  }
+  return { newElementWidth, newElementHeight };
+};

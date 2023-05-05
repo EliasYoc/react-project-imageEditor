@@ -6,6 +6,8 @@ export const initialThisDisplayOpen = {
   isCropToolsOpen: false,
   isTextToolsOpen: false,
   isColorPickerOpen: false,
+  isDrawing: false,
+  isEditingText: false,
 };
 export const themeColor = {
   bodyColor: "#000",
@@ -27,6 +29,8 @@ const ConfigurationProvider = ({ children }) => {
       isTextToolsOpen,
       isCropToolsOpen,
       isColorPickerOpen,
+      isDrawing,
+      isEditingText,
     },
     setDisplayConfig,
   ] = useState(initialThisDisplayOpen);
@@ -38,6 +42,7 @@ const ConfigurationProvider = ({ children }) => {
     useState(null);
   const [drawingHistoryLength, setDrawingHistoryLength] = useState(0);
   const [imageFile, setImageFile] = useState(null);
+
   const refOpenDisplayProperty = useRef();
   const refCanvas = useRef();
   const refFrontalCanvas = useRef();
@@ -59,6 +64,8 @@ const ConfigurationProvider = ({ children }) => {
     isTextToolsOpen,
     isCropToolsOpen,
     isColorPickerOpen,
+    isDrawing,
+    isEditingText,
     setDisplayConfig,
     openOptionPage,
     headerChildrenState,
