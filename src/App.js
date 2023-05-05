@@ -6,11 +6,7 @@ import {
   ContextConfiguration,
   themeColor,
 } from "./context/ConfigurationProvider";
-import {
-  FittedPaintWrap,
-  FixedContainer,
-  GlobalButton,
-} from "./utils/styledComponents";
+import { FittedPaintWrap, FixedContainer } from "./utils/styledComponents";
 import { useContext, useEffect } from "react";
 import Header from "./components/Header";
 import CropTools from "./components/CropTools";
