@@ -3,11 +3,7 @@ import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
 import ButtonTool from "../ButtonTool";
 import { BiPaint, BiSprayCan } from "react-icons/bi";
 import { BsEraser } from "react-icons/bs";
-import ToolBox from "../ToolBox";
-import {
-  ContextConfiguration,
-  themeColor,
-} from "../../context/ConfigurationProvider";
+import { themeColor } from "../../context/ConfigurationProvider";
 import PortalsSwipeableMenuLayout from "../Layout/PortalsSwipeableMenuLayout";
 import ColorPickerMenu from "../ColorPickerMenu/ColorPickerMenu";
 import {
@@ -23,7 +19,6 @@ import DetectableToolboxSizeLayout from "../DetectableToolboxSizeLayout";
 
 const DrawingTools = () => {
   const { activeButtonPosition } = useContext(ContextToolBoxes);
-  const { openOptionPage } = useContext(ContextConfiguration);
   const [isOpenPortalsDrawingModal, setIsOpenPortalsDrawingModal] =
     useState(false);
   const kindOfPencil = useSelector(selectKindOfPencil);
