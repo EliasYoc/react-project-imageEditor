@@ -94,7 +94,7 @@ function App() {
         )}
       </FittedPaintWrap>
       {isLoadingImage && (
-        <FixedContainer>
+        <FixedContainer zIndex="100">
           <LoaderSpinner />
         </FixedContainer>
       )}

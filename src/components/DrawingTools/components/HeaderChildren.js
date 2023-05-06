@@ -82,9 +82,17 @@ const HeaderChildren = () => {
     $canvasLayerCopy.width = $canvas.width;
     $canvasLayerCopy.height = $canvas.height;
 
-    const layerCtxCopy = $canvasLayerCopy.getContext("2d");
+    const layerCtxCopy = $canvasLayerCopy.getContext("2d", {
+      willReadFrequently: true,
+    });
 
-    layerCtxCopy.drawImage($canvas, 0, 0, $canvas.width, $canvas.height);
+    layerCtxCopy.drawImage(
+      $canvas,
+      0,
+      0,
+      principalImageLoaded ? principalImageLoaded.width : $canvas.width,
+      principalImageLoaded ? principalImageLoaded.height : $canvas.height
+    );
     await draggableItemIntoCanvas(layerCtxCopy);
 
     setTimeout(async () => {
@@ -135,16 +143,24 @@ const HeaderChildren = () => {
         const $draggableElement = document.getElementById(log.id);
         const img = new Image();
         try {
-          const canvas = await html2canvas($draggableElement, {
-            backgroundColor: null,
+          const elementCanvas = await html2canvas($draggableElement, {
+            backgroundColor: "pink",
           });
-          img.src = canvas.toDataURL("image/png");
+          const anchor = document.createElement("a");
+          anchor.href = elementCanvas.toDataURL("image/png");
+          anchor.download = "IMAGE";
+          anchor.onclick = () => console.log("click");
+          anchor.click();
+          img.src = elementCanvas.toDataURL("image/png");
           let x = log.realLeft;
           let y = log.realTop;
           const { width, height } = getComputedStyle($canvas);
           const floatCanvasWidth = parseFloat(width.slice(0, -2));
           const floatCanvasHeight = parseFloat(height.slice(0, -2));
-
+          console.log(`real:
+          w: ${log.realWidth}
+          h: ${log.realHeight}
+          `);
           const { newElementWidth, newElementHeight } =
             transformElementSizeIntoCanvasElementSize(
               log.realWidth,
@@ -178,8 +194,6 @@ const HeaderChildren = () => {
             newElementWidth,
             newElementHeight
           );
-
-          // canvas.getContext("2d", { willReadFrequently: true });
         } catch (error) {
           alert(error);
         }
