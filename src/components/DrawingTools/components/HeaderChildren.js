@@ -144,14 +144,9 @@ const HeaderChildren = () => {
         const img = new Image();
         try {
           const elementCanvas = await html2canvas($draggableElement, {
-            backgroundColor: "pink",
+            backgroundColor: null,
+            removeContainer: true,
           });
-          const anchor = document.createElement("a");
-          anchor.href = elementCanvas.toDataURL("image/png");
-          anchor.download = "IMAGE";
-          anchor.onclick = () => console.log("click");
-          anchor.click();
-          img.src = elementCanvas.toDataURL("image/png");
           let x = log.realLeft;
           let y = log.realTop;
           const { width, height } = getComputedStyle($canvas);
@@ -170,6 +165,32 @@ const HeaderChildren = () => {
               $canvas.width,
               $canvas.height
             );
+          console.dir($canvas);
+          // const elementCanvas = await htmlToImage.toCanvas($draggableElement, {
+          //   // cacheBust: true,
+          //   width: floatCanvasWidth,
+          //   height: floatCanvasHeight,
+          //   canvasWidth: floatCanvasWidth,
+          //   canvasHeight: floatCanvasHeight,
+
+          //   style: {
+          //     margin: "0",
+          //     padding: "8px",
+          //     borderRadius: "1rem",
+          //     background: "red",
+          //     left: "0%",
+          //     width: `${log.realWidth}px`,
+          //     height: `${log.realHeight}px`,
+          //   },
+          //   backgroundColor: "pink",
+          // });
+
+          // const anchor = document.createElement("a");
+          // anchor.href = elementCanvas.toDataURL("image/png");
+          // anchor.download = "tryout";
+          // anchor.onclick = () => console.log("click");
+          // anchor.click();
+          img.src = elementCanvas.toDataURL("image/png");
 
           const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
             canvasElement: $canvas,

@@ -15,7 +15,9 @@ export const initialBgMultiInputRange = {
   },
 };
 
-const initialState = {
+export const initialPaintingState = {
+  idOfSelectedDraggableText: null,
+  colorOfSelectedDraggableText: { r: 0, g: 0, b: 0, a: 1 },
   elementTextStyle: {
     fontSize: 24,
   },
@@ -56,7 +58,7 @@ const initialState = {
 
 const paintingSlice = createSlice({
   name: "paintingSlice",
-  initialState,
+  initialState: initialPaintingState,
   reducers: {
     setColorPencil(state, { payload }) {
       state.kindOfPencilStyle[state.pencilType].color = payload;
@@ -89,6 +91,12 @@ const paintingSlice = createSlice({
       state.gradientBgMultiInputRange[payload.id].thumbBackground =
         payload.background;
     },
+    applyDraggableTextId(state, { payload }) {
+      state.idOfSelectedDraggableText = payload;
+    },
+    applyDraggableTextColor(state, { payload }) {
+      state.colorOfSelectedDraggableText = payload;
+    },
   },
 });
 
@@ -103,6 +111,8 @@ export const {
   changeInpurRangeGradientDegree,
   deleteInputRange,
   changeColorMultiInputRange,
+  applyDraggableTextId,
+  applyDraggableTextColor,
 } = paintingSlice.actions;
 export const selectPencilType = (state) => state.painting.pencilType;
 export const selectKindOfPencil = (state) => state.painting.kindOfPencilStyle;
@@ -113,4 +123,8 @@ export const selectGradientMultiIntputRange = (state) =>
   state.painting.gradientBgMultiInputRange;
 export const selectGradientInputRangeDegree = (state) =>
   state.painting.gradientInputRangeDegree;
+export const selectDraggableTextId = (state) =>
+  state.painting.idOfSelectedDraggableText;
+export const selectDraggableTextColor = (state) =>
+  state.painting.colorOfSelectedDraggableText;
 export default paintingSlice.reducer;

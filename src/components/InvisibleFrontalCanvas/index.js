@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import PixelRange from "../PixelRange/PixelRange";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
+  applyDraggableTextId,
   selectKindOfPencil,
   selectPencilSizeForRange,
   selectPencilType,
+  selectRangeValues,
+  setPencilSizeForRangeSlider,
+  setSizePencil,
 } from "../../features/paintingSlice";
 import {
   deleteCanvasWithTransparency,
@@ -30,11 +34,15 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     $canvas,
     principalImageLoaded,
     isDrawingToolsOpen,
+    isDrawing,
+    isEditingText,
     ctx,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
+  const { minValue, maxValue } = useSelector(selectRangeValues);
+  const dispatch = useDispatch();
 
   const [checkInput, setCheckInput] = useState(false);
   const $frontalCanvas = refFrontalCanvas.current;
@@ -277,6 +285,12 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   };
 
   console.log("frontal canvas");
+  const handleSetPencilSize = (thumbValue) => {
+    dispatch(setSizePencil(maxValue - thumbValue[0] + minValue));
+    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
+  };
+
+  const handleSetFontSize = (thumbValue) => {};
 
   const updateDraggingLog = debounce((e) => {
     console.log("debouncelog", e);
@@ -288,8 +302,8 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           scale: e.scale || moveable.scale,
           offsetLeft: e.target.offsetLeft,
           offsetTop: e.target.offsetTop,
-          realWidth: e.moveable.state.pos4[0],
-          realHeight: e.moveable.state.pos4[1],
+          realWidth: e.moveable.state.targetClientRect.width,
+          realHeight: e.moveable.state.targetClientRect.height,
           realTop: e.moveable.state.moveableClientRect.top,
           realLeft: e.moveable.state.moveableClientRect.left,
         };
@@ -301,6 +315,9 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     console.log(refGlobalDrawingLogs);
   }, 300);
 
+  const selectDraggableId = debounce((id) => {
+    dispatch(applyDraggableTextId(id));
+  }, 300);
   return (
     <div
       className="scrollable"
@@ -336,10 +353,11 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                 id={draggable.id}
                 onRender={(e) => {
                   // updateLog(e);
-                  console.log("render");
                   e.target.style.cssText += e.cssText;
                   refContainer.current.scrollTo(0, 0);
+                  selectDraggableId(e.target.id);
                 }}
+                onRotate={updateDraggingLog}
                 onScale={updateDraggingLog}
                 onDrag={updateDraggingLog}
                 refGlobalDrawingLogs={refGlobalDrawingLogs}
@@ -370,11 +388,20 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       >
         Este navegador no es compatible
       </canvas>
-      {isDrawingToolsOpen && (
+      {isDrawingToolsOpen && isDrawing && (
         <PixelRange
           pixelSize={pencilSizeForRange}
           minValue={15}
           maxValue={200}
+          onInput={handleSetPencilSize}
+        />
+      )}
+      {isDrawingToolsOpen && isEditingText && (
+        <PixelRange
+          pixelSize={45}
+          minValue={16}
+          maxValue={50}
+          onInput={handleSetFontSize}
         />
       )}
     </div>
