@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from "react";
+import React, { useContext, useEffect, useRef } from "react";
 import Moveable from "react-moveable";
 import { useDispatch } from "react-redux";
+import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import { applyDraggableTextId } from "../../features/paintingSlice";
 import { debounce } from "../../utils/helper";
 
@@ -15,7 +16,7 @@ const ElementEditable = ({
   onDrag,
   refGlobalDrawingLogs,
 }) => {
-  const refMoveable = useRef();
+  const { refMoveable } = useContext(ContextConfiguration);
   const refEditableElement = useRef();
   const dispatch = useDispatch();
   useEffect(
@@ -56,6 +57,10 @@ const ElementEditable = ({
     resetPosition();
   };
 
+  const upateMoveableRectDebounce = debounce(() => {
+    refMoveable.current.updateRect();
+  }, 300);
+
   const updateGlobalLogsElementSize = debounce(() => {
     refGlobalDrawingLogs.current.forEach((log) => {
       if (log.whatTask === "draggableText" && log.id === id) {
@@ -68,11 +73,12 @@ const ElementEditable = ({
       }
     });
   }, 300);
+
   return (
     <>
       <div
         id={id}
-        className={`target${id}`}
+        className={`target${id} draggableText`}
         onClick={() => dispatch(applyDraggableTextId(id))}
         style={{
           maxWidth: "315px",
@@ -91,6 +97,7 @@ const ElementEditable = ({
         <span
           ref={refEditableElement}
           onKeyDown={updateMoveableBlueArea}
+          onKeyUp={upateMoveableRectDebounce}
           onBlur={() => {
             resetPosition();
             setCheckInput(false);
@@ -122,9 +129,6 @@ const ElementEditable = ({
         keepRatio
         renderDirections={["w", "e", "s", "n"]}
         pinchable
-        // onScale={(e) => {
-        //   e.target.style.transform = e.drag.transform;
-        // }}
         onRotate={onRotate}
         onDrag={onDrag}
         onScale={onScale}

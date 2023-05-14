@@ -60,7 +60,7 @@ const HeaderChildren = () => {
           anchor.current.href = url;
           anchor.current.download = imageFile?.name || "IMAGE";
           anchor.current.click();
-          anchor.current.remove();
+          anchor.remove();
 
           setTimeout(() => {
             setDataURLBlob(null);
@@ -92,7 +92,7 @@ const HeaderChildren = () => {
       principalImageLoaded ? principalImageLoaded.width : $canvas.width,
       principalImageLoaded ? principalImageLoaded.height : $canvas.height
     );
-    draggableItemIntoCanvas(layerCtxCopy);
+    await draggableItemIntoCanvas(layerCtxCopy);
 
     setTimeout(async () => {
       if (principalImageLoaded) {
@@ -132,18 +132,13 @@ const HeaderChildren = () => {
       $canvasLayerWithImage.remove();
       $canvasLayerCopy.remove();
       URL.revokeObjectURL(dataURL);
+      dataURL = null;
       layerCtxCopy = null;
     }, 500);
   };
 
-  const draggableItemIntoCanvas = (targetContext) => {
-    const logs = refGlobalDrawingLogs.current;
-    let index = 0;
-
-    const draawNextItem = async () => {
-      if (index >= logs.length) return;
-      const log = logs[index];
-
+  const draggableItemIntoCanvas = async (targetContext) => {
+    for (const log of refGlobalDrawingLogs.current) {
       if (
         log.whatTask === "draggableText" ||
         log.whatTask === "draggableSticker"
@@ -209,10 +204,7 @@ const HeaderChildren = () => {
           alert(error);
         }
       }
-      index++;
-      requestAnimationFrame(draawNextItem);
-    };
-    requestAnimationFrame(draawNextItem);
+    }
   };
 
   const imageOnLoad = (image) =>

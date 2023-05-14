@@ -13,7 +13,59 @@ body {
   /* avoiding refres when swipe down */
   overscroll-behavior: none;
 }
+/* static font */
+@font-face {
+  font-family: "rubik";
+  src: url("fonts/Rubik/Rubik-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-display: swap;
+}
 
+/* variable font */
+@font-face {
+  font-family: "raleway";
+  src: url("fonts/Raleway/Raleway-VariableFont_wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
+
+@font-face {
+  font-family: "caveat";
+  src: url("fonts/Caveat/Caveat-VariableFont_wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
+
+@font-face {
+  font-family: "cinzel";
+  src: url("fonts/Cinzel/Cinzel-VariableFont_wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
+@font-face {
+  font-family: "comfortaa";
+  src: url("fonts/Comfortaa/Comfortaa-VariableFont_wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
+@font-face {
+  font-family: "dancing-script";
+  src: url("fonts/Dancing_Script/DancingScript-VariableFont_wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
+@font-face {
+  font-family: "source-code-pro";
+  src: url("fonts/Source_Code_Pro/SourceCodePro-VariableFont_wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
+@font-face {
+  font-family: "shantell-sans";
+  src: url("fonts/SantellSans/ShantellSans-VariableFont_BNCE\,INFM\,SPAC\,wght.ttf")
+    format("truetype-variations");
+  font-weight: 200 900;
+}
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;

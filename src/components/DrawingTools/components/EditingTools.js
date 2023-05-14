@@ -18,6 +18,7 @@ import {
 } from "../../../features/paintingSlice";
 import { RgbaColorPicker } from "react-colorful";
 import { debounce } from "../../../utils/helper";
+import FontsButton from "./FontsButton";
 
 const EditingTools = () => {
   const { refGlobalDrawingLogs, setDrawingHistoryLength } =
@@ -90,6 +91,7 @@ const EditingTools = () => {
   const saveColor = debounce(({ r, g, b, a }) => {
     dispatch(applyDraggableTextColor({ r, g, b, a }));
   }, 300);
+
   return (
     <DetectableToolboxSizeLayout>
       <GlobalButton
@@ -100,6 +102,7 @@ const EditingTools = () => {
       >
         Add Text
       </GlobalButton>
+      <FontsButton />
       <GlobalButton
         border={`3px solid ${themeColor.textColor}`}
         backgroundColor="#eee"

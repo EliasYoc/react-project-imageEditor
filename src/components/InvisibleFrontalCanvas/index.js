@@ -293,7 +293,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const handleSetFontSize = (thumbValue) => {};
 
   const updateDraggingLog = debounce((e) => {
-    console.log("debouncelog", e);
     const modifiedGlobalLogs = refGlobalDrawingLogs.current.map((moveable) => {
       if (moveable.id === e.target.id) {
         return {
