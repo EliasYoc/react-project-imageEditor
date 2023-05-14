@@ -59,14 +59,13 @@ const HeaderChildren = () => {
           console.log(url);
           anchor.current.href = url;
           anchor.current.download = imageFile?.name || "IMAGE";
-          anchor.current.onclick = () => console.log("click");
           anchor.current.click();
-          console.dir(anchor);
-          console.log("downloaded");
+          anchor.current.remove();
 
           setTimeout(() => {
             setDataURLBlob(null);
             setPercentDownloading(0);
+            URL.revokeObjectURL(url);
           }, 400);
         }
         setPercentDownloading(percent);
@@ -82,7 +81,7 @@ const HeaderChildren = () => {
     $canvasLayerCopy.width = $canvas.width;
     $canvasLayerCopy.height = $canvas.height;
 
-    const layerCtxCopy = $canvasLayerCopy.getContext("2d", {
+    let layerCtxCopy = $canvasLayerCopy.getContext("2d", {
       willReadFrequently: true,
     });
 
@@ -93,13 +92,13 @@ const HeaderChildren = () => {
       principalImageLoaded ? principalImageLoaded.width : $canvas.width,
       principalImageLoaded ? principalImageLoaded.height : $canvas.height
     );
-    await draggableItemIntoCanvas(layerCtxCopy);
+    draggableItemIntoCanvas(layerCtxCopy);
 
     setTimeout(async () => {
       if (principalImageLoaded) {
         $canvasLayerWithImage.width = principalImageLoaded.width;
         $canvasLayerWithImage.height = principalImageLoaded.height;
-        const layerCtx = $canvasLayerWithImage.getContext("2d");
+        let layerCtx = $canvasLayerWithImage.getContext("2d");
 
         layerCtx.drawImage(
           principalImageLoaded,
@@ -116,6 +115,7 @@ const HeaderChildren = () => {
           principalImageLoaded.width,
           principalImageLoaded.height
         );
+        layerCtx = null;
       }
 
       console.log("converting to data");
@@ -124,24 +124,32 @@ const HeaderChildren = () => {
             (imageFile && imageFile.type) || "image/png"
           )
         : $canvasLayerCopy.toDataURL("image/png");
-      console.log(dataURL);
       // i need the blob in order to do the progress bar
       const dataBlob = await dataUrlToBlob(dataURL);
 
       setIsLoadingImage(false);
       setDataURLBlob(dataBlob);
-      dataURL = null;
+      $canvasLayerWithImage.remove();
+      $canvasLayerCopy.remove();
+      URL.revokeObjectURL(dataURL);
+      layerCtxCopy = null;
     }, 500);
   };
 
-  const draggableItemIntoCanvas = async (targetContext) => {
-    for (const log of refGlobalDrawingLogs.current) {
+  const draggableItemIntoCanvas = (targetContext) => {
+    const logs = refGlobalDrawingLogs.current;
+    let index = 0;
+
+    const draawNextItem = async () => {
+      if (index >= logs.length) return;
+      const log = logs[index];
+
       if (
         log.whatTask === "draggableText" ||
         log.whatTask === "draggableSticker"
       ) {
         const $draggableElement = document.getElementById(log.id);
-        const img = new Image();
+        let img = new Image();
         try {
           const elementCanvas = await html2canvas($draggableElement, {
             backgroundColor: null,
@@ -166,31 +174,9 @@ const HeaderChildren = () => {
               $canvas.height
             );
           console.dir($canvas);
-          // const elementCanvas = await htmlToImage.toCanvas($draggableElement, {
-          //   // cacheBust: true,
-          //   width: floatCanvasWidth,
-          //   height: floatCanvasHeight,
-          //   canvasWidth: floatCanvasWidth,
-          //   canvasHeight: floatCanvasHeight,
 
-          //   style: {
-          //     margin: "0",
-          //     padding: "8px",
-          //     borderRadius: "1rem",
-          //     background: "red",
-          //     left: "0%",
-          //     width: `${log.realWidth}px`,
-          //     height: `${log.realHeight}px`,
-          //   },
-          //   backgroundColor: "pink",
-          // });
-
-          // const anchor = document.createElement("a");
-          // anchor.href = elementCanvas.toDataURL("image/png");
-          // anchor.download = "tryout";
-          // anchor.onclick = () => console.log("click");
-          // anchor.click();
-          img.src = elementCanvas.toDataURL("image/png");
+          const url = elementCanvas.toDataURL("image/png");
+          img.src = url;
 
           const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
             canvasElement: $canvas,
@@ -215,11 +201,18 @@ const HeaderChildren = () => {
             newElementWidth,
             newElementHeight
           );
+
+          URL.revokeObjectURL(url);
+          elementCanvas.remove();
+          img = null;
         } catch (error) {
           alert(error);
         }
       }
-    }
+      index++;
+      requestAnimationFrame(draawNextItem);
+    };
+    requestAnimationFrame(draawNextItem);
   };
 
   const imageOnLoad = (image) =>
