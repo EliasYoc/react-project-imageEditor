@@ -17,7 +17,7 @@ const ToolBoxesProvider = ({ children }) => {
     width: null,
     height: null,
   });
-  console.log("ToolBox provid");
+  console.log("ToolBox provider");
   const handleSumHeightForCanvas = useCallback((...fullHeight) => {
     const fullHeightSum = fullHeight.reduce(
       (prevNum, num) => prevNum + parseFloat(num),
@@ -49,7 +49,6 @@ const ToolBoxesProvider = ({ children }) => {
     parentDrawinToolboxSize,
     setParentDrawinToolboxSize,
   };
-  console.log("rendering context drawing");
   return (
     <ContextToolBoxes.Provider value={data}>
       {children}

@@ -1,9 +1,14 @@
-import React, { useContext, useEffect, useRef } from "react";
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useRef, useState } from "react";
 import Moveable from "react-moveable";
 import { useDispatch } from "react-redux";
-import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import { applyDraggableTextId } from "../../features/paintingSlice";
+import {
+  updateDraggableRect,
+  updateInitialDraggableTextElementSize,
+} from "../../utils/draggableElements";
 import { debounce } from "../../utils/helper";
+import { DraggableTextElement } from "./styles";
 
 const ElementEditable = ({
   parentNode,
@@ -15,83 +20,97 @@ const ElementEditable = ({
   onScale,
   onDrag,
   refGlobalDrawingLogs,
+  fontFamily,
 }) => {
-  const { refMoveable } = useContext(ContextConfiguration);
   const refEditableElement = useRef();
+  const refMoveable = useRef();
   const dispatch = useDispatch();
+  const [updateRectTimes, setUpdateRectTimes] = useState(0);
+  useEffect(() => {
+    setCheckInput(true);
+    refEditableElement.current.focus();
+  }, [setCheckInput]);
+
   useEffect(
     function initialUpdateOfDraggableElement() {
       // puede que este forEach lo tenga que poner al descargar
       console.log("Element EDITABLE", id);
-      refGlobalDrawingLogs.current.forEach((log) => {
-        if (log.whatTask === "draggableText" && log.id === id) {
-          const draggableElement = document.getElementById(log.id);
-          const { left, top } = draggableElement.getBoundingClientRect();
-          const { width, height } = getComputedStyle(draggableElement);
-          const floatWidth = parseFloat(width.slice(0, -2));
-          const floatHeight = parseFloat(height.slice(0, -2));
-          log.left = log.realLeft = left;
-          log.top = log.realTop = top;
-          log.offsetLeft = draggableElement.offsetLeft;
-          log.offsetTop = draggableElement.offsetTop;
-          log.initialWidth = log.realWidth = floatWidth;
-          log.initialHeight = log.realHeight = floatHeight;
-          // log.initialWidth = log.realWidth = log.realWidth || floatWidth;
-          // log.initialHeight = log.realHeight = log.realHeight || floatHeight;
-        }
-      });
-      refEditableElement.current.focus();
-      setCheckInput(true);
+      updateInitialDraggableTextElementSize(refGlobalDrawingLogs, id);
       dispatch(applyDraggableTextId(id));
       return () => {
         dispatch(applyDraggableTextId(null));
       };
     },
-    [id, refGlobalDrawingLogs, setCheckInput, dispatch]
+    [id, refGlobalDrawingLogs, dispatch]
   );
+
+  useEffect(
+    function refreshMoveable() {
+      console.log(refGlobalDrawingLogs);
+
+      saveUpdatedMoveableRect();
+
+      console.log(refGlobalDrawingLogs);
+    },
+    [fontFamily]
+  );
+
+  useEffect(
+    function setMoveableSize() {
+      const moveable = refMoveable.current.getManager();
+      if (moveable.state.target && updateRectTimes > 0) {
+        const modifiedGlobalLogs = updateDraggableRect(
+          refGlobalDrawingLogs,
+          moveable,
+          id
+        );
+        console.log("modified", modifiedGlobalLogs);
+        refGlobalDrawingLogs.current = modifiedGlobalLogs;
+      }
+    },
+    [updateRectTimes]
+  );
+
+  // no cambia el refGlobalDrawingLogs (fixed)
+  const saveUpdatedMoveableRect = async () => {
+    refMoveable.current.updateRect();
+    setUpdateRectTimes(updateRectTimes + 1);
+  };
+
   const resetPosition = () => parentNode.scrollTo({ left: 0, top: 0 });
 
   const updateMoveableBlueArea = () => {
-    refMoveable.current.updateRect();
-    updateGlobalLogsElementSize();
+    // updateGlobalLogsElementSize();
+    saveUpdatedMoveableRect();
     resetPosition();
   };
 
   const upateMoveableRectDebounce = debounce(() => {
-    refMoveable.current.updateRect();
-  }, 300);
+    saveUpdatedMoveableRect();
+  }, 100);
 
-  const updateGlobalLogsElementSize = debounce(() => {
-    refGlobalDrawingLogs.current.forEach((log) => {
-      if (log.whatTask === "draggableText" && log.id === id) {
-        const draggableElement = document.getElementById(log.id);
-        const { width, height } = getComputedStyle(draggableElement);
-        const floatWidth = parseFloat(width.slice(0, -2));
-        const floatHeight = parseFloat(height.slice(0, -2));
-        log.realWidth = floatWidth;
-        log.realHeight = floatHeight;
-      }
-    });
-  }, 300);
+  // const updateGlobalLogsElementSize = debounce(() => {
+  //   refGlobalDrawingLogs.current.forEach((log) => {
+  //     if (log.whatTask === "draggableText" && log.id === id) {
+  //       const draggableElement = document.getElementById(log.id);
+  //       const { width, height } = getComputedStyle(draggableElement);
+  //       const floatWidth = parseFloat(width.slice(0, -2));
+  //       const floatHeight = parseFloat(height.slice(0, -2));
+  //       log.realWidth = floatWidth;
+  //       log.realHeight = floatHeight;
+  //     }
+  //   });
+  // }, 300);
 
   return (
     <>
-      <div
+      <DraggableTextElement
         id={id}
         className={`target${id} draggableText`}
         onClick={() => dispatch(applyDraggableTextId(id))}
         style={{
-          maxWidth: "315px",
-          left: "50%",
-          top: "20px",
           // minWidth: "40.5px",
-          position: "absolute",
-          color: "rgba(0,0,0,1)",
-          zIndex: "15",
-          wordBreak: "break-word",
-          fontSize: "1.4rem",
-          padding: ".5rem 0",
-          // background: "pink",
+          background: "rgb(156 39 176 / 35%)",
         }}
       >
         <span
@@ -117,7 +136,7 @@ const ElementEditable = ({
           }}
           contentEditable
         ></span>
-      </div>
+      </DraggableTextElement>
       <Moveable
         ref={refMoveable}
         checkInput={checkInput}

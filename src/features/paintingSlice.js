@@ -18,6 +18,7 @@ export const initialBgMultiInputRange = {
 export const initialPaintingState = {
   idOfSelectedDraggableText: null,
   colorOfSelectedDraggableText: { r: 0, g: 0, b: 0, a: 1 },
+  draggableTextFontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`,
   elementTextStyle: {
     fontSize: 24,
   },
@@ -97,6 +98,9 @@ const paintingSlice = createSlice({
     applyDraggableTextColor(state, { payload }) {
       state.colorOfSelectedDraggableText = payload;
     },
+    applyDraggableTextFontFamily(state, { payload }) {
+      state.draggableTextFontFamily = payload;
+    },
   },
 });
 
@@ -113,6 +117,7 @@ export const {
   changeColorMultiInputRange,
   applyDraggableTextId,
   applyDraggableTextColor,
+  applyDraggableTextFontFamily,
 } = paintingSlice.actions;
 export const selectPencilType = (state) => state.painting.pencilType;
 export const selectKindOfPencil = (state) => state.painting.kindOfPencilStyle;
@@ -127,4 +132,6 @@ export const selectDraggableTextId = (state) =>
   state.painting.idOfSelectedDraggableText;
 export const selectDraggableTextColor = (state) =>
   state.painting.colorOfSelectedDraggableText;
+export const selectDraggableTextFontFamily = (state) =>
+  state.painting.draggableTextFontFamily;
 export default paintingSlice.reducer;

@@ -155,10 +155,7 @@ const HeaderChildren = () => {
           const { width, height } = getComputedStyle($canvas);
           const floatCanvasWidth = parseFloat(width.slice(0, -2));
           const floatCanvasHeight = parseFloat(height.slice(0, -2));
-          console.log(`real:
-          w: ${log.realWidth}
-          h: ${log.realHeight}
-          `);
+
           const { newElementWidth, newElementHeight } =
             transformElementSizeIntoCanvasElementSize(
               log.realWidth,
@@ -180,6 +177,22 @@ const HeaderChildren = () => {
             xCoord: x,
             yCoord: y,
           });
+
+          console.log(`real:
+          imgW: ${principalImageLoaded.width}
+          imgH: ${principalImageLoaded.height}
+          cWidth:${$canvas.width}
+          cHeight:${$canvas.height}
+          styleW: ${floatCanvasWidth}
+          styleH: ${floatCanvasHeight}
+          `);
+
+          console.log(`real:
+          x:${x}
+          y:${y}
+          w: ${log.realWidth}
+          h: ${log.realHeight}
+          `);
 
           const msg = await imageOnLoad(img);
           console.log(`${msg}: 
@@ -257,7 +270,7 @@ const HeaderChildren = () => {
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
   const handleOpenGradientBox = (isOpen) => setIsOpenGradientBox(isOpen);
-  // example to download, it works because has content-length
+  // example to download, it works, has content-length
   // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
 
   // parseInt(res.headers.get("Content-Length"), 10);

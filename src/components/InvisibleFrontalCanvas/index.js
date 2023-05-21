@@ -5,6 +5,8 @@ import PixelRange from "../PixelRange/PixelRange";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
   applyDraggableTextId,
+  selectDraggableTextFontFamily,
+  selectDraggableTextId,
   selectKindOfPencil,
   selectPencilSizeForRange,
   selectPencilType,
@@ -22,6 +24,7 @@ import {
 import ElementEditable from "../Text/ElementEditable";
 import PortalNormalModal from "../Layout/PortalNormalModal";
 import { debounce } from "../../utils/helper";
+import { updateDraggableRect } from "../../utils/draggableElements";
 
 const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const {
@@ -42,6 +45,9 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
   const { minValue, maxValue } = useSelector(selectRangeValues);
+  const draggableTextId = useSelector(selectDraggableTextId);
+  const fontFamily = useSelector(selectDraggableTextFontFamily);
+
   const dispatch = useDispatch();
 
   const [checkInput, setCheckInput] = useState(false);
@@ -293,23 +299,11 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const handleSetFontSize = (thumbValue) => {};
 
   const updateDraggingLog = debounce((e) => {
-    const modifiedGlobalLogs = refGlobalDrawingLogs.current.map((moveable) => {
-      if (moveable.id === e.target.id) {
-        return {
-          ...moveable,
-          translate: e.translate || moveable.translate,
-          scale: e.scale || moveable.scale,
-          offsetLeft: e.target.offsetLeft,
-          offsetTop: e.target.offsetTop,
-          realWidth: e.moveable.state.targetClientRect.width,
-          realHeight: e.moveable.state.targetClientRect.height,
-          realTop: e.moveable.state.moveableClientRect.top,
-          realLeft: e.moveable.state.moveableClientRect.left,
-        };
-      } else {
-        return moveable;
-      }
-    });
+    const modifiedGlobalLogs = updateDraggableRect(
+      refGlobalDrawingLogs,
+      e.moveable,
+      draggableTextId
+    );
     refGlobalDrawingLogs.current = modifiedGlobalLogs;
     console.log(refGlobalDrawingLogs);
   }, 300);
@@ -317,6 +311,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const selectDraggableId = debounce((id) => {
     dispatch(applyDraggableTextId(id));
   }, 300);
+
   return (
     <div
       className="scrollable"
@@ -351,11 +346,13 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                 // checkInput={checkInput}
                 id={draggable.id}
                 onRender={(e) => {
-                  // updateLog(e);
+                  console.log("render");
                   e.target.style.cssText += e.cssText;
                   refContainer.current.scrollTo(0, 0);
                   selectDraggableId(e.target.id);
                 }}
+                // fix: cuando agrego un segundo texto, el fontFamily del primero desaparece
+                fontFamily={draggable.id === draggableTextId && fontFamily}
                 onRotate={updateDraggingLog}
                 onScale={updateDraggingLog}
                 onDrag={updateDraggingLog}

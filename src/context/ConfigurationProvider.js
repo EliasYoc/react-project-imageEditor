@@ -48,7 +48,6 @@ const ConfigurationProvider = ({ children }) => {
   const refFrontalCanvas = useRef();
   // what tasks "painting" "adding image" "transparent eraser"
   const refGlobalDrawingLogs = useRef([]);
-  const refMoveable = useRef();
 
   const $canvas = refCanvas.current;
   const ctx = $canvas?.getContext("2d");
@@ -89,7 +88,6 @@ const ConfigurationProvider = ({ children }) => {
     refFrontalCanvas,
     imageFile,
     setImageFile,
-    refMoveable,
   };
 
   return (

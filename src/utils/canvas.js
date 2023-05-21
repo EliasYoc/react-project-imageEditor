@@ -52,19 +52,12 @@ export const getCalculatedCoordsOfContainCanvas = ({
   let originalCanvasWidth = canvasElement.getBoundingClientRect().width;
   let originalCanvasHeight = canvasElement.getBoundingClientRect().height;
 
-  const { dominantCellSize, maxWidth, maxHeight, width, height } =
-    getDominantCellSizeOfContainCanvas(
-      originalCanvasWidth,
-      originalCanvasHeight,
-      canvasHeightPixel,
-      canvasWidthPixel
-    );
-  console.log(`d:${dominantCellSize}
-  mw: ${maxWidth},
-  mh: ${maxHeight},
-  w:${width},
-  h:${height},
-  `);
+  const { dominantCellSize } = getDominantCellSizeOfContainCanvas(
+    originalCanvasWidth,
+    originalCanvasHeight,
+    canvasHeightPixel,
+    canvasWidthPixel
+  );
   // investigar este calculo
   let coordX = Math.floor(
     (xCoord -
