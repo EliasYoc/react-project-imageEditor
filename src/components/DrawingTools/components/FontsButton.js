@@ -71,7 +71,7 @@ const FontsButton = ({ onClick }) => {
     dispatch(applyDraggableTextFontFamily(e.target.value));
     setIsOpen(false);
   };
-
+  console.log("consolelog");
   return (
     <GlobalButton
       onClick={() => setIsOpen(!isOpen)}
