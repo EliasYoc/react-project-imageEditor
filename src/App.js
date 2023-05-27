@@ -66,7 +66,7 @@ function App() {
         </div>
         <Canvas />
         {isPrincipalToolsOpen && <PrincipalTools />}
-        <div ref={refFooter}>
+        <div ref={refFooter} style={{ zIndex: "100" }}>
           {isDrawingToolsOpen && (
             <>
               <ToolBox
@@ -76,7 +76,6 @@ function App() {
                 borderRadius="50px"
                 position="relative"
                 margin="10px auto 0"
-                overflow="hidden"
               >
                 {isDrawing && <DrawingTools />}
                 {isEditingText && <EditingTools />}
@@ -94,7 +93,7 @@ function App() {
         )}
       </FittedPaintWrap>
       {isLoadingImage && (
-        <FixedContainer>
+        <FixedContainer zIndex="100">
           <LoaderSpinner />
         </FixedContainer>
       )}

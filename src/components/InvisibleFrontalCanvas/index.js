@@ -1,12 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import PixelRange from "../PixelRange/PixelRange";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
+  applyDraggableTextId,
+  selectDraggableTextFontFamily,
+  selectDraggableTextId,
   selectKindOfPencil,
   selectPencilSizeForRange,
   selectPencilType,
+  selectRangeValues,
+  setPencilSizeForRangeSlider,
+  setSizePencil,
 } from "../../features/paintingSlice";
 import {
   deleteCanvasWithTransparency,
@@ -18,6 +24,7 @@ import {
 import ElementEditable from "../Text/ElementEditable";
 import PortalNormalModal from "../Layout/PortalNormalModal";
 import { debounce } from "../../utils/helper";
+import { updateDraggableRect } from "../../utils/draggableElements";
 
 const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const {
@@ -30,11 +37,18 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     $canvas,
     principalImageLoaded,
     isDrawingToolsOpen,
+    isDrawing,
+    isEditingText,
     ctx,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
+  const { minValue, maxValue } = useSelector(selectRangeValues);
+  const draggableTextId = useSelector(selectDraggableTextId);
+  const fontFamily = useSelector(selectDraggableTextFontFamily);
+
+  const dispatch = useDispatch();
 
   const [checkInput, setCheckInput] = useState(false);
   const $frontalCanvas = refFrontalCanvas.current;
@@ -277,28 +291,25 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   };
 
   console.log("frontal canvas");
+  const handleSetPencilSize = (thumbValue) => {
+    dispatch(setSizePencil(maxValue - thumbValue[0] + minValue));
+    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
+  };
+
+  const handleSetFontSize = (thumbValue) => {};
 
   const updateDraggingLog = debounce((e) => {
-    console.log("debouncelog", e);
-    const modifiedGlobalLogs = refGlobalDrawingLogs.current.map((moveable) => {
-      if (moveable.id === e.target.id) {
-        return {
-          ...moveable,
-          translate: e.translate || moveable.translate,
-          scale: e.scale || moveable.scale,
-          offsetLeft: e.target.offsetLeft,
-          offsetTop: e.target.offsetTop,
-          realWidth: e.moveable.state.pos4[0],
-          realHeight: e.moveable.state.pos4[1],
-          realTop: e.moveable.state.moveableClientRect.top,
-          realLeft: e.moveable.state.moveableClientRect.left,
-        };
-      } else {
-        return moveable;
-      }
-    });
+    const modifiedGlobalLogs = updateDraggableRect(
+      refGlobalDrawingLogs,
+      e.moveable,
+      draggableTextId
+    );
     refGlobalDrawingLogs.current = modifiedGlobalLogs;
     console.log(refGlobalDrawingLogs);
+  }, 300);
+
+  const selectDraggableId = debounce((id) => {
+    dispatch(applyDraggableTextId(id));
   }, 300);
 
   return (
@@ -335,11 +346,14 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                 // checkInput={checkInput}
                 id={draggable.id}
                 onRender={(e) => {
-                  // updateLog(e);
                   console.log("render");
                   e.target.style.cssText += e.cssText;
                   refContainer.current.scrollTo(0, 0);
+                  selectDraggableId(e.target.id);
                 }}
+                // fix: cuando agrego un segundo texto, el fontFamily del primero desaparece
+                fontFamily={draggable.id === draggableTextId && fontFamily}
+                onRotate={updateDraggingLog}
                 onScale={updateDraggingLog}
                 onDrag={updateDraggingLog}
                 refGlobalDrawingLogs={refGlobalDrawingLogs}
@@ -370,11 +384,20 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       >
         Este navegador no es compatible
       </canvas>
-      {isDrawingToolsOpen && (
+      {isDrawingToolsOpen && isDrawing && (
         <PixelRange
           pixelSize={pencilSizeForRange}
           minValue={15}
           maxValue={200}
+          onInput={handleSetPencilSize}
+        />
+      )}
+      {isDrawingToolsOpen && isEditingText && (
+        <PixelRange
+          pixelSize={45}
+          minValue={16}
+          maxValue={50}
+          onInput={handleSetFontSize}
         />
       )}
     </div>

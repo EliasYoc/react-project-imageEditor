@@ -25,7 +25,6 @@ const DrawingTools = () => {
   const pencilType = useSelector(selectPencilType);
   const { r, g, b, a } = kindOfPencil[pencilType].color;
 
-  console.log("drawing tools");
   const handleOpenCloseModal = () => {
     if (pencilType === "eraser") return;
     setIsOpenPortalsDrawingModal(!isOpenPortalsDrawingModal);

@@ -59,14 +59,13 @@ const HeaderChildren = () => {
           console.log(url);
           anchor.current.href = url;
           anchor.current.download = imageFile?.name || "IMAGE";
-          anchor.current.onclick = () => console.log("click");
           anchor.current.click();
-          console.dir(anchor);
-          console.log("downloaded");
+          anchor.remove();
 
           setTimeout(() => {
             setDataURLBlob(null);
             setPercentDownloading(0);
+            URL.revokeObjectURL(url);
           }, 400);
         }
         setPercentDownloading(percent);
@@ -82,16 +81,24 @@ const HeaderChildren = () => {
     $canvasLayerCopy.width = $canvas.width;
     $canvasLayerCopy.height = $canvas.height;
 
-    const layerCtxCopy = $canvasLayerCopy.getContext("2d");
+    let layerCtxCopy = $canvasLayerCopy.getContext("2d", {
+      willReadFrequently: true,
+    });
 
-    layerCtxCopy.drawImage($canvas, 0, 0, $canvas.width, $canvas.height);
+    layerCtxCopy.drawImage(
+      $canvas,
+      0,
+      0,
+      principalImageLoaded ? principalImageLoaded.width : $canvas.width,
+      principalImageLoaded ? principalImageLoaded.height : $canvas.height
+    );
     await draggableItemIntoCanvas(layerCtxCopy);
 
     setTimeout(async () => {
       if (principalImageLoaded) {
         $canvasLayerWithImage.width = principalImageLoaded.width;
         $canvasLayerWithImage.height = principalImageLoaded.height;
-        const layerCtx = $canvasLayerWithImage.getContext("2d");
+        let layerCtx = $canvasLayerWithImage.getContext("2d");
 
         layerCtx.drawImage(
           principalImageLoaded,
@@ -108,6 +115,7 @@ const HeaderChildren = () => {
           principalImageLoaded.width,
           principalImageLoaded.height
         );
+        layerCtx = null;
       }
 
       console.log("converting to data");
@@ -116,13 +124,16 @@ const HeaderChildren = () => {
             (imageFile && imageFile.type) || "image/png"
           )
         : $canvasLayerCopy.toDataURL("image/png");
-      console.log(dataURL);
       // i need the blob in order to do the progress bar
       const dataBlob = await dataUrlToBlob(dataURL);
 
       setIsLoadingImage(false);
       setDataURLBlob(dataBlob);
+      $canvasLayerWithImage.remove();
+      $canvasLayerCopy.remove();
+      URL.revokeObjectURL(dataURL);
       dataURL = null;
+      layerCtxCopy = null;
     }, 500);
   };
 
@@ -133,12 +144,12 @@ const HeaderChildren = () => {
         log.whatTask === "draggableSticker"
       ) {
         const $draggableElement = document.getElementById(log.id);
-        const img = new Image();
+        let img = new Image();
         try {
-          const canvas = await html2canvas($draggableElement, {
+          const elementCanvas = await html2canvas($draggableElement, {
             backgroundColor: null,
+            removeContainer: true,
           });
-          img.src = canvas.toDataURL("image/png");
           let x = log.realLeft;
           let y = log.realTop;
           const { width, height } = getComputedStyle($canvas);
@@ -154,6 +165,10 @@ const HeaderChildren = () => {
               $canvas.width,
               $canvas.height
             );
+          console.dir($canvas);
+
+          const url = elementCanvas.toDataURL("image/png");
+          img.src = url;
 
           const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
             canvasElement: $canvas,
@@ -162,6 +177,22 @@ const HeaderChildren = () => {
             xCoord: x,
             yCoord: y,
           });
+
+          console.log(`real:
+          imgW: ${principalImageLoaded.width}
+          imgH: ${principalImageLoaded.height}
+          cWidth:${$canvas.width}
+          cHeight:${$canvas.height}
+          styleW: ${floatCanvasWidth}
+          styleH: ${floatCanvasHeight}
+          `);
+
+          console.log(`real:
+          x:${x}
+          y:${y}
+          w: ${log.realWidth}
+          h: ${log.realHeight}
+          `);
 
           const msg = await imageOnLoad(img);
           console.log(`${msg}: 
@@ -179,7 +210,9 @@ const HeaderChildren = () => {
             newElementHeight
           );
 
-          // canvas.getContext("2d", { willReadFrequently: true });
+          URL.revokeObjectURL(url);
+          elementCanvas.remove();
+          img = null;
         } catch (error) {
           alert(error);
         }
@@ -237,7 +270,7 @@ const HeaderChildren = () => {
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
   const handleOpenGradientBox = (isOpen) => setIsOpenGradientBox(isOpen);
-  // example to download, it works because has content-length
+  // example to download, it works, has content-length
   // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
 
   // parseInt(res.headers.get("Content-Length"), 10);
