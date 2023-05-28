@@ -346,7 +346,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                 // checkInput={checkInput}
                 id={draggable.id}
                 onRender={(e) => {
-                  console.log("render");
                   e.target.style.cssText += e.cssText;
                   refContainer.current.scrollTo(0, 0);
                   selectDraggableId(e.target.id);

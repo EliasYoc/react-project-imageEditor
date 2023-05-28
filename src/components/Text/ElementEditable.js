@@ -34,7 +34,6 @@ const ElementEditable = ({
   useEffect(
     function initialUpdateOfDraggableElement() {
       // puede que este forEach lo tenga que poner al descargar
-      console.log("Element EDITABLE", id);
       updateInitialDraggableTextElementSize(refGlobalDrawingLogs, id);
       dispatch(applyDraggableTextId(id));
       return () => {
@@ -46,11 +45,7 @@ const ElementEditable = ({
 
   useEffect(
     function refreshMoveable() {
-      console.log(refGlobalDrawingLogs);
-
       saveUpdatedMoveableRect();
-
-      console.log(refGlobalDrawingLogs);
     },
     [fontFamily]
   );
@@ -64,7 +59,6 @@ const ElementEditable = ({
           moveable,
           id
         );
-        console.log("modified", modifiedGlobalLogs);
         refGlobalDrawingLogs.current = modifiedGlobalLogs;
       }
     },

@@ -6,7 +6,6 @@ const useFullSizeElement = (arrayDepenencies = []) => {
   const refElement = useRef();
   useEffect(() => {
     if (refElement?.current) {
-      console.log("useFullSizeElement");
       const {
         margin,
         marginTop,

@@ -61,7 +61,7 @@ const HeaderChildren = () => {
           anchor.current.href = url;
           anchor.current.download = imageFile?.name || "IMAGE";
           anchor.current.click();
-          anchor.remove();
+          anchor.current.remove();
 
           setTimeout(() => {
             setDataURLBlob(null);
