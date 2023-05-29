@@ -291,19 +291,19 @@ export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
 export const transformElementSizeIntoCanvasElementSize = (
   elementWidth = 0,
   elementHeight = 0,
-  canvasStyleWidth = 0,
-  canvasStyleHeigth = 0,
+  canvasStyleMaxWidth = 0,
+  canvasStyleMaxHeigth = 0,
   canvasWidth = 0,
   canvasHeight = 0
 ) => {
   let newElementWidth;
   let newElementHeight;
   if (canvasWidth > canvasHeight) {
-    newElementWidth = (elementWidth * canvasWidth) / canvasStyleWidth;
-    newElementHeight = (elementHeight * canvasWidth) / canvasStyleWidth;
+    newElementWidth = (elementWidth * canvasWidth) / canvasStyleMaxWidth;
+    newElementHeight = (elementHeight * canvasWidth) / canvasStyleMaxWidth;
   } else {
-    newElementWidth = (elementWidth * canvasHeight) / canvasStyleHeigth;
-    newElementHeight = (elementHeight * canvasHeight) / canvasStyleHeigth;
+    newElementWidth = (elementWidth * canvasHeight) / canvasStyleMaxHeigth;
+    newElementHeight = (elementHeight * canvasHeight) / canvasStyleMaxHeigth;
   }
   return { newElementWidth, newElementHeight };
 };

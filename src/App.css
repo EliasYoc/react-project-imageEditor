@@ -24,15 +24,21 @@
   }
 }
 .moveable-line {
-  background: transparent !important;
+  display: none !important;
+  /* background: transparent !important;
   border-top: 4px dashed rgba(68, 171, 255, 0.7);
-  border-left: 3px dashed rgba(68, 171, 255, 0.7);
+  border-left: 3px dashed rgba(68, 171, 255, 0.7); */
 }
 
 .moveable-control {
   width: 16px !important;
   height: 16px !important;
   border: 1px dashed #fff !important;
+}
+
+.moveable-control.moveable-origin {
+  border: none !important;
+  background: none !important;
 }
 
 .rCS7rstfg {

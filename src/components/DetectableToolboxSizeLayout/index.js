@@ -1,11 +1,15 @@
 import React, { useEffect, useContext } from "react";
+import { useSelector } from "react-redux";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
+import { selectDraggableTextFontFamily } from "../../features/paintingSlice";
 import useFullSizeElement from "../../hooks/useFullSizeElement";
 import { LayoutToolBox } from "../../utils/styledComponents";
 
 const DetectableToolboxSizeLayout = ({ children, style }) => {
   const { setParentDrawinToolboxSize } = useContext(ContextToolBoxes);
-  const { refElement, elementSize } = useFullSizeElement();
+  const fontFamily = useSelector(selectDraggableTextFontFamily);
+  const { refElement, elementSize } = useFullSizeElement([fontFamily]);
+
   useEffect(() => {
     if (elementSize) {
       const { width, height } = elementSize;

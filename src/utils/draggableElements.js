@@ -17,8 +17,6 @@ export const updateInitialDraggableTextElementSize = (
       log.initialHeight = log.realHeight = floatHeight;
       // log.initialWidth = log.realWidth = log.realWidth || floatWidth;
       // log.initialHeight = log.realHeight = log.realHeight || floatHeight;
-      console.dir(draggableElement);
-      console.log("update draggableSize", log);
     }
   });
 };
@@ -31,11 +29,6 @@ export const updateDraggableRect = (
   if (!moveable.state.target) return null;
   return refGlobalDrawingLogs.current.map((draggable) => {
     if (draggable.id === draggableElementId) {
-      console.log(moveable);
-      console.log(
-        moveable.state.targetClientRect.width,
-        moveable.state.targetClientRect.height
-      );
       return {
         ...draggable,
         translate:

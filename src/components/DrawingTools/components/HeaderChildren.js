@@ -13,6 +13,7 @@ import {
 import {
   deleteCanvasWithTransparency,
   getCalculatedCoordsOfContainCanvas,
+  getDominantCellSizeOfContainCanvas,
   paintWholeCanvas,
   redrawGlobalDrawingLogs,
   transformElementSizeIntoCanvasElementSize,
@@ -60,7 +61,7 @@ const HeaderChildren = () => {
           anchor.current.href = url;
           anchor.current.download = imageFile?.name || "IMAGE";
           anchor.current.click();
-          anchor.remove();
+          anchor.current.remove();
 
           setTimeout(() => {
             setDataURLBlob(null);
@@ -84,6 +85,7 @@ const HeaderChildren = () => {
     let layerCtxCopy = $canvasLayerCopy.getContext("2d", {
       willReadFrequently: true,
     });
+    let layerCtxWithImage = $canvasLayerWithImage.getContext("2d");
 
     layerCtxCopy.drawImage(
       $canvas,
@@ -98,9 +100,8 @@ const HeaderChildren = () => {
       if (principalImageLoaded) {
         $canvasLayerWithImage.width = principalImageLoaded.width;
         $canvasLayerWithImage.height = principalImageLoaded.height;
-        let layerCtx = $canvasLayerWithImage.getContext("2d");
 
-        layerCtx.drawImage(
+        layerCtxWithImage.drawImage(
           principalImageLoaded,
           0,
           0,
@@ -108,14 +109,13 @@ const HeaderChildren = () => {
           principalImageLoaded.height
         );
 
-        layerCtx.drawImage(
+        layerCtxWithImage.drawImage(
           $canvasLayerCopy,
           0,
           0,
           principalImageLoaded.width,
           principalImageLoaded.height
         );
-        layerCtx = null;
       }
 
       console.log("converting to data");
@@ -134,6 +134,7 @@ const HeaderChildren = () => {
       URL.revokeObjectURL(dataURL);
       dataURL = null;
       layerCtxCopy = null;
+      layerCtxWithImage = null;
     }, 500);
   };
 
@@ -150,18 +151,25 @@ const HeaderChildren = () => {
             backgroundColor: null,
             removeContainer: true,
           });
+
           let x = log.realLeft;
           let y = log.realTop;
-          const { width, height } = getComputedStyle($canvas);
-          const floatCanvasWidth = parseFloat(width.slice(0, -2));
-          const floatCanvasHeight = parseFloat(height.slice(0, -2));
+          let originalCanvasWidth = $canvas.getBoundingClientRect().width;
+          let originalCanvasHeight = $canvas.getBoundingClientRect().height;
+
+          const { width, height } = getDominantCellSizeOfContainCanvas(
+            originalCanvasWidth,
+            originalCanvasHeight,
+            $canvas.height,
+            $canvas.width
+          );
 
           const { newElementWidth, newElementHeight } =
             transformElementSizeIntoCanvasElementSize(
               log.realWidth,
               log.realHeight,
-              floatCanvasWidth,
-              floatCanvasHeight,
+              width,
+              height,
               $canvas.width,
               $canvas.height
             );
@@ -179,12 +187,12 @@ const HeaderChildren = () => {
           });
 
           console.log(`real:
-          imgW: ${principalImageLoaded.width}
-          imgH: ${principalImageLoaded.height}
+          imgW: ${principalImageLoaded?.width}
+          imgH: ${principalImageLoaded?.height}
           cWidth:${$canvas.width}
           cHeight:${$canvas.height}
-          styleW: ${floatCanvasWidth}
-          styleH: ${floatCanvasHeight}
+          styleW: ${width}
+          styleH: ${height}
           `);
 
           console.log(`real:
