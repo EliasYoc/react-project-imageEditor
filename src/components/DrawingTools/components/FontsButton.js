@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   applyDraggableTextFontFamily,
@@ -64,9 +64,18 @@ const FontsButton = ({ onClick }) => {
   const draggableTextList = document.querySelectorAll(".draggableText");
   const hasDraggableTexts = draggableTextList.length > 0;
 
+  useEffect(() => {
+    alert(draggableTextId);
+    if (draggableTextId) {
+      const draggableText = document.getElementById(draggableTextId);
+      setSelectedFont(draggableText.dataset.fontName || "Normal");
+    }
+  }, [draggableTextId]);
+
   const handleSelectFont = (e) => {
     const $draggableElementText = document.getElementById(draggableTextId);
     $draggableElementText.style.fontFamily = e.target.value;
+    $draggableElementText.dataset.fontName = e.target.dataset.fontName;
     setSelectedFont(e.target.dataset.fontName);
     dispatch(applyDraggableTextFontFamily(e.target.value));
     setIsOpen(false);

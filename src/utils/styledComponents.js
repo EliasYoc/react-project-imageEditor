@@ -25,7 +25,7 @@ export const LayoutToolBox = styled.div`
   background-color: ${({ backgroundColor }) =>
     backgroundColor || themeColor.boxesColor};
   border-radius: ${({ borderRadius }) => borderRadius || "1rem"};
-  width: ${({ width }) => width || "fit-content"};
+  width: ${({ width }) => width};
   height: ${({ height }) => height || "auto"};
   margin: ${({ margin }) => margin || "auto"};
   padding: ${({ padding }) => padding || "0"};
