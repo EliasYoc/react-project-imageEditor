@@ -66,7 +66,10 @@ function App() {
         </div>
         <Canvas />
         {isPrincipalToolsOpen && <PrincipalTools />}
-        <div ref={refFooter} style={{ zIndex: "100" }}>
+        <div
+          ref={refFooter}
+          style={{ zIndex: "100", display: "flex", flexDirection: "column" }}
+        >
           {isDrawingToolsOpen && (
             <>
               <ToolBox

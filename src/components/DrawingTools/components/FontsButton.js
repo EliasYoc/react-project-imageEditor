@@ -60,12 +60,12 @@ const FontsButton = ({ onClick }) => {
   const draggableTextId = useSelector(selectDraggableTextId);
 
   const [isOpen, setIsOpen] = useState(false);
+  // selectedFont must be global and added to useFullSizeDependencies dependencies of Detectabletoolbox...
   const [selectedFont, setSelectedFont] = useState("Normal");
   const draggableTextList = document.querySelectorAll(".draggableText");
   const hasDraggableTexts = draggableTextList.length > 0;
 
   useEffect(() => {
-    alert(draggableTextId);
     if (draggableTextId) {
       const draggableText = document.getElementById(draggableTextId);
       setSelectedFont(draggableText.dataset.fontName || "Normal");
