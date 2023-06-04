@@ -93,7 +93,6 @@ const ElementEditable = ({
   const resetPosition = () => parentNode.scrollTo({ left: 0, top: 0 });
 
   const updateMoveableBlueArea = () => {
-    // updateGlobalLogsElementSize();
     saveUpdatedMoveableRect();
     resetPosition();
   };
@@ -102,25 +101,13 @@ const ElementEditable = ({
     saveUpdatedMoveableRect();
   }, 100);
 
-  // const updateGlobalLogsElementSize = debounce(() => {
-  //   refGlobalDrawingLogs.current.forEach((log) => {
-  //     if (log.whatTask === "draggableText" && log.id === id) {
-  //       const draggableElement = document.getElementById(log.id);
-  //       const { width, height } = getComputedStyle(draggableElement);
-  //       const floatWidth = parseFloat(width.slice(0, -2));
-  //       const floatHeight = parseFloat(height.slice(0, -2));
-  //       log.realWidth = floatWidth;
-  //       log.realHeight = floatHeight;
-  //     }
-  //   });
-  // }, 300);
-
   return (
     <>
       <DraggableTextElement
         id={id}
         className={`target${id} draggableText`}
         onClick={() => dispatch(applyDraggableTextId(id))}
+        onTouchStart={() => dispatch(applyDraggableTextId(id))}
         zIndex={id === draggableTextId ? 15 : 14}
       >
         <span
