@@ -1,8 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useRef, useState } from "react";
 import Moveable from "react-moveable";
-import { useDispatch } from "react-redux";
-import { applyDraggableTextId } from "../../features/paintingSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  applyDraggableTextId,
+  selectDraggableTextFontSize,
+  selectDraggableTextId,
+} from "../../features/paintingSlice";
 import {
   updateDraggableRect,
   updateInitialDraggableTextElementSize,
@@ -22,6 +26,8 @@ const ElementEditable = ({
   refGlobalDrawingLogs,
   fontFamily,
 }) => {
+  const draggableTextId = useSelector(selectDraggableTextId);
+  const draggableTextFontSize = useSelector(selectDraggableTextFontSize);
   const refEditableElement = useRef();
   const refMoveable = useRef();
   const dispatch = useDispatch();
@@ -40,7 +46,7 @@ const ElementEditable = ({
         dispatch(applyDraggableTextId(null));
       };
     },
-    [id, refGlobalDrawingLogs, dispatch]
+    [refGlobalDrawingLogs, dispatch]
   );
 
   useEffect(
@@ -65,6 +71,17 @@ const ElementEditable = ({
     [updateRectTimes]
   );
 
+  useEffect(
+    function applyFontSize() {
+      if (!draggableTextId) return;
+      console.log(draggableTextId);
+      const $draggableText = document.getElementById(draggableTextId);
+      $draggableText.style.fontSize = `${draggableTextFontSize}px`;
+      $draggableText.dataset.fontSize = draggableTextFontSize;
+      saveUpdatedMoveableRect();
+    },
+    [draggableTextFontSize]
+  );
   // no cambia el refGlobalDrawingLogs (fixed)
   const saveUpdatedMoveableRect = async () => {
     refMoveable.current.updateRect();
@@ -102,10 +119,6 @@ const ElementEditable = ({
         id={id}
         className={`target${id} draggableText`}
         onClick={() => dispatch(applyDraggableTextId(id))}
-        style={{
-          // minWidth: "40.5px",
-          background: "rgb(156 39 176 / 35%)",
-        }}
       >
         <span
           ref={refEditableElement}

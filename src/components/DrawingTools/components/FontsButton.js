@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   applyDraggableTextFontFamily,
+  applyDraggableTextFontSize,
   selectDraggableTextFontFamily,
   selectDraggableTextId,
+  selectRangeValues,
+  setPencilSizeForRangeSlider,
 } from "../../../features/paintingSlice";
 import { GlobalButton } from "../../../utils/styledComponents";
 import { FontBox, FontInput, FontLabel } from "../styles";
@@ -58,6 +61,7 @@ const FontsButton = ({ onClick }) => {
   const dispatch = useDispatch();
   const fontFamily = useSelector(selectDraggableTextFontFamily);
   const draggableTextId = useSelector(selectDraggableTextId);
+  const { minValue, maxValue } = useSelector(selectRangeValues);
 
   const [isOpen, setIsOpen] = useState(false);
   // selectedFont must be global and added to useFullSizeDependencies dependencies of Detectabletoolbox...
@@ -65,12 +69,24 @@ const FontsButton = ({ onClick }) => {
   const draggableTextList = document.querySelectorAll(".draggableText");
   const hasDraggableTexts = draggableTextList.length > 0;
 
-  useEffect(() => {
-    if (draggableTextId) {
-      const draggableText = document.getElementById(draggableTextId);
-      setSelectedFont(draggableText.dataset.fontName || "Normal");
-    }
-  }, [draggableTextId]);
+  useEffect(
+    function applyDraggableTextConfiguration() {
+      if (draggableTextId) {
+        console.log("font");
+        const $draggableText = document.getElementById(draggableTextId);
+        setSelectedFont($draggableText.dataset.fontName || "Normal");
+
+        const fontSizeForRange =
+          maxValue + minValue - $draggableText.dataset.fontSize || 22;
+        dispatch(setPencilSizeForRangeSlider(fontSizeForRange));
+
+        dispatch(
+          applyDraggableTextFontSize($draggableText.dataset.fontSize || 22)
+        );
+      }
+    },
+    [draggableTextId, dispatch, maxValue, minValue]
+  );
 
   const handleSelectFont = (e) => {
     const $draggableElementText = document.getElementById(draggableTextId);
