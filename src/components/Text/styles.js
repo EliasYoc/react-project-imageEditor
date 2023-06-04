@@ -12,5 +12,6 @@ export const DraggableTextElement = styled.div`
   font-size: 1.4rem;
   padding: 0.5rem 0;
 
-  animation: ${scaleShowUp} 0.3s ease;
+  // applicar esta animacion afecta la descarga de una imagen con texto que ha sido rotado
+  // animation: ${scaleShowUp} 0.3s ease;
 `;
