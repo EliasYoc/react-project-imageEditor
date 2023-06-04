@@ -16,6 +16,15 @@ export const fadeIn = keyframes`
     opacity:1;
   }
 `;
+
+export const scaleShowUp = keyframes`
+  0% {
+      transform: scale(.8);
+  }
+    100% {
+      transform: scale(1);
+    }
+`;
 // clamp(300px, 90% ,500px)
 export const LayoutToolBox = styled.div`
   display: ${({ display }) => display || "block"};

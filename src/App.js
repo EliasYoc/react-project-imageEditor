@@ -29,8 +29,7 @@ function App() {
     isDrawing,
     isEditingText,
   } = useContext(ContextConfiguration);
-  const { handleSumHeightForCanvas, parentDrawinToolboxSize } =
-    useContext(ContextToolBoxes);
+  const { handleSumHeightForCanvas } = useContext(ContextToolBoxes);
   const { refElement: refFooter, elementSize: footerSize } = useFullSizeElement(
     [isCropToolsOpen, isDrawingToolsOpen]
   );
@@ -59,7 +58,10 @@ function App() {
   }, [openOptionPage]);
 
   return (
-    <div style={{ backgroundColor: themeColor.bodyColor }} className="App">
+    <div
+      style={{ background: "linear-gradient(45deg, #111111, #1d1d1d)" }}
+      className="App"
+    >
       <FittedPaintWrap style={{ color: themeColor.textColor }}>
         <div ref={refHeader}>
           {isDrawingToolsOpen && <Header children={headerChildrenState} />}
@@ -73,8 +75,8 @@ function App() {
           {isDrawingToolsOpen && (
             <>
               <ToolBox
-                width={parentDrawinToolboxSize.width}
-                height={parentDrawinToolboxSize.height}
+                // width={parentDrawinToolboxSize.width}
+                // height={parentDrawinToolboxSize.height}
                 display="flex"
                 borderRadius="50px"
                 position="relative"

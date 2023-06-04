@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Moveable from "react-moveable";
 import { useDispatch, useSelector } from "react-redux";
+import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
   applyDraggableTextId,
   selectDraggableTextFontSize,
@@ -26,6 +27,7 @@ const ElementEditable = ({
   refGlobalDrawingLogs,
   fontFamily,
 }) => {
+  const { isEditingText } = useContext(ContextConfiguration);
   const draggableTextId = useSelector(selectDraggableTextId);
   const draggableTextFontSize = useSelector(selectDraggableTextFontSize);
   const refEditableElement = useRef();
@@ -119,6 +121,7 @@ const ElementEditable = ({
         id={id}
         className={`target${id} draggableText`}
         onClick={() => dispatch(applyDraggableTextId(id))}
+        zIndex={id === draggableTextId ? 15 : 14}
       >
         <span
           ref={refEditableElement}
@@ -148,6 +151,9 @@ const ElementEditable = ({
         ref={refMoveable}
         checkInput={checkInput}
         target={`.target${id}`}
+        className={
+          id === draggableTextId && isEditingText ? "editing" : "drawing"
+        }
         scalable
         draggable
         // snappable

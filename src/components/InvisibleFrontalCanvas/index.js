@@ -66,6 +66,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const refSecondCircleRadius = useRef();
   let { current: allowOneDotAfterPaintingWholeCanvas } = useRef(false);
   const refContainer = useRef();
+  let { current: dragRenderOnce } = useRef(1);
 
   let isPainting = false;
 
@@ -292,25 +293,26 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   };
 
   const handleSetFontSize = (thumbValue) => {
-    console.log(thumbValue);
-    console.log(maxValue, minValue);
     dispatch(applyDraggableTextFontSize(maxValue - thumbValue[0] + minValue));
     dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
   };
 
-  const updateDraggingLog = debounce((e) => {
+  const updateDraggingLogDebounce = debounce((e) => {
     const modifiedGlobalLogs = updateDraggableRect(
       refGlobalDrawingLogs,
       e.moveable,
       draggableTextId
     );
     refGlobalDrawingLogs.current = modifiedGlobalLogs;
-    console.log(refGlobalDrawingLogs);
   }, 300);
 
-  const selectDraggableId = debounce((id) => {
+  const selectDraggableId = (id) => {
     dispatch(applyDraggableTextId(id));
-  }, 300);
+  };
+
+  const resetDragRenderOnceRef = debounce(() => (dragRenderOnce = 1), 300);
+
+  const doNothing = () => {};
 
   return (
     <div
@@ -347,12 +349,15 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                 onRender={(e) => {
                   e.target.style.cssText += e.cssText;
                   refContainer.current.scrollTo(0, 0);
-                  selectDraggableId(e.target.id);
+
+                  if (dragRenderOnce === 1) selectDraggableId(e.target.id);
+                  dragRenderOnce++;
+                  resetDragRenderOnceRef();
                 }}
                 fontFamily={draggable.id === draggableTextId && fontFamily}
-                onRotate={updateDraggingLog}
-                onScale={updateDraggingLog}
-                onDrag={updateDraggingLog}
+                onRotate={updateDraggingLogDebounce}
+                onScale={updateDraggingLogDebounce}
+                onDrag={updateDraggingLogDebounce}
                 refGlobalDrawingLogs={refGlobalDrawingLogs}
               />
             );
@@ -360,18 +365,18 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         })}
 
       <canvas
-        onMouseDown={listenerStartPaiting}
-        onTouchStart={listenerStartPaiting}
-        onMouseMove={listenerPainting}
-        onTouchMove={listenerPainting}
-        onMouseUp={listenerStopPainting}
-        onTouchEnd={listenerStopPainting}
+        onMouseDown={isDrawing ? listenerStartPaiting : doNothing}
+        onTouchStart={isDrawing ? listenerStartPaiting : doNothing}
+        onMouseMove={isDrawing ? listenerPainting : doNothing}
+        onTouchMove={isDrawing ? listenerPainting : doNothing}
+        onMouseUp={isDrawing ? listenerStopPainting : doNothing}
+        onTouchEnd={isDrawing ? listenerStopPainting : doNothing}
         width={canvasSize.width}
         height={canvasSize.height}
         ref={refFrontalCanvas}
         style={{
           position: "absolute",
-          zIndex: "1",
+          zIndex: isDrawing ? "100" : "1",
           // background: "rgba(90,255,78,.3)",
           width: "100%",
           height: "100%",
