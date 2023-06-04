@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import PixelRange from "../PixelRange/PixelRange";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
+  applyDraggableTextFontSize,
   applyDraggableTextId,
   selectDraggableTextFontFamily,
   selectDraggableTextId,
@@ -92,12 +93,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   useEffect(
     function painting() {
       if (!frontalCanvasCtx) return;
-
-      // const canvasStyleText = {
-      //   canvasFontSize: 240,
-      //   positionX: 0,
-      //   positionY: 0,
-      // };
       if (isDrawingToolsOpen || drawingHistoryLength === 0) {
         //config
         ctx.lineCap = frontalCanvasCtx.lineCap = "round";
@@ -296,7 +291,12 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
   };
 
-  const handleSetFontSize = (thumbValue) => {};
+  const handleSetFontSize = (thumbValue) => {
+    console.log(thumbValue);
+    console.log(maxValue, minValue);
+    dispatch(applyDraggableTextFontSize(maxValue - thumbValue[0] + minValue));
+    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
+  };
 
   const updateDraggingLog = debounce((e) => {
     const modifiedGlobalLogs = updateDraggableRect(
@@ -319,7 +319,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       style={{
         width: "100%",
         height: `calc(100% - ${headerHeight + footerHeight}px)`,
-        background: "#ff00005c",
         position: "absolute",
         marginTop: `${headerHeight}px`,
         overflow: "hidden",
@@ -350,7 +349,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                   refContainer.current.scrollTo(0, 0);
                   selectDraggableId(e.target.id);
                 }}
-                // fix: cuando agrego un segundo texto, el fontFamily del primero desaparece
                 fontFamily={draggable.id === draggableTextId && fontFamily}
                 onRotate={updateDraggingLog}
                 onScale={updateDraggingLog}
@@ -374,7 +372,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         style={{
           position: "absolute",
           zIndex: "1",
-          background: "rgba(90,255,78,.3)",
+          // background: "rgba(90,255,78,.3)",
           width: "100%",
           height: "100%",
           objectFit: "contain",
@@ -393,7 +391,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       )}
       {isDrawingToolsOpen && isEditingText && (
         <PixelRange
-          pixelSize={45}
+          pixelSize={pencilSizeForRange}
           minValue={16}
           maxValue={50}
           onInput={handleSetFontSize}
