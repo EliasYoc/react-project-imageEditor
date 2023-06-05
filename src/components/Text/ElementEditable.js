@@ -27,7 +27,7 @@ const ElementEditable = ({
   refGlobalDrawingLogs,
   fontFamily,
 }) => {
-  const { isEditingText } = useContext(ContextConfiguration);
+  const { isEditingText, refFrontalCanvas } = useContext(ContextConfiguration);
   const draggableTextId = useSelector(selectDraggableTextId);
   const draggableTextFontSize = useSelector(selectDraggableTextFontSize);
   const refEditableElement = useRef();
@@ -143,7 +143,6 @@ const ElementEditable = ({
         }
         scalable
         draggable
-        // snappable
         rotatable
         keepRatio
         renderDirections={["w", "e", "s", "n"]}
@@ -158,6 +157,22 @@ const ElementEditable = ({
             setCheckInput(true);
           }
         }}
+        snappable
+        snapDirections={{
+          top: true,
+          center: true,
+          middle: true,
+          bottom: true,
+        }}
+        elementSnapDirections={{
+          top: true,
+          center: true,
+          middle: true,
+          bottom: true,
+        }}
+        snapThreshold={10}
+        elementGuidelines={[refFrontalCanvas]}
+
         // onDrag={(e) => (e.target.style.transform = e.transform)}
         // bounds={{ top: 0, left: 0, right: 0, bottom: 0, position: "css" }}
       />
