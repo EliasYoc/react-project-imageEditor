@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   applyDraggableTextFontFamily,
@@ -8,7 +8,7 @@ import {
   selectRangeValues,
   setPencilSizeForRangeSlider,
 } from "../../../features/paintingSlice";
-import { GlobalButton } from "../../../utils/styledComponents";
+import { FixedContainer, GlobalButton } from "../../../utils/styledComponents";
 import { FontBox, FontInput, FontLabel } from "../styles";
 const fonts = [
   {
@@ -62,19 +62,24 @@ const FontsButton = ({ onClick }) => {
   const fontFamily = useSelector(selectDraggableTextFontFamily);
   const draggableTextId = useSelector(selectDraggableTextId);
   const { minValue, maxValue } = useSelector(selectRangeValues);
-
   const [isOpen, setIsOpen] = useState(false);
+  const refFontBox = useRef();
   // selectedFont must be global and added to useFullSizeDependencies dependencies of Detectabletoolbox...
-  const [selectedFont, setSelectedFont] = useState("Normal");
+  const [selectedFontName, setSelectedFontName] = useState("Normal");
+
   const draggableTextList = document.querySelectorAll(".draggableText");
   const hasDraggableTexts = draggableTextList.length > 0;
 
   useEffect(
     function applyDraggableTextConfiguration() {
       if (draggableTextId) {
-        console.log("font");
         const $draggableText = document.getElementById(draggableTextId);
-        setSelectedFont($draggableText.dataset.fontName || "Normal");
+        setSelectedFontName($draggableText.dataset.fontName || "Normal");
+        dispatch(
+          applyDraggableTextFontFamily(
+            $draggableText.dataset.fontFamily || fonts[0].font
+          )
+        );
 
         const fontSizeForRange =
           maxValue + minValue - $draggableText.dataset.fontSize || 22;
@@ -92,7 +97,8 @@ const FontsButton = ({ onClick }) => {
     const $draggableElementText = document.getElementById(draggableTextId);
     $draggableElementText.style.fontFamily = e.target.value;
     $draggableElementText.dataset.fontName = e.target.dataset.fontName;
-    setSelectedFont(e.target.dataset.fontName);
+    $draggableElementText.dataset.fontFamily = e.target.value;
+    setSelectedFontName(e.target.dataset.fontName);
     dispatch(applyDraggableTextFontFamily(e.target.value));
     setIsOpen(false);
   };
@@ -108,8 +114,12 @@ const FontsButton = ({ onClick }) => {
       backgroundColor={`${hasDraggableTexts ? "transparent" : "#4d4c4c"}`}
       style={{ pointerEvents: hasDraggableTexts ? "auto" : "none", fontFamily }}
     >
-      {selectedFont}
-      <FontBox className={`${isOpen ? "open" : ""}`}>
+      {selectedFontName}
+      <FixedContainer
+        zIndex={-1}
+        className={isOpen ? "" : "close"}
+      ></FixedContainer>
+      <FontBox ref={refFontBox} className={`${isOpen ? "open" : ""}`}>
         <div
           style={{
             overflow: "hidden",
@@ -121,6 +131,7 @@ const FontsButton = ({ onClick }) => {
             <>
               <FontLabel fontFamily={font.font} htmlFor={font.id}>
                 <FontInput
+                  checked={selectedFontName === font.label}
                   data-font-name={font.label}
                   onChange={handleSelectFont}
                   name="font"

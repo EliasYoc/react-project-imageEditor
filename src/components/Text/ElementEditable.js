@@ -76,7 +76,6 @@ const ElementEditable = ({
   useEffect(
     function applyFontSize() {
       if (!draggableTextId) return;
-      console.log(draggableTextId);
       const $draggableText = document.getElementById(draggableTextId);
       $draggableText.style.fontSize = `${draggableTextFontSize}px`;
       $draggableText.dataset.fontSize = draggableTextFontSize;
@@ -163,6 +162,8 @@ const ElementEditable = ({
           center: true,
           middle: true,
           bottom: true,
+          left: true,
+          right: true,
         }}
         elementSnapDirections={{
           top: true,
@@ -170,7 +171,7 @@ const ElementEditable = ({
           middle: true,
           bottom: true,
         }}
-        snapThreshold={10}
+        snapThreshold={4}
         elementGuidelines={[refFrontalCanvas]}
 
         // onDrag={(e) => (e.target.style.transform = e.transform)}
