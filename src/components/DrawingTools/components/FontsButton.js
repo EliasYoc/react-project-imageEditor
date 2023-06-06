@@ -82,7 +82,7 @@ const FontsButton = ({ onClick }) => {
         );
 
         const fontSizeForRange =
-          maxValue + minValue - $draggableText.dataset.fontSize || 22;
+          maxValue + minValue - ($draggableText.dataset.fontSize || 22);
         dispatch(setPencilSizeForRangeSlider(fontSizeForRange));
 
         dispatch(

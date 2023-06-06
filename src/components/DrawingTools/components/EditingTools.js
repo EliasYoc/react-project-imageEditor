@@ -38,11 +38,12 @@ const EditingTools = () => {
         const arrColor = $draggable.style.color
           .slice(indexOfFirstParenthesis + 1, indesOfLastParenthesis)
           .split(", ");
+        console.log(arrColor);
 
         const objColor = {
-          r: parseInt(arrColor[0]),
-          g: parseInt(arrColor[1]),
-          b: parseInt(arrColor[2]),
+          r: parseInt(arrColor[0] || 0),
+          g: parseInt(arrColor[1] || 0),
+          b: parseInt(arrColor[2] || 0),
           a: !arrColor[3] ? 1 : parseInt(arrColor[3]),
         };
         dispatch(applyDraggableTextColor(objColor));
@@ -131,6 +132,7 @@ const EditingTools = () => {
         isOpen={isOpenPortalsEditingModal}
         onClose={handleOpenEditingModal}
       >
+        {console.log(color)}
         <RgbaColorPicker color={color} onChange={hanldleApplyColor} />
       </PortalsSwipeableMenuLayout>
     </DetectableToolboxSizeLayout>
