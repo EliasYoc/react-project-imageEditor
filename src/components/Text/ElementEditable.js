@@ -74,7 +74,7 @@ const ElementEditable = ({
   );
 
   useEffect(
-    function applyFontSize() {
+    function reapplyFontSize() {
       if (!draggableTextId) return;
       const $draggableText = document.getElementById(draggableTextId);
       $draggableText.style.fontSize = `${draggableTextFontSize}px`;
