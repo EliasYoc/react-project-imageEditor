@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
 import { BiDotsVerticalRounded, BiDownload } from "react-icons/bi";
@@ -12,8 +12,11 @@ import {
 } from "../../../utils/styledComponents";
 import {
   deleteCanvasWithTransparency,
+  getCalculatedCoordsOfContainCanvas,
+  getDominantCellSizeOfContainCanvas,
   paintWholeCanvas,
   redrawGlobalDrawingLogs,
+  transformElementSizeIntoCanvasElementSize,
 } from "../../../utils/canvas";
 import { dataUrlToBlob } from "../../../utils/helper";
 import { useEffect } from "react";
@@ -22,6 +25,7 @@ import Option from "../../ListOptionsLayout/components/Option";
 import PortalNormalModal from "../../Layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../Layout/PortalsSwipeableMenuLayout";
 import GradientBox from "../../GradientBox";
+import html2canvas from "html2canvas";
 
 const HeaderChildren = () => {
   const {
@@ -41,23 +45,29 @@ const HeaderChildren = () => {
   const [percentDownloading, setPercentDownloading] = useState(0);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isOpenGradientBox, setIsOpenGradientBox] = useState(false);
+  const anchor = useRef();
 
   useEffect(() => {
     async function progressDownload() {
-      const anchor = document.createElement("a");
       const eventTarget = await readImageProgressFromDataURLBlob(dataURLBlob);
+      anchor.current = document.createElement("a");
 
       eventTarget.addEventListener("progress", function (event) {
         const percent = Math.round(event.detail.percent);
         if (event.detail.image) {
           // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
           const url = event.detail.image.src;
-          anchor.href = url;
-          anchor.download = imageFile?.name || "IMAGE";
-          anchor.click();
-          anchor.remove();
-          setDataURLBlob(null);
-          setTimeout(() => setPercentDownloading(0), 400);
+          console.log(url);
+          anchor.current.href = url;
+          anchor.current.download = imageFile?.name || "IMAGE";
+          anchor.current.click();
+          anchor.current.remove();
+
+          setTimeout(() => {
+            setDataURLBlob(null);
+            setPercentDownloading(0);
+            URL.revokeObjectURL(url);
+          }, 400);
         }
         setPercentDownloading(percent);
       });
@@ -65,16 +75,33 @@ const HeaderChildren = () => {
     if (dataURLBlob) progressDownload();
   }, [dataURLBlob, imageFile?.name]);
 
-  const downloadImageCanvas = () => {
+  const configureImageCanvasBeforeDownloading = async () => {
     setIsLoadingImage(true);
-    setTimeout(async () => {
-      const $canvasLayer = document.createElement("canvas");
-      if (principalImageLoaded) {
-        $canvasLayer.width = principalImageLoaded.width;
-        $canvasLayer.height = principalImageLoaded.height;
-        const layerCtx = $canvasLayer.getContext("2d");
+    const $canvasLayerWithImage = document.createElement("canvas");
+    const $canvasLayerCopy = document.createElement("canvas");
+    $canvasLayerCopy.width = $canvas.width;
+    $canvasLayerCopy.height = $canvas.height;
 
-        layerCtx.drawImage(
+    let layerCtxCopy = $canvasLayerCopy.getContext("2d", {
+      willReadFrequently: true,
+    });
+    let layerCtxWithImage = $canvasLayerWithImage.getContext("2d");
+
+    layerCtxCopy.drawImage(
+      $canvas,
+      0,
+      0,
+      principalImageLoaded ? principalImageLoaded.width : $canvas.width,
+      principalImageLoaded ? principalImageLoaded.height : $canvas.height
+    );
+    await draggableItemIntoCanvas(layerCtxCopy);
+
+    setTimeout(async () => {
+      if (principalImageLoaded) {
+        $canvasLayerWithImage.width = principalImageLoaded.width;
+        $canvasLayerWithImage.height = principalImageLoaded.height;
+
+        layerCtxWithImage.drawImage(
           principalImageLoaded,
           0,
           0,
@@ -82,24 +109,130 @@ const HeaderChildren = () => {
           principalImageLoaded.height
         );
 
-        layerCtx.drawImage(
-          $canvas,
+        layerCtxWithImage.drawImage(
+          $canvasLayerCopy,
           0,
           0,
           principalImageLoaded.width,
           principalImageLoaded.height
         );
       }
+
+      console.log("converting to data");
       let dataURL = principalImageLoaded
-        ? $canvasLayer.toDataURL((imageFile && imageFile.type) || "image/png")
-        : $canvas.toDataURL("image/png");
+        ? $canvasLayerWithImage.toDataURL(
+            (imageFile && imageFile.type) || "image/png"
+          )
+        : $canvasLayerCopy.toDataURL("image/png");
+      // i need the blob in order to do the progress bar
       const dataBlob = await dataUrlToBlob(dataURL);
 
       setIsLoadingImage(false);
       setDataURLBlob(dataBlob);
+      $canvasLayerWithImage.remove();
+      $canvasLayerCopy.remove();
+      URL.revokeObjectURL(dataURL);
       dataURL = null;
+      layerCtxCopy = null;
+      layerCtxWithImage = null;
     }, 500);
   };
+
+  const draggableItemIntoCanvas = async (targetContext) => {
+    for (const log of refGlobalDrawingLogs.current) {
+      if (
+        log.whatTask === "draggableText" ||
+        log.whatTask === "draggableSticker"
+      ) {
+        const $draggableElement = document.getElementById(log.id);
+        let img = new Image();
+        try {
+          const elementCanvas = await html2canvas($draggableElement, {
+            backgroundColor: null,
+            removeContainer: true,
+          });
+
+          let x = log.realLeft;
+          let y = log.realTop;
+          let originalCanvasWidth = $canvas.getBoundingClientRect().width;
+          let originalCanvasHeight = $canvas.getBoundingClientRect().height;
+
+          const { width, height } = getDominantCellSizeOfContainCanvas(
+            originalCanvasWidth,
+            originalCanvasHeight,
+            $canvas.height,
+            $canvas.width
+          );
+
+          const { newElementWidth, newElementHeight } =
+            transformElementSizeIntoCanvasElementSize(
+              log.realWidth,
+              log.realHeight,
+              width,
+              height,
+              $canvas.width,
+              $canvas.height
+            );
+          console.dir($canvas);
+
+          const url = elementCanvas.toDataURL("image/png");
+          img.src = url;
+
+          const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
+            canvasElement: $canvas,
+            canvasWidthPixel: $canvas.width,
+            canvasHeightPixel: $canvas.height,
+            xCoord: x,
+            yCoord: y,
+          });
+
+          console.log(`real:
+          imgW: ${principalImageLoaded?.width}
+          imgH: ${principalImageLoaded?.height}
+          cWidth:${$canvas.width}
+          cHeight:${$canvas.height}
+          styleW: ${width}
+          styleH: ${height}
+          `);
+
+          console.log(`real:
+          x:${x}
+          y:${y}
+          w: ${log.realWidth}
+          h: ${log.realHeight}
+          `);
+
+          const msg = await imageOnLoad(img);
+          console.log(`${msg}: 
+                ${img}
+                x: ${coordX}
+                y: ${coordY}
+                w: ${newElementWidth}
+                h: ${newElementHeight}
+              `);
+          targetContext.drawImage(
+            img,
+            coordX,
+            coordY,
+            newElementWidth,
+            newElementHeight
+          );
+
+          URL.revokeObjectURL(url);
+          elementCanvas.remove();
+          img = null;
+        } catch (error) {
+          alert(error);
+        }
+      }
+    }
+  };
+
+  const imageOnLoad = (image) =>
+    new Promise((resolve, reject) => {
+      image.onload = () => resolve("image loaded");
+      image.onerror = () => reject("error");
+    });
 
   const readImageProgressFromDataURLBlob = async (dataURLBlob) => {
     const eventTarget = new EventTarget();
@@ -145,7 +278,7 @@ const HeaderChildren = () => {
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
   const handleOpenGradientBox = (isOpen) => setIsOpenGradientBox(isOpen);
-  // example to download, it works because has content-length
+  // example to download, it works, has content-length
   // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
 
   // parseInt(res.headers.get("Content-Length"), 10);
@@ -300,7 +433,11 @@ const HeaderChildren = () => {
           <BiDotsVerticalRounded />
         </GlobalButton>
       </LayoutToolBox>
-      <PortalNormalModal isOpen={isOptionsOpen} onClose={handleOpenOptions}>
+      <PortalNormalModal
+        isOpen={isOptionsOpen}
+        onClose={handleOpenOptions}
+        zIndex="100"
+      >
         <ListOptionsLayout
           background="#2e2e2ee0"
           position="absolute"
@@ -308,7 +445,7 @@ const HeaderChildren = () => {
           right=".5rem"
         >
           <Option
-            onClick={downloadImageCanvas}
+            onClick={configureImageCanvasBeforeDownloading}
             icon={BiDownload}
             text="Descargar"
           />

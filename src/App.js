@@ -14,6 +14,9 @@ import LoaderSpinner from "./components/LoaderSpinner";
 import useFullSizeElement from "./hooks/useFullSizeElement";
 import { ContextToolBoxes } from "./context/ToolBoxesProvider";
 import InvisibleFrontalCanvas from "./components/InvisibleFrontalCanvas";
+import ToolBox from "./components/ToolBox";
+import DrawingNavigation from "./components/DrawingNavigation";
+import EditingTools from "./components/DrawingTools/components/EditingTools";
 
 function App() {
   const {
@@ -23,6 +26,8 @@ function App() {
     openOptionPage,
     headerChildrenState,
     isLoadingImage,
+    isDrawing,
+    isEditingText,
   } = useContext(ContextConfiguration);
   const { handleSumHeightForCanvas } = useContext(ContextToolBoxes);
   const { refElement: refFooter, elementSize: footerSize } = useFullSizeElement(
@@ -53,15 +58,36 @@ function App() {
   }, [openOptionPage]);
 
   return (
-    <div style={{ backgroundColor: themeColor.bodyColor }} className="App">
+    <div
+      style={{ background: "linear-gradient(45deg, #111111, #1d1d1d)" }}
+      className="App"
+    >
       <FittedPaintWrap style={{ color: themeColor.textColor }}>
         <div ref={refHeader}>
           {isDrawingToolsOpen && <Header children={headerChildrenState} />}
         </div>
         <Canvas />
         {isPrincipalToolsOpen && <PrincipalTools />}
-        <div ref={refFooter}>
-          {isDrawingToolsOpen && <DrawingTools />}
+        <div
+          ref={refFooter}
+          style={{ zIndex: "100", display: "flex", flexDirection: "column" }}
+        >
+          {isDrawingToolsOpen && (
+            <>
+              <ToolBox
+                // width={parentDrawinToolboxSize.width}
+                // height={parentDrawinToolboxSize.height}
+                display="flex"
+                borderRadius="50px"
+                position="relative"
+                margin="10px auto 0"
+              >
+                {isDrawing && <DrawingTools />}
+                {isEditingText && <EditingTools />}
+              </ToolBox>
+              <DrawingNavigation />
+            </>
+          )}
           {isCropToolsOpen && <CropTools />}
         </div>
         {isDrawingToolsOpen && (
@@ -72,7 +98,7 @@ function App() {
         )}
       </FittedPaintWrap>
       {isLoadingImage && (
-        <FixedContainer>
+        <FixedContainer zIndex="100">
           <LoaderSpinner />
         </FixedContainer>
       )}

@@ -7,6 +7,7 @@ import {
 } from "../../features/paintingSlice";
 import { debounce } from "../../utils/helper";
 
+// this color picker only for pencils
 const ColorPickerMenu = () => {
   const kindOfPencil = useSelector(selectKindOfPencil);
   const pencilType = useSelector(selectPencilType);

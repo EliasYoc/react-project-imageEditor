@@ -1,5 +1,47 @@
 import { middlePointBetween } from "./helper";
 
+/**
+ * this function calculates de pixel one, from canvas into contain canvas resolution when providing the canvas style w,h and canvas resolution w,h.
+ * this is useful when canvas background-size is "contain" and real canvas are placed at center
+ * @param {Number} originalCanvasWidth the real width resolution
+ * @param {Number} originalCanvasHeight the real height resolution
+ * @param {Number} canvasHeightPixel the canvas style height
+ * @param {Number} canvasWidthPixel the canvas style width
+ * @returns object that provides the dominantCellSize in order to do your tasks, and the maxWidth, masHeight,width and heigh of resolution canvas as canvas mode size
+ */
+export const getDominantCellSizeOfContainCanvas = (
+  originalCanvasWidth,
+  originalCanvasHeight,
+  canvasHeightPixel,
+  canvasWidthPixel
+) => {
+  let dominantCellSize;
+  //when resizing the viewport the least possible, to resize the contain canvas there will be troubles for painting
+  // canvas container horizontal
+  const cellSize = originalCanvasHeight / canvasHeightPixel; //calculating pixel size
+  const maxWidth = cellSize * canvasWidthPixel;
+  const maxHeight = cellSize * canvasHeightPixel;
+  // const maxHeight = cellSize * canvasHeightPixel;
+
+  dominantCellSize =
+    originalCanvasWidth < maxWidth
+      ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
+      : cellSize;
+
+  const width = dominantCellSize * canvasWidthPixel;
+  const height = dominantCellSize * canvasHeightPixel;
+  // const calculatedContainBgHeight =
+  //   originalCanvasWidth < maxWidth
+  //     ? dominantCellSize * canvasHeightPixel
+  //     : maxHeight;
+  // const calculatedContainCanvasWidth =
+  //   originalCanvasWidth < maxWidth
+  //     ? dominantCellSize * canvasWidthPixel
+  //     : maxWidth;
+
+  return { dominantCellSize, maxWidth, maxHeight, width, height };
+};
+
 export const getCalculatedCoordsOfContainCanvas = ({
   canvasElement,
   canvasWidthPixel,
@@ -9,33 +51,13 @@ export const getCalculatedCoordsOfContainCanvas = ({
 }) => {
   let originalCanvasWidth = canvasElement.getBoundingClientRect().width;
   let originalCanvasHeight = canvasElement.getBoundingClientRect().height;
-  let dominantCellSize;
-  //when resizing the viewport the least possible, to resize the contain canvas there will be troubles for painting
-  // canvas container horizontal
-  const cellSize = originalCanvasHeight / canvasHeightPixel; //calculating pixel size
-  const maxWidth = cellSize * canvasWidthPixel;
-  // const maxHeight = cellSize * canvasHeightPixel;
-  if (canvasWidthPixel > canvasHeightPixel) {
-    dominantCellSize =
-      originalCanvasWidth < maxWidth
-        ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
-        : cellSize;
 
-    // const calculatedContainBgHeight =
-    //   originalCanvasWidth < maxWidth
-    //     ? dominantCellSize * canvasHeightPixel
-    //     : maxHeight;
-    // const calculatedContainCanvasWidth =
-    //   originalCanvasWidth < maxWidth
-    //     ? dominantCellSize * canvasWidthPixel
-    //     : maxWidth;
-  } else {
-    //canvas container vertical
-    dominantCellSize =
-      originalCanvasWidth < maxWidth
-        ? originalCanvasWidth / canvasWidthPixel ////calculating pixel size
-        : cellSize;
-  }
+  const { dominantCellSize } = getDominantCellSizeOfContainCanvas(
+    originalCanvasWidth,
+    originalCanvasHeight,
+    canvasHeightPixel,
+    canvasWidthPixel
+  );
   // investigar este calculo
   let coordX = Math.floor(
     (xCoord -
@@ -201,10 +223,7 @@ export const redrawLastPath = (targetCtx, paintingLogs) => {
   if (!paintingLogs.length) return;
   let p1 = paintingLogs[0];
   let p2 = paintingLogs[1];
-  // console.log(refPaintingLogs.current);
-  // console.log(`p1: ${JSON.stringify(p1)},
-  // p2: ${JSON.stringify(p2)}
-  // `);
+
   targetCtx.beginPath();
   targetCtx.moveTo(p1.coordX, p1.coordY);
   targetCtx.lineTo(p1.coordX, p1.coordY);
@@ -268,3 +287,23 @@ export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
 
   return gradient;
 }
+
+export const transformElementSizeIntoCanvasElementSize = (
+  elementWidth = 0,
+  elementHeight = 0,
+  canvasStyleMaxWidth = 0,
+  canvasStyleMaxHeigth = 0,
+  canvasWidth = 0,
+  canvasHeight = 0
+) => {
+  let newElementWidth;
+  let newElementHeight;
+  if (canvasWidth > canvasHeight) {
+    newElementWidth = (elementWidth * canvasWidth) / canvasStyleMaxWidth;
+    newElementHeight = (elementHeight * canvasWidth) / canvasStyleMaxWidth;
+  } else {
+    newElementWidth = (elementWidth * canvasHeight) / canvasStyleMaxHeigth;
+    newElementHeight = (elementHeight * canvasHeight) / canvasStyleMaxHeigth;
+  }
+  return { newElementWidth, newElementHeight };
+};

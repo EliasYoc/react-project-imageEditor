@@ -81,10 +81,15 @@ const PrincipalTools = () => {
         borderRadius="50px"
         margin="10px auto"
         bottom="0"
+        padding="0 .5rem"
         ref={refToolBox}
         onTransitionEnd={(e) => {
           if (e.propertyName === "transform") {
-            openOptionPage({ [refOpenDisplayProperty.current]: true });
+            openOptionPage({
+              [refOpenDisplayProperty.current]: true,
+              isDrawing:
+                refOpenDisplayProperty.current === "isDrawingToolsOpen",
+            });
           }
         }}
       >

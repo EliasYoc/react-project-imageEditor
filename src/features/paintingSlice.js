@@ -15,8 +15,11 @@ export const initialBgMultiInputRange = {
   },
 };
 
-const initialState = {
-  elementTextStyle: {
+export const initialPaintingState = {
+  idOfSelectedDraggableText: null,
+  colorOfSelectedDraggableText: { r: 0, g: 0, b: 0, a: 1 },
+  draggableTextStyle: {
+    fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`,
     fontSize: 24,
   },
   pencilType: "normal",
@@ -56,7 +59,7 @@ const initialState = {
 
 const paintingSlice = createSlice({
   name: "paintingSlice",
-  initialState,
+  initialState: initialPaintingState,
   reducers: {
     setColorPencil(state, { payload }) {
       state.kindOfPencilStyle[state.pencilType].color = payload;
@@ -89,6 +92,18 @@ const paintingSlice = createSlice({
       state.gradientBgMultiInputRange[payload.id].thumbBackground =
         payload.background;
     },
+    applyDraggableTextId(state, { payload }) {
+      state.idOfSelectedDraggableText = payload;
+    },
+    applyDraggableTextColor(state, { payload }) {
+      state.colorOfSelectedDraggableText = payload;
+    },
+    applyDraggableTextFontFamily(state, { payload }) {
+      state.draggableTextStyle.fontFamily = payload;
+    },
+    applyDraggableTextFontSize(state, { payload }) {
+      state.draggableTextStyle.fontSize = payload;
+    },
   },
 });
 
@@ -103,6 +118,10 @@ export const {
   changeInpurRangeGradientDegree,
   deleteInputRange,
   changeColorMultiInputRange,
+  applyDraggableTextId,
+  applyDraggableTextColor,
+  applyDraggableTextFontFamily,
+  applyDraggableTextFontSize,
 } = paintingSlice.actions;
 export const selectPencilType = (state) => state.painting.pencilType;
 export const selectKindOfPencil = (state) => state.painting.kindOfPencilStyle;
@@ -113,4 +132,12 @@ export const selectGradientMultiIntputRange = (state) =>
   state.painting.gradientBgMultiInputRange;
 export const selectGradientInputRangeDegree = (state) =>
   state.painting.gradientInputRangeDegree;
+export const selectDraggableTextId = (state) =>
+  state.painting.idOfSelectedDraggableText;
+export const selectDraggableTextColor = (state) =>
+  state.painting.colorOfSelectedDraggableText;
+export const selectDraggableTextFontFamily = (state) =>
+  state.painting.draggableTextStyle.fontFamily;
+export const selectDraggableTextFontSize = (state) =>
+  state.painting.draggableTextStyle.fontSize;
 export default paintingSlice.reducer;

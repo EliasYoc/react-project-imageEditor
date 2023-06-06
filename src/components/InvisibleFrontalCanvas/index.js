@@ -1,12 +1,19 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useContext } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import PixelRange from "../PixelRange/PixelRange";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import {
+  applyDraggableTextFontSize,
+  applyDraggableTextId,
+  selectDraggableTextFontFamily,
+  selectDraggableTextId,
   selectKindOfPencil,
   selectPencilSizeForRange,
   selectPencilType,
+  selectRangeValues,
+  setPencilSizeForRangeSlider,
+  setSizePencil,
 } from "../../features/paintingSlice";
 import {
   deleteCanvasWithTransparency,
@@ -15,6 +22,10 @@ import {
   redrawLastPath,
   redrawSprayPoints,
 } from "../../utils/canvas";
+import ElementEditable from "../Text/ElementEditable";
+import PortalNormalModal from "../Layout/PortalNormalModal";
+import { debounce } from "../../utils/helper";
+import { updateDraggableRect } from "../../utils/draggableElements";
 
 const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const {
@@ -27,12 +38,20 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     $canvas,
     principalImageLoaded,
     isDrawingToolsOpen,
+    isDrawing,
+    isEditingText,
     ctx,
   } = useContext(ContextConfiguration);
   const pencilType = useSelector(selectPencilType);
   const kindOfPencilStyle = useSelector(selectKindOfPencil);
   const pencilSizeForRange = useSelector(selectPencilSizeForRange);
+  const { minValue, maxValue } = useSelector(selectRangeValues);
+  const draggableTextId = useSelector(selectDraggableTextId);
+  const fontFamily = useSelector(selectDraggableTextFontFamily);
 
+  const dispatch = useDispatch();
+
+  const [checkInput, setCheckInput] = useState(false);
   const $frontalCanvas = refFrontalCanvas.current;
   const frontalCanvasCtx = $frontalCanvas?.getContext("2d");
   const { color, size } = kindOfPencilStyle[pencilType];
@@ -46,7 +65,9 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const refPercentageOffForSecondCircle = useRef(89 / 100);
   const refSecondCircleRadius = useRef();
   let { current: allowOneDotAfterPaintingWholeCanvas } = useRef(false);
-  // let { current: sprayLastPoints } = useRef({});
+  const refContainer = useRef();
+  let { current: dragRenderOnce } = useRef(1);
+
   let isPainting = false;
 
   useEffect(
@@ -73,31 +94,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   useEffect(
     function painting() {
       if (!frontalCanvasCtx) return;
-
-      // const canvasStyleText = {
-      //   canvasFontSize: 240,
-      //   positionX: 0,
-      //   positionY: 0,
-      // };
-      console.log("painting canvas");
-      //painting canvas
-      //creating the text's background
-      // ctx.fillStyle = "#fff";
-      // ctx.fillRect(
-      //   canvasStyleText.positionX,
-      //   canvasStyleText.positionY,
-      //   40,
-      //   canvasStyleText.canvasFontSize
-      // );
-
-      //designing text
-      // ctx.font = `${canvasStyleText.canvasFontSize}px Comic Sans Ms`;
-      // ctx.fillStyle = "#000";
-      // ctx.fillText(
-      //   "Elías Yoc",
-      //   canvasStyleText.positionX,
-      //   canvasStyleText.positionY + canvasStyleText.canvasFontSize
-      // );
       if (isDrawingToolsOpen || drawingHistoryLength === 0) {
         //config
         ctx.lineCap = frontalCanvasCtx.lineCap = "round";
@@ -155,7 +151,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         whatTask: "paintingWholeCanvas",
         globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
       };
-      console.log("setimeout start");
       paintWholeCanvas(
         ctx,
         `rgba(${r}, ${g}, ${b}, ${alpha})`,
@@ -219,7 +214,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
 
   const listenerStopPainting = (e) => {
     if (!isDrawingToolsOpen) return;
-    console.log("up");
     clearTimeout(pressHoldTimeoutId);
     if (!refWholeCanvasHasBeenPainted.current) {
       drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
@@ -293,38 +287,122 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   };
 
   console.log("frontal canvas");
+  const handleSetPencilSize = (thumbValue) => {
+    dispatch(setSizePencil(maxValue - thumbValue[0] + minValue));
+    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
+  };
+
+  const handleSetFontSize = (thumbValue) => {
+    dispatch(applyDraggableTextFontSize(maxValue - thumbValue[0] + minValue));
+    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
+  };
+
+  const updateDraggingLogDebounce = debounce((e) => {
+    const modifiedGlobalLogs = updateDraggableRect(
+      refGlobalDrawingLogs,
+      e.moveable,
+      draggableTextId
+    );
+    refGlobalDrawingLogs.current = modifiedGlobalLogs;
+  }, 300);
+
+  const selectDraggableId = (id) => {
+    dispatch(applyDraggableTextId(id));
+  };
+
+  const resetDragRenderOnceRef = debounce(() => (dragRenderOnce = 1), 300);
+
+  const doNothing = () => {};
+
   return (
-    <>
+    <div
+      className="scrollable"
+      ref={refContainer}
+      style={{
+        width: "100%",
+        height: `calc(100% - ${headerHeight + footerHeight}px)`,
+        position: "absolute",
+        marginTop: `${headerHeight}px`,
+        overflow: "hidden",
+        left: 0,
+      }}
+    >
+      <PortalNormalModal
+        isOpen={checkInput}
+        onClose={() => setCheckInput(false)}
+      />
+      {refGlobalDrawingLogs.current
+        .filter(
+          (log) =>
+            log.whatTask === "draggableText" ||
+            log.whatTask === "draggableSticker"
+        )
+        .map((draggable) => {
+          if (draggable.whatTask === "draggableText")
+            return (
+              <ElementEditable
+                key={draggable.id}
+                parentNode={refContainer.current}
+                setCheckInput={setCheckInput}
+                // checkInput={checkInput}
+                id={draggable.id}
+                onRender={(e) => {
+                  e.target.style.cssText += e.cssText;
+                  refContainer.current.scrollTo(0, 0);
+
+                  if (dragRenderOnce === 1) selectDraggableId(e.target.id);
+                  dragRenderOnce++;
+                  resetDragRenderOnceRef();
+                }}
+                fontFamily={draggable.id === draggableTextId && fontFamily}
+                onRotate={updateDraggingLogDebounce}
+                onScale={updateDraggingLogDebounce}
+                onDrag={updateDraggingLogDebounce}
+                refGlobalDrawingLogs={refGlobalDrawingLogs}
+              />
+            );
+          return draggable;
+        })}
+
       <canvas
-        onMouseDown={listenerStartPaiting}
-        onTouchStart={listenerStartPaiting}
-        onMouseMove={listenerPainting}
-        onTouchMove={listenerPainting}
-        onMouseUp={listenerStopPainting}
-        onTouchEnd={listenerStopPainting}
+        onMouseDown={isDrawing ? listenerStartPaiting : doNothing}
+        onTouchStart={isDrawing ? listenerStartPaiting : doNothing}
+        onMouseMove={isDrawing ? listenerPainting : doNothing}
+        onTouchMove={isDrawing ? listenerPainting : doNothing}
+        onMouseUp={isDrawing ? listenerStopPainting : doNothing}
+        onTouchEnd={isDrawing ? listenerStopPainting : doNothing}
         width={canvasSize.width}
         height={canvasSize.height}
         ref={refFrontalCanvas}
         style={{
-          // background: "rgba(0,0,0,.3)",
-          width: "100%",
-          marginTop: `${headerHeight}px`,
-          height: `calc(100% - ${headerHeight + footerHeight}px)`,
           position: "absolute",
+          zIndex: isDrawing ? "100" : "1",
+          // background: "rgba(90,255,78,.3)",
+          width: "100%",
+          height: "100%",
           objectFit: "contain",
           imageRendering: "crisp-edges",
         }}
       >
         Este navegador no es compatible
       </canvas>
-      {isDrawingToolsOpen && (
+      {isDrawingToolsOpen && isDrawing && (
         <PixelRange
           pixelSize={pencilSizeForRange}
           minValue={15}
           maxValue={200}
+          onInput={handleSetPencilSize}
         />
       )}
-    </>
+      {isDrawingToolsOpen && isEditingText && (
+        <PixelRange
+          pixelSize={pencilSizeForRange}
+          minValue={16}
+          maxValue={50}
+          onInput={handleSetFontSize}
+        />
+      )}
+    </div>
   );
 };
 
