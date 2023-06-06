@@ -72,7 +72,6 @@ const EditingTools = () => {
       initialHeight: null,
     };
     refGlobalDrawingLogs.current.push(initialDraggableElement);
-    console.log(refGlobalDrawingLogs);
     setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
   };
 
@@ -100,7 +99,7 @@ const EditingTools = () => {
         height="auto"
         fontSize="1rem"
       >
-        Add Text
+        Agregar
       </GlobalButton>
       <FontsButton />
       <GlobalButton

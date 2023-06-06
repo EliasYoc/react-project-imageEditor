@@ -5,17 +5,16 @@ const useClickAway = (element) => {
 
   useEffect(() => {
     const handleClick = (e) => {
-      if (element && e.target.contains(element)) {
-        alert("isClickingAway");
+      if (element && e.currentTarget.contains(element)) {
         setIsClickingAway(true);
       } else {
         setIsClickingAway(false);
       }
     };
-    document.addEventListener("onClick", handleClick);
+    document.addEventListener("click", handleClick);
 
     return () => {
-      document.removeEventListener("onClick", handleClick);
+      document.removeEventListener("click", handleClick);
     };
   }, [element]);
 
