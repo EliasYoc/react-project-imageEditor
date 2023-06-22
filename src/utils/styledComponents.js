@@ -70,6 +70,7 @@ export const GlobalButton = styled.span`
   background-color: ${({ backgroundColor }) =>
     backgroundColor || "transparent"};
   border: ${({ border }) => border || "none"};
+  color: ${({ color }) => color};
   display: ${({ display }) => display || "flex"};
   gap: ${({ gap }) => gap || "0"};
   align-items: ${({ alignItems }) => alignItems || "center"};

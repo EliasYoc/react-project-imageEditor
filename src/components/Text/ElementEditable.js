@@ -13,7 +13,7 @@ import {
   updateInitialDraggableTextElementSize,
 } from "../../utils/draggableElements";
 import { debounce } from "../../utils/helper";
-import { DraggableTextElement } from "./styles";
+import { DraggableTextElement, SpanDraggableText } from "./styles";
 
 const ElementEditable = ({
   parentNode,
@@ -26,6 +26,7 @@ const ElementEditable = ({
   onDrag,
   refGlobalDrawingLogs,
   fontFamily,
+  fontWeight,
 }) => {
   const { isEditingText, refFrontalCanvas } = useContext(ContextConfiguration);
   const draggableTextId = useSelector(selectDraggableTextId);
@@ -34,6 +35,7 @@ const ElementEditable = ({
   const refMoveable = useRef();
   const dispatch = useDispatch();
   const [updateRectTimes, setUpdateRectTimes] = useState(0);
+
   useEffect(() => {
     setCheckInput(true);
     refEditableElement.current.focus();
@@ -53,9 +55,10 @@ const ElementEditable = ({
 
   useEffect(
     function refreshMoveable() {
+      console.log("updating");
       saveUpdatedMoveableRect();
     },
-    [fontFamily]
+    [fontFamily, fontWeight]
   );
 
   useEffect(
@@ -109,7 +112,7 @@ const ElementEditable = ({
         onTouchStart={() => dispatch(applyDraggableTextId(id))}
         zIndex={id === draggableTextId ? 15 : 14}
       >
-        <span
+        <SpanDraggableText
           ref={refEditableElement}
           onKeyDown={updateMoveableBlueArea}
           onKeyUp={upateMoveableRectDebounce}
@@ -121,17 +124,8 @@ const ElementEditable = ({
             e.target.blur();
             setCheckInput(false);
           }}
-          style={{
-            // borderRadius: "1rem",
-            // boxDecorationBreak not supported on html2canvas
-            // boxDecorationBreak: "clone",
-            WebkitBoxDecorationBreak: "clone",
-            padding: ".5rem",
-            // background: "crimson",
-            outline: "none",
-          }}
           contentEditable
-        ></span>
+        ></SpanDraggableText>
       </DraggableTextElement>
       <Moveable
         ref={refMoveable}

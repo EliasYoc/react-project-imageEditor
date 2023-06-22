@@ -21,6 +21,7 @@ export const initialPaintingState = {
   draggableTextStyle: {
     fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`,
     fontSize: 24,
+    fontWeight: 500,
   },
   pencilType: "normal",
   pencilSizeForRangeSlider: 0,
@@ -104,6 +105,9 @@ const paintingSlice = createSlice({
     applyDraggableTextFontSize(state, { payload }) {
       state.draggableTextStyle.fontSize = payload;
     },
+    applyDraggableTextFontWeight(state, { payload }) {
+      state.draggableTextStyle.fontWeight = payload;
+    },
   },
 });
 
@@ -122,6 +126,7 @@ export const {
   applyDraggableTextColor,
   applyDraggableTextFontFamily,
   applyDraggableTextFontSize,
+  applyDraggableTextFontWeight,
 } = paintingSlice.actions;
 export const selectPencilType = (state) => state.painting.pencilType;
 export const selectKindOfPencil = (state) => state.painting.kindOfPencilStyle;
@@ -140,4 +145,7 @@ export const selectDraggableTextFontFamily = (state) =>
   state.painting.draggableTextStyle.fontFamily;
 export const selectDraggableTextFontSize = (state) =>
   state.painting.draggableTextStyle.fontSize;
+export const selectDraggableTextWeight = (state) =>
+  state.painting.draggableTextStyle.fontWeight;
+
 export default paintingSlice.reducer;
