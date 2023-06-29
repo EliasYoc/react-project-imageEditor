@@ -67,6 +67,7 @@ const HeaderChildren = () => {
             setDataURLBlob(null);
             setPercentDownloading(0);
             URL.revokeObjectURL(url);
+            window.location.reload();
           }, 400);
         }
         setPercentDownloading(percent);

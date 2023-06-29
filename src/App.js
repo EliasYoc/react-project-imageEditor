@@ -81,6 +81,8 @@ function App() {
                 borderRadius="50px"
                 position="relative"
                 margin="10px auto 0"
+                padding="0 1rem"
+                gap="1rem"
               >
                 {isDrawing && <DrawingTools />}
                 {isEditingText && <EditingTools />}

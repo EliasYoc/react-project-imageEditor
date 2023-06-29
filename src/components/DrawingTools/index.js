@@ -15,7 +15,6 @@ import {
   selectKindOfPencil,
   selectPencilType,
 } from "../../features/paintingSlice";
-import DetectableToolboxSizeLayout from "../DetectableToolboxSizeLayout";
 
 const DrawingTools = () => {
   const { activeButtonPosition } = useContext(ContextToolBoxes);
@@ -30,7 +29,7 @@ const DrawingTools = () => {
     setIsOpenPortalsDrawingModal(!isOpenPortalsDrawingModal);
   };
   return (
-    <DetectableToolboxSizeLayout>
+    <>
       <GlobalButton
         backgroundColor={themeColor.activeBgColor}
         position="absolute"
@@ -77,7 +76,7 @@ const DrawingTools = () => {
       >
         <ColorPickerMenu />
       </PortalsSwipeableMenuLayout>
-    </DetectableToolboxSizeLayout>
+    </>
   );
 };
 

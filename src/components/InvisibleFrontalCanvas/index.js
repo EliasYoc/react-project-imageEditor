@@ -8,6 +8,7 @@ import {
   applyDraggableTextId,
   selectDraggableTextFontFamily,
   selectDraggableTextId,
+  selectDraggableTextWeight,
   selectKindOfPencil,
   selectPencilSizeForRange,
   selectPencilType,
@@ -48,6 +49,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
   const { minValue, maxValue } = useSelector(selectRangeValues);
   const draggableTextId = useSelector(selectDraggableTextId);
   const fontFamily = useSelector(selectDraggableTextFontFamily);
+  const fontWeight = useSelector(selectDraggableTextWeight);
 
   const dispatch = useDispatch();
 
@@ -304,7 +306,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       draggableTextId
     );
     refGlobalDrawingLogs.current = modifiedGlobalLogs;
-  }, 300);
+  }, 150);
 
   const selectDraggableId = (id) => {
     dispatch(applyDraggableTextId(id));
@@ -314,6 +316,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
 
   const doNothing = () => {};
 
+  console.log(draggableTextId);
   return (
     <div
       className="scrollable"
@@ -354,7 +357,12 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
                   dragRenderOnce++;
                   resetDragRenderOnceRef();
                 }}
-                fontFamily={draggable.id === draggableTextId && fontFamily}
+                fontFamily={
+                  draggable.id === draggableTextId ? fontFamily : undefined
+                }
+                fontWeight={
+                  draggable.id === draggableTextId ? fontWeight : undefined
+                }
                 onRotate={updateDraggingLogDebounce}
                 onScale={updateDraggingLogDebounce}
                 onDrag={updateDraggingLogDebounce}

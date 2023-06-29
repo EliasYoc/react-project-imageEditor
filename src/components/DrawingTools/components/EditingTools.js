@@ -7,7 +7,6 @@ import {
   GlobalButton,
   PencilBackgroundColor,
 } from "../../../utils/styledComponents";
-import DetectableToolboxSizeLayout from "../../DetectableToolboxSizeLayout";
 import { v4 as uuidv4 } from "uuid";
 import PortalsSwipeableMenuLayout from "../../Layout/PortalsSwipeableMenuLayout";
 import { useDispatch, useSelector } from "react-redux";
@@ -19,6 +18,7 @@ import {
 import { RgbaColorPicker } from "react-colorful";
 import { debounce } from "../../../utils/helper";
 import FontsButton from "./FontsButton";
+import BoldButton from "./BoldButton";
 
 const EditingTools = () => {
   const { refGlobalDrawingLogs, setDrawingHistoryLength } =
@@ -38,7 +38,6 @@ const EditingTools = () => {
         const arrColor = $draggable.style.color
           .slice(indexOfFirstParenthesis + 1, indesOfLastParenthesis)
           .split(", ");
-        console.log(arrColor);
 
         const objColor = {
           r: parseInt(arrColor[0] || 0),
@@ -93,7 +92,7 @@ const EditingTools = () => {
   }, 300);
 
   return (
-    <DetectableToolboxSizeLayout>
+    <>
       <GlobalButton
         onClick={handleAddText}
         width="auto"
@@ -102,6 +101,7 @@ const EditingTools = () => {
       >
         Agregar
       </GlobalButton>
+      <BoldButton />
       <FontsButton />
       <GlobalButton
         border={`3px solid ${themeColor.textColor}`}
@@ -132,10 +132,9 @@ const EditingTools = () => {
         isOpen={isOpenPortalsEditingModal}
         onClose={handleOpenEditingModal}
       >
-        {console.log(color)}
         <RgbaColorPicker color={color} onChange={hanldleApplyColor} />
       </PortalsSwipeableMenuLayout>
-    </DetectableToolboxSizeLayout>
+    </>
   );
 };
 
