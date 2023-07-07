@@ -345,7 +345,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
           return (
             <ElementEditable
               i={i}
-              lengthDraggableElements={refGlobalDrawingLogs.current.length}
               key={draggable.id}
               type={draggable.whatTask}
               parentNode={refContainer.current}

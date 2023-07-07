@@ -35,7 +35,6 @@ const ElementEditable = ({
   type,
   draggableData,
   i,
-  lengthDraggableElements,
 }) => {
   const { isEditingText, refFrontalCanvas } = useContext(ContextConfiguration);
   const draggableTextId = useSelector(selectDraggableTextId);
