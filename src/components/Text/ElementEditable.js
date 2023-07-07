@@ -165,6 +165,7 @@ const ElementEditable = ({
             alt="elemento imagen"
             src={draggableData.imageUrl}
             style={{ width: "100%", borderRadius: ".5rem" }}
+            onLoad={() => saveUpdatedMoveableRect()}
           />
         )}
       </DraggableTextElement>

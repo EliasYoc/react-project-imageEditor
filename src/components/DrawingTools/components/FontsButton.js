@@ -56,6 +56,56 @@ const fonts = [
     label: "Shantell Sans",
     font: "shantell-sans",
   },
+  {
+    id: "lobsterTwo",
+    label: "Lobster Two",
+    font: "Lobster Two",
+  },
+  {
+    id: "pacifico",
+    label: "Pacifico",
+    font: "Pacifico",
+  },
+  {
+    id: "indieFlower",
+    label: "Indie Flower",
+    font: "Indie Flower",
+  },
+  {
+    id: "kablammo",
+    label: "Kablammo",
+    font: "Kablammo",
+  },
+  {
+    id: "kalam",
+    label: "Kalam",
+    font: "Kalam",
+  },
+  {
+    id: "permanentMarker",
+    label: "Permanent Marker",
+    font: "Permanent Marker",
+  },
+  {
+    id: "pressStart2p",
+    label: "Press Start 2P",
+    font: "'Press Start 2P'",
+  },
+  {
+    id: "specialElite",
+    label: "Special Elite",
+    font: "Special Elite",
+  },
+  {
+    id: "hennyPenny",
+    label: "Henny Penny",
+    font: "Henny Penny",
+  },
+  {
+    id: "jajaja",
+    label: "jajaja",
+    font: "jajaja",
+  },
 ];
 const FontsButton = ({ onClick }) => {
   const dispatch = useDispatch();
@@ -105,6 +155,7 @@ const FontsButton = ({ onClick }) => {
 
   const handleSelectFont = (e) => {
     const $draggableElementText = document.getElementById(draggableTextId);
+    console.log(e.target.value);
     $draggableElementText.style.fontFamily = e.target.value;
     $draggableElementText.dataset.fontName = e.target.dataset.fontName;
     $draggableElementText.dataset.fontFamily = e.target.value;
@@ -140,7 +191,7 @@ const FontsButton = ({ onClick }) => {
       <FontBox ref={refFontBox} className={`${isOpen ? "open" : ""}`}>
         <div
           style={{
-            overflow: "hidden",
+            overflow: "scroll",
             display: "flex",
             flexDirection: "column",
           }}

@@ -1,7 +1,8 @@
 import styled from "styled-components";
 
 export const FontBox = styled.div`
-  width: max-content;
+  width: 200px;
+  max-height: 350px;
   border-radius: 0.5rem;
   background: #2e2e2ee0;
   position: absolute;
