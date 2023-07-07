@@ -15,6 +15,11 @@ import {
 import { debounce } from "../../utils/helper";
 import { DraggableTextElement, SpanDraggableText } from "./styles";
 
+/**
+ *
+ * @param {String} type draggableText | draggableImage
+ * @returns a draggable component
+ */
 const ElementEditable = ({
   parentNode,
   setCheckInput,
@@ -27,6 +32,10 @@ const ElementEditable = ({
   refGlobalDrawingLogs,
   fontFamily,
   fontWeight,
+  type,
+  draggableData,
+  i,
+  lengthDraggableElements,
 }) => {
   const { isEditingText, refFrontalCanvas } = useContext(ContextConfiguration);
   const draggableTextId = useSelector(selectDraggableTextId);
@@ -35,10 +44,13 @@ const ElementEditable = ({
   const refMoveable = useRef();
   const dispatch = useDispatch();
   const [updateRectTimes, setUpdateRectTimes] = useState(0);
+  const [zIndexDraggableElement, setZIndexDraggableElement] = useState(15 + i);
 
   useEffect(() => {
     setCheckInput(true);
-    refEditableElement.current.focus();
+    if (type === "draggableText") {
+      refEditableElement.current.focus();
+    }
   }, [setCheckInput]);
 
   useEffect(
@@ -103,29 +115,59 @@ const ElementEditable = ({
     saveUpdatedMoveableRect();
   }, 100);
 
+  useEffect(
+    function getZIndexDraggable() {
+      if (id === draggableTextId) {
+        const draggableElements = Array.from(
+          document.querySelectorAll(".draggable")
+        );
+
+        const zIndexElements = draggableElements.map((draggable) =>
+          parseInt(getComputedStyle(draggable).zIndex)
+        );
+
+        const maxDraggable = Math.max(...zIndexElements);
+
+        setZIndexDraggableElement(maxDraggable + 1);
+      }
+    },
+    [draggableTextId]
+  );
+
   return (
     <>
       <DraggableTextElement
         id={id}
-        className={`target${id} draggableText`}
+        className={`target${id} draggable ${
+          type === "draggableText" ? "draggableText" : ""
+        }`}
         onClick={() => dispatch(applyDraggableTextId(id))}
         onTouchStart={() => dispatch(applyDraggableTextId(id))}
-        zIndex={id === draggableTextId ? 15 : 14}
+        zIndex={zIndexDraggableElement}
       >
-        <SpanDraggableText
-          ref={refEditableElement}
-          onKeyDown={updateMoveableBlueArea}
-          onKeyUp={upateMoveableRectDebounce}
-          onBlur={() => {
-            resetPosition();
-            setCheckInput(false);
-          }}
-          onTouchMove={(e) => {
-            e.target.blur();
-            setCheckInput(false);
-          }}
-          contentEditable
-        ></SpanDraggableText>
+        {type === "draggableText" && (
+          <SpanDraggableText
+            ref={refEditableElement}
+            onKeyDown={updateMoveableBlueArea}
+            onKeyUp={upateMoveableRectDebounce}
+            onBlur={() => {
+              resetPosition();
+              setCheckInput(false);
+            }}
+            onTouchMove={(e) => {
+              e.target.blur();
+              setCheckInput(false);
+            }}
+            contentEditable
+          ></SpanDraggableText>
+        )}
+        {type === "draggableImage" && (
+          <img
+            alt="elemento imagen"
+            src={draggableData.imageUrl}
+            style={{ width: "100%", borderRadius: ".5rem" }}
+          />
+        )}
       </DraggableTextElement>
       <Moveable
         ref={refMoveable}

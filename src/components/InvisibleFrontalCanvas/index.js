@@ -338,38 +338,41 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         .filter(
           (log) =>
             log.whatTask === "draggableText" ||
-            log.whatTask === "draggableSticker"
+            log.whatTask === "draggableSticker" ||
+            log.whatTask === "draggableImage"
         )
-        .map((draggable) => {
-          if (draggable.whatTask === "draggableText")
-            return (
-              <ElementEditable
-                key={draggable.id}
-                parentNode={refContainer.current}
-                setCheckInput={setCheckInput}
-                // checkInput={checkInput}
-                id={draggable.id}
-                onRender={(e) => {
-                  e.target.style.cssText += e.cssText;
-                  refContainer.current.scrollTo(0, 0);
+        .map((draggable, i) => {
+          return (
+            <ElementEditable
+              i={i}
+              lengthDraggableElements={refGlobalDrawingLogs.current.length}
+              key={draggable.id}
+              type={draggable.whatTask}
+              parentNode={refContainer.current}
+              setCheckInput={setCheckInput}
+              // checkInput={checkInput}
+              id={draggable.id}
+              onRender={(e) => {
+                e.target.style.cssText += e.cssText;
+                refContainer.current.scrollTo(0, 0);
 
-                  if (dragRenderOnce === 1) selectDraggableId(e.target.id);
-                  dragRenderOnce++;
-                  resetDragRenderOnceRef();
-                }}
-                fontFamily={
-                  draggable.id === draggableTextId ? fontFamily : undefined
-                }
-                fontWeight={
-                  draggable.id === draggableTextId ? fontWeight : undefined
-                }
-                onRotate={updateDraggingLogDebounce}
-                onScale={updateDraggingLogDebounce}
-                onDrag={updateDraggingLogDebounce}
-                refGlobalDrawingLogs={refGlobalDrawingLogs}
-              />
-            );
-          return draggable;
+                if (dragRenderOnce === 1) selectDraggableId(e.target.id);
+                dragRenderOnce++;
+                resetDragRenderOnceRef();
+              }}
+              fontFamily={
+                draggable.id === draggableTextId ? fontFamily : undefined
+              }
+              fontWeight={
+                draggable.id === draggableTextId ? fontWeight : undefined
+              }
+              onRotate={updateDraggingLogDebounce}
+              onScale={updateDraggingLogDebounce}
+              onDrag={updateDraggingLogDebounce}
+              refGlobalDrawingLogs={refGlobalDrawingLogs}
+              draggableData={draggable}
+            />
+          );
         })}
 
       <canvas
@@ -405,7 +408,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       {isDrawingToolsOpen && isEditingText && (
         <PixelRange
           pixelSize={pencilSizeForRange}
-          minValue={16}
+          minValue={12}
           maxValue={50}
           onInput={handleSetFontSize}
         />

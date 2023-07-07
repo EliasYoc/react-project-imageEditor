@@ -82,7 +82,7 @@ function App() {
                 position="relative"
                 margin="10px auto 0"
                 padding="0 1rem"
-                gap="1rem"
+                gap=".5rem"
               >
                 {isDrawing && <DrawingTools />}
                 {isEditingText && <EditingTools />}

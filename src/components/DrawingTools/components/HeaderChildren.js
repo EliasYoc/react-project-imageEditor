@@ -143,7 +143,8 @@ const HeaderChildren = () => {
     for (const log of refGlobalDrawingLogs.current) {
       if (
         log.whatTask === "draggableText" ||
-        log.whatTask === "draggableSticker"
+        log.whatTask === "draggableSticker" ||
+        log.whatTask === "draggableImage"
       ) {
         const $draggableElement = document.getElementById(log.id);
         let img = new Image();

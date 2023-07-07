@@ -63,6 +63,7 @@ const FontsButton = ({ onClick }) => {
   const draggableTextId = useSelector(selectDraggableTextId);
   const { minValue, maxValue } = useSelector(selectRangeValues);
   const [isOpen, setIsOpen] = useState(false);
+  const [disableButton, setDisableButton] = useState(true);
   const refFontBox = useRef();
   // selectedFont must be global and added to useFullSizeDependencies dependencies of Detectabletoolbox...
   const [selectedFontName, setSelectedFontName] = useState("Normal");
@@ -74,6 +75,15 @@ const FontsButton = ({ onClick }) => {
     function applyDraggableTextConfiguration() {
       if (draggableTextId) {
         const $draggableText = document.getElementById(draggableTextId);
+        if (
+          $draggableText.classList.contains("draggableText") &&
+          hasDraggableTexts
+        ) {
+          setDisableButton(false);
+        } else {
+          setDisableButton(true);
+        }
+
         setSelectedFontName($draggableText.dataset.fontName || "Normal");
         dispatch(
           applyDraggableTextFontFamily(
@@ -90,7 +100,7 @@ const FontsButton = ({ onClick }) => {
         );
       }
     },
-    [draggableTextId, dispatch, maxValue, minValue]
+    [draggableTextId, dispatch, maxValue, minValue, hasDraggableTexts]
   );
 
   const handleSelectFont = (e) => {
@@ -106,15 +116,23 @@ const FontsButton = ({ onClick }) => {
   return (
     <GlobalButton
       onClick={() => setIsOpen(!isOpen)}
-      width="auto"
+      width="120px"
       height="auto"
       fontSize="1rem"
       border="1px solid gray"
       overflow="visible"
-      backgroundColor={`${hasDraggableTexts ? "transparent" : "#4d4c4c"}`}
-      style={{ pointerEvents: hasDraggableTexts ? "auto" : "none", fontFamily }}
+      backgroundColor={`${!disableButton ? "transparent" : "#4d4c4c"}`}
+      style={{ pointerEvents: !disableButton ? "auto" : "none", fontFamily }}
     >
-      {selectedFontName}
+      <span
+        style={{
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {selectedFontName}
+      </span>
       <FixedContainer
         zIndex={-1}
         className={isOpen ? "" : "close"}
