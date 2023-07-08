@@ -101,11 +101,6 @@ const fonts = [
     label: "Henny Penny",
     font: "Henny Penny",
   },
-  {
-    id: "jajaja",
-    label: "jajaja",
-    font: "jajaja",
-  },
 ];
 const FontsButton = ({ onClick }) => {
   const dispatch = useDispatch();
