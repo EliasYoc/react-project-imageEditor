@@ -19,6 +19,7 @@ import { RgbaColorPicker } from "react-colorful";
 import { debounce } from "../../../utils/helper";
 import FontsButton from "./FontsButton";
 import BoldButton from "./BoldButton";
+import IncludeImageButton from "./IncludeImageButton";
 
 const EditingTools = () => {
   const { refGlobalDrawingLogs, setDrawingHistoryLength } =
@@ -28,6 +29,24 @@ const EditingTools = () => {
   const dispatch = useDispatch();
   const [isOpenPortalsEditingModal, setIsOpenPortalsEditingModal] =
     useState(false);
+  const [disablePickColorButton, setDisablePickColorButton] = useState(true);
+
+  useEffect(() => {
+    if (draggableTextId) {
+      const draggableTextList = document.querySelectorAll(".draggableText");
+      const hasDraggableTexts = draggableTextList.length > 0;
+
+      const draggableText = document.getElementById(draggableTextId);
+      if (
+        draggableText.classList.contains("draggableText") &&
+        hasDraggableTexts
+      ) {
+        setDisablePickColorButton(false);
+      } else {
+        setDisablePickColorButton(true);
+      }
+    }
+  }, [draggableTextId]);
 
   useEffect(
     function updatePickerTextColor() {
@@ -76,7 +95,7 @@ const EditingTools = () => {
   };
 
   const handleOpenEditingModal = () => {
-    if (!draggableTextId) return;
+    if (disablePickColorButton) return;
     setIsOpenPortalsEditingModal(!isOpenPortalsEditingModal);
   };
 
@@ -101,6 +120,7 @@ const EditingTools = () => {
       >
         Agregar
       </GlobalButton>
+      <IncludeImageButton />
       <BoldButton />
       <FontsButton />
       <GlobalButton
@@ -121,7 +141,7 @@ const EditingTools = () => {
             borderRadius: "50px",
           }}
           backgroundColor={
-            !draggableTextId
+            disablePickColorButton
               ? "transparent"
               : `rgba(${color.r}, ${color.g},${color.b},${color.a} )`
           }

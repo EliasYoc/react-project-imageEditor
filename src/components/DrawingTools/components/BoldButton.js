@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { GlobalButton } from "../../../utils/styledComponents";
 import { BiBold } from "react-icons/bi";
 import { useDispatch, useSelector } from "react-redux";
@@ -10,9 +10,26 @@ import {
 const BoldButton = () => {
   const draggableTextId = useSelector(selectDraggableTextId);
   const dispatch = useDispatch();
+  const [disableButton, setDisableButton] = useState(true);
 
   const draggableTextList = document.querySelectorAll(".draggableText");
   const hasDraggableTexts = draggableTextList.length > 0;
+
+  useEffect(() => {
+    if (draggableTextId) {
+      const $draggableElementText = document.getElementById(draggableTextId);
+      if (
+        $draggableElementText.classList.contains("draggableText") &&
+        hasDraggableTexts
+      ) {
+        setDisableButton(false);
+      } else {
+        setDisableButton(true);
+      }
+    }
+
+    return () => {};
+  }, [draggableTextId, hasDraggableTexts]);
 
   const handleChange = (e) => {
     const $draggableElementText = document.getElementById(draggableTextId);
@@ -33,8 +50,8 @@ const BoldButton = () => {
       fontSize="1.5rem"
       overflow="visible"
       padding="0"
-      color={`${hasDraggableTexts ? "auto" : "#4d4c4c"}`}
-      style={{ pointerEvents: hasDraggableTexts ? "auto" : "none" }}
+      color={`${!disableButton ? "auto" : "#4d4c4c"}`}
+      style={{ pointerEvents: !disableButton ? "auto" : "none" }}
     >
       <input
         type="checkbox"

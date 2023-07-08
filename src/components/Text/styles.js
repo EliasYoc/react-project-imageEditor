@@ -4,6 +4,7 @@ import { scaleShowUp } from "../../utils/styledComponents";
 export const DraggableTextElement = styled.div`
   max-width: 315px;
   left: 50%;
+  transform: translateX(-50%);
   top: 20px;
   position: absolute;
   color: rgba(0, 0, 0, 1);

@@ -21,6 +21,13 @@ body {
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("fonts/Press_Start_2P/PressStart2P-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-display: swap;
+}
+
 /* variable font */
 @font-face {
   font-family: "raleway";
