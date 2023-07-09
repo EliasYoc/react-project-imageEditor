@@ -57,7 +57,6 @@ const HeaderChildren = () => {
         if (event.detail.image) {
           // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
           const url = event.detail.image.src;
-          console.log(url);
           anchor.current.href = url;
           anchor.current.download = imageFile?.name || "IMAGE";
           anchor.current.click();
@@ -119,7 +118,6 @@ const HeaderChildren = () => {
         );
       }
 
-      console.log("converting to data");
       let dataURL = principalImageLoaded
         ? $canvasLayerWithImage.toDataURL(
             (imageFile && imageFile.type) || "image/png"
@@ -140,7 +138,13 @@ const HeaderChildren = () => {
   };
 
   const draggableItemIntoCanvas = async (targetContext) => {
-    for (const log of refGlobalDrawingLogs.current) {
+    const sortedDraggables = refGlobalDrawingLogs.current.sort((a, b) => {
+      if (a.zIndex < b.zIndex) return -1;
+      if (a.zIndex > b.zIndex) return 1;
+      return 0;
+    });
+
+    for (const log of sortedDraggables) {
       if (
         log.whatTask === "draggableText" ||
         log.whatTask === "draggableSticker" ||
@@ -175,7 +179,6 @@ const HeaderChildren = () => {
               $canvas.width,
               $canvas.height
             );
-          console.dir($canvas);
 
           const url = elementCanvas.toDataURL("image/png");
           img.src = url;
@@ -280,73 +283,6 @@ const HeaderChildren = () => {
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
   const handleOpenGradientBox = (isOpen) => setIsOpenGradientBox(isOpen);
-  // example to download, it works, has content-length
-  // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
-
-  // parseInt(res.headers.get("Content-Length"), 10);
-  // console.log(blob);
-  // fetch(URL.createObjectURL(blob))
-  //   .then(function (res) {
-  //     console.log(res.body); //readablaStream
-  //     console.log(Array.from(res.headers));
-  //     const reader = res.body.getReader();
-  //     return new ReadableStream({
-  //       start: function (controller) {
-  //         console.log("controller: ", controller);
-  //         function read() {
-  //           reader.read(1024).then(function (result) {
-  //             console.log("result: ", result);
-  //             if (result.done) {
-  //               controller.close();
-  //               eventTarget.dispatchEvent(
-  //                 new CustomEvent("progress", { detail: { percent: 100 } })
-  //               );
-  //               return;
-  //             }
-  //             downloadedBytes += result.value.length;
-  //             let percentage = totalBytes
-  //               ? (downloadedBytes / totalBytes) * 100
-  //               : 0;
-  //             console.log("progreso: ", percentage);
-  //             controller.enqueue(result.value);
-  //             eventTarget.dispatchEvent(
-  //               new CustomEvent("progress", {
-  //                 detail: { percent: percentage },
-  //               })
-  //             );
-  //             read();
-  //           });
-  //         }
-  //         read();
-  //       },
-  //     });
-  //   })
-  //   .then(function (stream) {
-  //     const chunks = [];
-  //     const reader = stream.getReader();
-  //     function process() {
-  //       reader.read().then(function (result) {
-  //         console.log("chunks: ", chunks);
-  //         if (result.done) {
-  //           let blob = new Blob(chunks);
-  //           let url = URL.createObjectURL(blob);
-  //           const $img = new Image();
-  //           $img.onload = function () {
-  //             eventTarget.dispatchEvent(
-  //               new CustomEvent("loaded", { detail: { img: $img } })
-  //             );
-  //             URL.revokeObjectURL(url);
-  //           };
-  //           $img.src = url;
-  //           return;
-  //         }
-  //         chunks.push(result.value);
-
-  //         process();
-  //       });
-  //     }
-  //     process();
-  //   });
 
   const handleClickUndo = () => {
     if (!refGlobalDrawingLogs.current.length) return;

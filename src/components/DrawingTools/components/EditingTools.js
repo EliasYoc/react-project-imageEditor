@@ -89,6 +89,7 @@ const EditingTools = () => {
       realHeight: null,
       initialWidth: null,
       initialHeight: null,
+      zIndex: 15,
     };
     refGlobalDrawingLogs.current.push(initialDraggableElement);
     setDrawingHistoryLength(refGlobalDrawingLogs.current.length);

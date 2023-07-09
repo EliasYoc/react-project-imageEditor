@@ -35,6 +35,7 @@ const ElementEditable = ({
   type,
   draggableData,
   i,
+  zIndex,
 }) => {
   const { isEditingText, refFrontalCanvas } = useContext(ContextConfiguration);
   const draggableTextId = useSelector(selectDraggableTextId);
@@ -43,7 +44,9 @@ const ElementEditable = ({
   const refMoveable = useRef();
   const dispatch = useDispatch();
   const [updateRectTimes, setUpdateRectTimes] = useState(0);
-  const [zIndexDraggableElement, setZIndexDraggableElement] = useState(15 + i);
+  const [zIndexDraggableElement, setZIndexDraggableElement] = useState(
+    zIndex + i
+  );
 
   useEffect(() => {
     setCheckInput(true);
@@ -128,6 +131,10 @@ const ElementEditable = ({
         const maxDraggable = Math.max(...zIndexElements);
 
         setZIndexDraggableElement(maxDraggable + 1);
+
+        refGlobalDrawingLogs.current.forEach((draggable) => {
+          if (draggable.id === id) draggable.zIndex = maxDraggable + 1;
+        });
       }
     },
     [draggableTextId]
