@@ -29,6 +29,7 @@ const IncludeImageButton = () => {
       initialWidth: null,
       initialHeight: null,
       imageUrl,
+      zIndex: 15,
     };
 
     refGlobalDrawingLogs.current.push(initialDraggableElement);

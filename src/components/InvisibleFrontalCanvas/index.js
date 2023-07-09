@@ -346,6 +346,7 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
             <ElementEditable
               i={i}
               key={draggable.id}
+              zIndex={draggable.zIndex}
               type={draggable.whatTask}
               parentNode={refContainer.current}
               setCheckInput={setCheckInput}
