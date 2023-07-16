@@ -32,7 +32,7 @@ export const FontLabel = styled.label`
 export const InputDownloadName = styled.input`
   display: block;
   width: 100%;
-  background: #2e2e2ee0;
+  background: #515151e0;
   border: none;
   padding: 1rem 1.2rem;
   border-radius: 0.5rem;
