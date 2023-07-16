@@ -26,6 +26,8 @@ import PortalNormalModal from "../../Layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../Layout/PortalsSwipeableMenuLayout";
 import GradientBox from "../../GradientBox";
 import html2canvas from "html2canvas";
+import ConfirmModal from "../../ConfirmModal";
+import { InputDownloadName, WarningEmptyNameField } from "../styles";
 
 const HeaderChildren = () => {
   const {
@@ -45,6 +47,9 @@ const HeaderChildren = () => {
   const [percentDownloading, setPercentDownloading] = useState(0);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isOpenGradientBox, setIsOpenGradientBox] = useState(false);
+  const [openDownloadNameModal, setOpenDownloadNameModal] = useState(false);
+  const [downloadName, setDownloadName] = useState("");
+  const [isDownloadNameEmpty, setIsDownloadNameEmpty] = useState(false);
   const anchor = useRef();
 
   useEffect(() => {
@@ -58,7 +63,7 @@ const HeaderChildren = () => {
           // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
           const url = event.detail.image.src;
           anchor.current.href = url;
-          anchor.current.download = imageFile?.name || "IMAGE";
+          anchor.current.download = downloadName;
           anchor.current.click();
           anchor.current.remove();
 
@@ -73,7 +78,7 @@ const HeaderChildren = () => {
       });
     }
     if (dataURLBlob) progressDownload();
-  }, [dataURLBlob, imageFile?.name]);
+  }, [dataURLBlob, downloadName]);
 
   const configureImageCanvasBeforeDownloading = async () => {
     setIsLoadingImage(true);
@@ -383,7 +388,8 @@ const HeaderChildren = () => {
           right=".5rem"
         >
           <Option
-            onClick={configureImageCanvasBeforeDownloading}
+            // onClick={configureImageCanvasBeforeDownloading}
+            onClick={() => setOpenDownloadNameModal(true)}
             icon={BiDownload}
             text="Descargar"
           />
@@ -394,6 +400,36 @@ const HeaderChildren = () => {
           />
         </ListOptionsLayout>
       </PortalNormalModal>
+      <ConfirmModal
+        description="Agrega un nombre a la descarga"
+        isOpen={openDownloadNameModal}
+        onClose={() => {
+          setOpenDownloadNameModal(false);
+          setIsDownloadNameEmpty(false);
+        }}
+        onClickConfirm={() => {
+          if (!downloadName.trim()) {
+            setIsDownloadNameEmpty(true);
+            return;
+          }
+          configureImageCanvasBeforeDownloading();
+          setIsDownloadNameEmpty(false);
+          setOpenDownloadNameModal(false);
+        }}
+      >
+        <div>
+          <InputDownloadName
+            type="text"
+            value={downloadName}
+            onChange={(e) => setDownloadName(e.target.value)}
+          />
+        </div>
+        {isDownloadNameEmpty && (
+          <WarningEmptyNameField>
+            El campo no debe ir vacio
+          </WarningEmptyNameField>
+        )}
+      </ConfirmModal>
       <PortalsSwipeableMenuLayout
         title="Crea un fondo difuminado"
         adviseText="Agrega hasta 8 thumbs para aplicar diferentes colores, presiona la línea de los multiples thumbs para agregar uno nuevo"
