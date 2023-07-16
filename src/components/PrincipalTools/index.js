@@ -82,6 +82,7 @@ const PrincipalTools = () => {
         margin="10px auto"
         bottom="0"
         padding="0 .5rem"
+        width="clamp(300px, 90% ,500px)"
         ref={refToolBox}
         onTransitionEnd={(e) => {
           if (e.propertyName === "transform") {
