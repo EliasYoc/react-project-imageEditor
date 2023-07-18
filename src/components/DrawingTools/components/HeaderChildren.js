@@ -26,6 +26,8 @@ import PortalNormalModal from "../../Layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../Layout/PortalsSwipeableMenuLayout";
 import GradientBox from "../../GradientBox";
 import html2canvas from "html2canvas";
+import ConfirmModal from "../../ConfirmModal";
+import { InputDownloadName, WarningEmptyNameField } from "../styles";
 
 const HeaderChildren = () => {
   const {
@@ -45,6 +47,9 @@ const HeaderChildren = () => {
   const [percentDownloading, setPercentDownloading] = useState(0);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isOpenGradientBox, setIsOpenGradientBox] = useState(false);
+  const [openDownloadNameModal, setOpenDownloadNameModal] = useState(false);
+  const [downloadName, setDownloadName] = useState("");
+  const [isDownloadNameEmpty, setIsDownloadNameEmpty] = useState(false);
   const anchor = useRef();
 
   useEffect(() => {
@@ -57,9 +62,8 @@ const HeaderChildren = () => {
         if (event.detail.image) {
           // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
           const url = event.detail.image.src;
-          console.log(url);
           anchor.current.href = url;
-          anchor.current.download = imageFile?.name || "IMAGE";
+          anchor.current.download = downloadName;
           anchor.current.click();
           anchor.current.remove();
 
@@ -74,7 +78,7 @@ const HeaderChildren = () => {
       });
     }
     if (dataURLBlob) progressDownload();
-  }, [dataURLBlob, imageFile?.name]);
+  }, [dataURLBlob, downloadName]);
 
   const configureImageCanvasBeforeDownloading = async () => {
     setIsLoadingImage(true);
@@ -119,7 +123,6 @@ const HeaderChildren = () => {
         );
       }
 
-      console.log("converting to data");
       let dataURL = principalImageLoaded
         ? $canvasLayerWithImage.toDataURL(
             (imageFile && imageFile.type) || "image/png"
@@ -140,10 +143,17 @@ const HeaderChildren = () => {
   };
 
   const draggableItemIntoCanvas = async (targetContext) => {
-    for (const log of refGlobalDrawingLogs.current) {
+    const sortedDraggables = refGlobalDrawingLogs.current.sort((a, b) => {
+      if (a.zIndex < b.zIndex) return -1;
+      if (a.zIndex > b.zIndex) return 1;
+      return 0;
+    });
+
+    for (const log of sortedDraggables) {
       if (
         log.whatTask === "draggableText" ||
-        log.whatTask === "draggableSticker"
+        log.whatTask === "draggableSticker" ||
+        log.whatTask === "draggableImage"
       ) {
         const $draggableElement = document.getElementById(log.id);
         let img = new Image();
@@ -174,7 +184,6 @@ const HeaderChildren = () => {
               $canvas.width,
               $canvas.height
             );
-          console.dir($canvas);
 
           const url = elementCanvas.toDataURL("image/png");
           img.src = url;
@@ -279,73 +288,6 @@ const HeaderChildren = () => {
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
   const handleOpenGradientBox = (isOpen) => setIsOpenGradientBox(isOpen);
-  // example to download, it works, has content-length
-  // https://fetch-progress.anthum.com/30kbps/images/sunrise-baseline.jpg
-
-  // parseInt(res.headers.get("Content-Length"), 10);
-  // console.log(blob);
-  // fetch(URL.createObjectURL(blob))
-  //   .then(function (res) {
-  //     console.log(res.body); //readablaStream
-  //     console.log(Array.from(res.headers));
-  //     const reader = res.body.getReader();
-  //     return new ReadableStream({
-  //       start: function (controller) {
-  //         console.log("controller: ", controller);
-  //         function read() {
-  //           reader.read(1024).then(function (result) {
-  //             console.log("result: ", result);
-  //             if (result.done) {
-  //               controller.close();
-  //               eventTarget.dispatchEvent(
-  //                 new CustomEvent("progress", { detail: { percent: 100 } })
-  //               );
-  //               return;
-  //             }
-  //             downloadedBytes += result.value.length;
-  //             let percentage = totalBytes
-  //               ? (downloadedBytes / totalBytes) * 100
-  //               : 0;
-  //             console.log("progreso: ", percentage);
-  //             controller.enqueue(result.value);
-  //             eventTarget.dispatchEvent(
-  //               new CustomEvent("progress", {
-  //                 detail: { percent: percentage },
-  //               })
-  //             );
-  //             read();
-  //           });
-  //         }
-  //         read();
-  //       },
-  //     });
-  //   })
-  //   .then(function (stream) {
-  //     const chunks = [];
-  //     const reader = stream.getReader();
-  //     function process() {
-  //       reader.read().then(function (result) {
-  //         console.log("chunks: ", chunks);
-  //         if (result.done) {
-  //           let blob = new Blob(chunks);
-  //           let url = URL.createObjectURL(blob);
-  //           const $img = new Image();
-  //           $img.onload = function () {
-  //             eventTarget.dispatchEvent(
-  //               new CustomEvent("loaded", { detail: { img: $img } })
-  //             );
-  //             URL.revokeObjectURL(url);
-  //           };
-  //           $img.src = url;
-  //           return;
-  //         }
-  //         chunks.push(result.value);
-
-  //         process();
-  //       });
-  //     }
-  //     process();
-  //   });
 
   const handleClickUndo = () => {
     if (!refGlobalDrawingLogs.current.length) return;
@@ -446,7 +388,8 @@ const HeaderChildren = () => {
           right=".5rem"
         >
           <Option
-            onClick={configureImageCanvasBeforeDownloading}
+            // onClick={configureImageCanvasBeforeDownloading}
+            onClick={() => setOpenDownloadNameModal(true)}
             icon={BiDownload}
             text="Descargar"
           />
@@ -457,6 +400,36 @@ const HeaderChildren = () => {
           />
         </ListOptionsLayout>
       </PortalNormalModal>
+      <ConfirmModal
+        description="Agrega un nombre a la descarga"
+        isOpen={openDownloadNameModal}
+        onClose={() => {
+          setOpenDownloadNameModal(false);
+          setIsDownloadNameEmpty(false);
+        }}
+        onClickConfirm={() => {
+          if (!downloadName.trim()) {
+            setIsDownloadNameEmpty(true);
+            return;
+          }
+          configureImageCanvasBeforeDownloading();
+          setIsDownloadNameEmpty(false);
+          setOpenDownloadNameModal(false);
+        }}
+      >
+        <div>
+          <InputDownloadName
+            type="text"
+            value={downloadName}
+            onChange={(e) => setDownloadName(e.target.value)}
+          />
+        </div>
+        {isDownloadNameEmpty && (
+          <WarningEmptyNameField>
+            El campo no debe ir vacio
+          </WarningEmptyNameField>
+        )}
+      </ConfirmModal>
       <PortalsSwipeableMenuLayout
         title="Crea un fondo difuminado"
         adviseText="Agrega hasta 8 thumbs para aplicar diferentes colores, presiona la línea de los multiples thumbs para agregar uno nuevo"

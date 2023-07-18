@@ -59,7 +59,7 @@ export const FittedPaintWrap = styled.div`
   position: relative;
 `;
 
-export const GlobalButton = styled.span`
+export const GlobalButton = styled.div`
   width: ${({ width }) => width || "45px"};
   height: ${({ height }) => height || "45px"};
   background-image: ${({ backgroundImage }) => backgroundImage || "none"};

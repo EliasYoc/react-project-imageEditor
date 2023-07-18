@@ -56,6 +56,51 @@ const fonts = [
     label: "Shantell Sans",
     font: "shantell-sans",
   },
+  {
+    id: "lobsterTwo",
+    label: "Lobster Two",
+    font: "Lobster Two",
+  },
+  {
+    id: "pacifico",
+    label: "Pacifico",
+    font: "Pacifico",
+  },
+  {
+    id: "indieFlower",
+    label: "Indie Flower",
+    font: "Indie Flower",
+  },
+  {
+    id: "kablammo",
+    label: "Kablammo",
+    font: "Kablammo",
+  },
+  {
+    id: "kalam",
+    label: "Kalam",
+    font: "Kalam",
+  },
+  {
+    id: "permanentMarker",
+    label: "Permanent Marker",
+    font: "Permanent Marker",
+  },
+  {
+    id: "pressStart2p",
+    label: "Press Start 2P",
+    font: "'Press Start 2P'",
+  },
+  {
+    id: "specialElite",
+    label: "Special Elite",
+    font: "Special Elite",
+  },
+  {
+    id: "hennyPenny",
+    label: "Henny Penny",
+    font: "Henny Penny",
+  },
 ];
 const FontsButton = ({ onClick }) => {
   const dispatch = useDispatch();
@@ -63,6 +108,7 @@ const FontsButton = ({ onClick }) => {
   const draggableTextId = useSelector(selectDraggableTextId);
   const { minValue, maxValue } = useSelector(selectRangeValues);
   const [isOpen, setIsOpen] = useState(false);
+  const [disableButton, setDisableButton] = useState(true);
   const refFontBox = useRef();
   // selectedFont must be global and added to useFullSizeDependencies dependencies of Detectabletoolbox...
   const [selectedFontName, setSelectedFontName] = useState("Normal");
@@ -74,6 +120,15 @@ const FontsButton = ({ onClick }) => {
     function applyDraggableTextConfiguration() {
       if (draggableTextId) {
         const $draggableText = document.getElementById(draggableTextId);
+        if (
+          $draggableText.classList.contains("draggableText") &&
+          hasDraggableTexts
+        ) {
+          setDisableButton(false);
+        } else {
+          setDisableButton(true);
+        }
+
         setSelectedFontName($draggableText.dataset.fontName || "Normal");
         dispatch(
           applyDraggableTextFontFamily(
@@ -90,11 +145,12 @@ const FontsButton = ({ onClick }) => {
         );
       }
     },
-    [draggableTextId, dispatch, maxValue, minValue]
+    [draggableTextId, dispatch, maxValue, minValue, hasDraggableTexts]
   );
 
   const handleSelectFont = (e) => {
     const $draggableElementText = document.getElementById(draggableTextId);
+    console.log(e.target.value);
     $draggableElementText.style.fontFamily = e.target.value;
     $draggableElementText.dataset.fontName = e.target.dataset.fontName;
     $draggableElementText.dataset.fontFamily = e.target.value;
@@ -106,15 +162,23 @@ const FontsButton = ({ onClick }) => {
   return (
     <GlobalButton
       onClick={() => setIsOpen(!isOpen)}
-      width="auto"
+      width="120px"
       height="auto"
       fontSize="1rem"
       border="1px solid gray"
       overflow="visible"
-      backgroundColor={`${hasDraggableTexts ? "transparent" : "#4d4c4c"}`}
-      style={{ pointerEvents: hasDraggableTexts ? "auto" : "none", fontFamily }}
+      backgroundColor={`${!disableButton ? "transparent" : "#4d4c4c"}`}
+      style={{ pointerEvents: !disableButton ? "auto" : "none", fontFamily }}
     >
-      {selectedFontName}
+      <span
+        style={{
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {selectedFontName}
+      </span>
       <FixedContainer
         zIndex={-1}
         className={isOpen ? "" : "close"}
@@ -122,7 +186,7 @@ const FontsButton = ({ onClick }) => {
       <FontBox ref={refFontBox} className={`${isOpen ? "open" : ""}`}>
         <div
           style={{
-            overflow: "hidden",
+            overflow: "scroll",
             display: "flex",
             flexDirection: "column",
           }}
