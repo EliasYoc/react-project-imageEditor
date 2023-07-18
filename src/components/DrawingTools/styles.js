@@ -1,7 +1,7 @@
 import styled from "styled-components";
 
 export const FontBox = styled.div`
-  width: 200px;
+  width: 190px;
   max-height: 350px;
   border-radius: 0.5rem;
   background: #2e2e2ee0;
@@ -11,7 +11,8 @@ export const FontBox = styled.div`
   display: grid;
   margin-bottom: 1rem;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.2s ease;
+  transition: grid-template-rows 0.35s ease;
+  overflow: hidden;
 
   &.open {
     grid-template-rows: 1fr;
