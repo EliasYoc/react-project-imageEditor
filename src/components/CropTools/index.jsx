@@ -1,7 +1,7 @@
 import { useContext, useRef } from "react";
 import { ContextConfiguration } from "../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
-import { GlobalButton, LayoutToolBox } from "../../utils/styledComponents";
+import { GlobalButton, LayoutToolBox } from "../ui/legacy/styledComponents";
 
 const CropTools = () => {
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);

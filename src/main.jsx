@@ -1,7 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./App";
+import "./styles/global.css";
+import "./styles/fonts.css";
+import App from "./app/App";
 import ToolBoxesProvider from "./context/ToolBoxesProvider";
 import ConfigurationProvider from "./context/ConfigurationProvider";
 import { Provider } from "react-redux";
