@@ -1,7 +1,7 @@
 import type { Point, StrokePoint } from "../model/types";
 import { screenToDocument, type View } from "./viewport";
 
-type PointerSample = Pick<
+export type PointerSample = Pick<
   PointerEvent,
   "clientX" | "clientY" | "pressure" | "pointerType"
 >;

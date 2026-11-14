@@ -11,8 +11,10 @@ import HomeToolbar from "../features/home/HomeToolbar";
 import DrawingTools from "../features/drawing/DrawingTools";
 import ModeSwitcher from "../features/drawing/ModeSwitcher";
 import SizeSlider from "../features/drawing/SizeSlider";
+import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
 import TextToolbar from "../features/text/TextToolbar";
 import ElementsOverlay from "../features/text/legacy/ElementsOverlay";
+import ZoomControls from "../features/zoom/ZoomControls";
 
 /**
  * Shell de la aplicación: cabecera | lienzo | barra inferior.
@@ -25,6 +27,7 @@ function App() {
   const mode = useEditorStore((state) => state.mode);
   const isBusy = useEditorStore((state) => state.status !== "idle");
   const isEditorOpen = mode !== "home";
+  useKeyboardShortcuts();
 
   return (
     <div className={styles.app}>
@@ -40,6 +43,8 @@ function App() {
           <>
             <ElementsOverlay />
             <SizeSlider />
+            {/* El zoom solo existe en modo Dibujar (ver useDisplayView). */}
+            {mode === "draw" && <ZoomControls />}
           </>
         ) : (
           <HomeToolbar />

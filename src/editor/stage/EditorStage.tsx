@@ -1,5 +1,7 @@
-import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
+import type { Group as KonvaGroup } from "konva/lib/Group";
 import type { Layer as KonvaLayer } from "konva/lib/Layer";
+import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
+import "konva/lib/shapes/Circle";
 import "konva/lib/shapes/Image";
 import "konva/lib/shapes/Rect";
 import {
@@ -10,8 +12,10 @@ import {
   useRef,
 } from "react";
 // Versión mínima de react-konva: solo se registran las formas que se usan
-// (Image y Rect, arriba) en lugar de todas las de Konva.
+// (Circle, Image y Rect, arriba) en lugar de todas las de Konva.
 import {
+  Circle,
+  Group,
   Image as KonvaImage,
   Layer,
   Rect,
@@ -19,11 +23,11 @@ import {
 } from "react-konva/lib/ReactKonvaCore";
 import { createCanvas } from "../../lib/canvas";
 import { PaintRaster } from "../engine/PaintRaster";
-import { fitView } from "../engine/viewport";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectStrokes } from "../store/selectors";
 import styles from "./EditorStage.module.css";
-import { useDrawingInput } from "./useDrawingInput";
+import { useDisplayView } from "./useDisplayView";
+import { useStageInput } from "./useStageInput";
 import { useViewStore, viewStore } from "./viewStore";
 
 /**
@@ -35,18 +39,20 @@ import { useViewStore, viewStore } from "./viewStore";
  *   Al estar separadas, el borrador quita pintura sin tocar la foto.
  *
  * Ambas se dibujan con la transformación de la vista (posición y escala), así
- * que todo se guarda en coordenadas del documento.
+ * que todo se guarda en coordenadas del documento. Una tercera capa, sin
+ * transformar, muestra el círculo del tamaño del pincel.
  */
 const EditorStage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const paintLayerRef = useRef<KonvaLayer>(null);
   const liveNodeRef = useRef<KonvaImageNode>(null);
+  const cursorRef = useRef<KonvaGroup>(null);
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
   const preview = useEditorStore((state) => state.background.preview);
   const isDrawing = useEditorStore((state) => state.mode === "draw");
   const stageSize = useViewStore((state) => state.stageSize);
-  const view = useViewStore((state) => state.view);
+  const { view } = useDisplayView();
 
   // Un raster y un canvas para el trazo en curso por cada tamaño de documento.
   const raster = useMemo(() => new PaintRaster(canvasSize), [canvasSize]);
@@ -67,10 +73,10 @@ const EditorStage = () => {
   }, []);
 
   useEffect(
-    function fitDocument() {
-      viewStore.getState().setView(fitView(stageSize, canvasSize));
+    function fitNewDocument() {
+      viewStore.getState().fitToScreen();
     },
-    [stageSize, canvasSize]
+    [canvasSize]
   );
 
   useEffect(
@@ -89,11 +95,12 @@ const EditorStage = () => {
     [raster, requestDraw]
   );
 
-  useDrawingInput({
+  useStageInput({
     containerRef,
     enabled: isDrawing,
     liveCanvas,
     liveNodeRef,
+    cursorRef,
     requestDraw,
   });
 
@@ -143,6 +150,17 @@ const EditorStage = () => {
             width={canvasSize.width}
             height={canvasSize.height}
           />
+        </Layer>
+        <Layer listening={false}>
+          {/* Dos círculos (blanco y negro) para que se vea sobre cualquier color. */}
+          <Group ref={cursorRef} visible={false}>
+            <Circle
+              radius={1}
+              stroke="rgba(255, 255, 255, 0.9)"
+              strokeWidth={3}
+            />
+            <Circle radius={1} stroke="rgba(0, 0, 0, 0.9)" strokeWidth={1} />
+          </Group>
         </Layer>
       </Stage>
     </div>

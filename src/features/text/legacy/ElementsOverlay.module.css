@@ -10,6 +10,13 @@
   pointer-events: auto;
 }
 
+/* Sigue el zoom de la vista (transform calculado en ElementsOverlay). */
+.viewportLayer {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
+}
+
 /* Rectángulo del documento en pantalla: invisible, solo para medir. */
 .documentFrame {
   position: absolute;
