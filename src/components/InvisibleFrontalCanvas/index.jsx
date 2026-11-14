@@ -103,10 +103,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         ctx.globalCompositeOperation =
           frontalCanvasCtx.globalCompositeOperation = "source-over";
 
-        if (pencilType === "normal") {
-        }
-        if (pencilType === "chalk") {
-        }
         if (pencilType === "spray") {
           refGradientCircleRadius.current = size / 2;
           let resultRadiusRest =

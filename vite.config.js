@@ -8,4 +8,9 @@ export default defineConfig({
     // Netlify publica desde "build/" (igual que con Create React App).
     outDir: "build",
   },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: "./src/setupTests.js",
+  },
 });

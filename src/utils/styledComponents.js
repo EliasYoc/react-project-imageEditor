@@ -46,7 +46,10 @@ export const LayoutToolBox = styled.div`
   font-size: ${({ fontSize }) => fontSize || "12px"};
   overflow: ${({ overflow }) => overflow || "visible"};
   flex-shrink: 0;
-  transition: transform 0.3s ease, height 0.3s ease, width 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    height 0.3s ease,
+    width 0.3s ease;
   &.closeDown {
     transform: translateY(calc(100% + 10px));
   }
