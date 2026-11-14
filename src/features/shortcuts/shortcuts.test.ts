@@ -44,17 +44,24 @@ describe("getShortcutAction", () => {
     expect(getShortcutAction(key("0", { ctrlKey: true }), "text")).toBeNull();
   });
 
-  it("B, S y E eligen el pincel solo en modo Dibujar y sin modificadores", () => {
-    expect(getShortcutAction(key("e"), "draw")).toEqual({
-      type: "brush",
-      brush: "eraser",
-    });
-    expect(getShortcutAction(key("S"), "draw")).toEqual({
-      type: "brush",
-      brush: "spray",
-    });
+  it("B y E alternan pincel y borrador solo en modo Dibujar y sin modificadores", () => {
+    expect(getShortcutAction(key("e"), "draw")).toEqual({ type: "eraser" });
+    expect(getShortcutAction(key("B"), "draw")).toEqual({ type: "drawBrush" });
     expect(getShortcutAction(key("b"), "text")).toBeNull();
     expect(getShortcutAction(key("b", { shiftKey: true }), "draw")).toBeNull();
+  });
+
+  it("[ y ] cambian el tamaño, también por la tecla física (teclado español)", () => {
+    expect(getShortcutAction(key("]"), "draw")).toEqual({
+      type: "brushSize",
+      factor: 1.25,
+    });
+    expect(
+      getShortcutAction({ ...key("+"), code: "BracketRight" }, "draw")
+    ).toMatchObject({ type: "brushSize", factor: 1.25 });
+    expect(
+      getShortcutAction({ ...key("´"), code: "BracketLeft" }, "draw")
+    ).toMatchObject({ type: "brushSize", factor: 0.8 });
   });
 
   it("no hace nada en la pantalla de inicio ni con Alt", () => {
@@ -85,18 +92,33 @@ describe("useKeyboardShortcuts", () => {
 
   it("ejecuta la acción y evita la del navegador", () => {
     renderHook(() => useKeyboardShortcuts());
-    editorStore
-      .getState()
-      .addStroke(
-        createStroke("normal", { size: 1, color: { r: 0, g: 0, b: 0, a: 1 } })
-      );
+    editorStore.getState().addStroke(
+      createStroke({
+        brush: "marker",
+        settings: { size: 1, opacity: 1, stabilizer: 0 },
+        color: { r: 0, g: 0, b: 0, a: 1 },
+      })
+    );
 
     const event = press(window, { key: "z", ctrlKey: true });
     expect(event.defaultPrevented).toBe(true);
     expect(editorStore.getState().log).toHaveLength(0);
 
     press(window, { key: "e" });
-    expect(editorStore.getState().brush.type).toBe("eraser");
+    expect(editorStore.getState().brush.presetId).toBe("eraserHard");
+
+    press(window, { key: "b" });
+    press(window, { key: "]" });
+    expect(editorStore.getState().brush.settings.pen.size).toBe(20); // 16 × 1.25
+  });
+
+  it("con pinceles pequeños [ y ] cambian al menos 1 px y no bajan de 1", () => {
+    renderHook(() => useKeyboardShortcuts());
+    editorStore.getState().setBrushSize(2);
+    press(window, { key: "]" });
+    expect(editorStore.getState().brush.settings.pen.size).toBe(3);
+    for (let i = 0; i < 5; i++) press(window, { key: "[" });
+    expect(editorStore.getState().brush.settings.pen.size).toBe(1);
   });
 
   it("acerca la vista con Ctrl + =", () => {
@@ -114,6 +136,6 @@ describe("useKeyboardShortcuts", () => {
 
     const event = press(input, { key: "e" });
     expect(event.defaultPrevented).toBe(false);
-    expect(editorStore.getState().brush.type).toBe("normal");
+    expect(editorStore.getState().brush.presetId).toBe("pen");
   });
 });

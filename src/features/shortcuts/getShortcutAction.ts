@@ -1,4 +1,4 @@
-import type { BrushType, Mode } from "../../editor/model/types";
+import type { Mode } from "../../editor/model/types";
 
 export type ShortcutAction =
   | { type: "undo" }
@@ -6,30 +6,32 @@ export type ShortcutAction =
   | { type: "fit" }
   | { type: "zoomIn" }
   | { type: "zoomOut" }
-  | { type: "brush"; brush: BrushType };
+  | { type: "drawBrush" }
+  | { type: "eraser" }
+  | { type: "brushSize"; factor: number };
 
 type KeyInfo = Pick<
   KeyboardEvent,
   "key" | "ctrlKey" | "metaKey" | "shiftKey" | "altKey"
->;
+> &
+  Partial<Pick<KeyboardEvent, "code">>;
 
-const BRUSH_KEYS: Record<string, BrushType> = {
-  b: "normal",
-  s: "spray",
-  e: "eraser",
-};
+/** Cuánto cambian el tamaño [ y ]. */
+export const BRUSH_SIZE_STEP = 1.25;
 
 /**
  * Qué hace una combinación de teclas en el editor (null = nada).
  *
  * - Ctrl/⌘ + Z: deshacer · Ctrl/⌘ + Shift + Z o Ctrl/⌘ + Y: rehacer
  * - Ctrl/⌘ + 0: ajustar · Ctrl/⌘ + = / −: acercar / alejar (modo Dibujar)
- * - B, S, E: pincel, spray y borrador (modo Dibujar)
+ * - B / E: último pincel / último borrador (modo Dibujar)
+ * - [ / ]: pincel más pequeño / más grande (modo Dibujar). Se usa la tecla
+ *   física (`code`): en un teclado español los corchetes necesitan AltGr.
  *
  * Es una función pura (sin DOM ni store) para poder probarla sin más.
  */
 export const getShortcutAction = (
-  { key, ctrlKey, metaKey, shiftKey, altKey }: KeyInfo,
+  { key, code, ctrlKey, metaKey, shiftKey, altKey }: KeyInfo,
   mode: Mode
 ): ShortcutAction | null => {
   if (mode === "home" || altKey) return null;
@@ -46,8 +48,14 @@ export const getShortcutAction = (
     return null;
   }
 
-  if (isDrawing && !shiftKey && lowerKey in BRUSH_KEYS) {
-    return { type: "brush", brush: BRUSH_KEYS[lowerKey] };
+  if (!isDrawing || shiftKey) return null;
+  if (lowerKey === "b") return { type: "drawBrush" };
+  if (lowerKey === "e") return { type: "eraser" };
+  if (key === "[" || code === "BracketLeft") {
+    return { type: "brushSize", factor: 1 / BRUSH_SIZE_STEP };
+  }
+  if (key === "]" || code === "BracketRight") {
+    return { type: "brushSize", factor: BRUSH_SIZE_STEP };
   }
   return null;
 };

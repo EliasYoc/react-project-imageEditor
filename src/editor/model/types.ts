@@ -28,17 +28,36 @@ export interface Point {
 
 // ---------------------------------------------------------------- pinceles
 
-export type BrushType = "normal" | "spray" | "eraser";
+/** Presets de pincel (sus parámetros están en editor/engine/brushes/presets.ts). */
+export type BrushPresetId =
+  | "pen"
+  | "marker"
+  | "pencil"
+  | "chalk"
+  | "airbrush"
+  | "spray"
+  | "highlighter"
+  | "eraserHard"
+  | "eraserSoft";
 
+/** Ajustes que el usuario cambia; cada preset recuerda los suyos. */
 export interface BrushSettings {
+  /** Diámetro en píxeles del documento. */
   size: number;
-  color: Rgba;
+  /** Opacidad del trazo completo, de 0 a 1. */
+  opacity: number;
+  /** Estabilización, de 0 (nada) a 1 (máxima). */
+  stabilizer: number;
 }
 
 export interface BrushState {
-  type: BrushType;
-  /** Cada pincel recuerda su propio tamaño y color. */
-  settings: Record<BrushType, BrushSettings>;
+  presetId: BrushPresetId;
+  /** Último pincel y último borrador usados (para alternar entre ambos). */
+  lastDrawPresetId: BrushPresetId;
+  lastEraserPresetId: BrushPresetId;
+  /** Color compartido por todos los pinceles (la transparencia es la opacidad). */
+  color: Rgba;
+  settings: Record<BrushPresetId, BrushSettings>;
 }
 
 // ---------------------------------------------------------------- trazos
@@ -50,17 +69,23 @@ export interface StrokePoint extends Point {
 }
 
 /**
- * Un trazo es un VECTOR: los puntos que recorrió el puntero y el pincel con el
- * que se hizo. El raster de la pantalla se genera a partir de aquí, así que se
- * puede volver a pintar a cualquier resolución (p. ej. al exportar).
+ * Un trazo es un VECTOR: los puntos que recorrió el puntero (ya estabilizados)
+ * y el pincel con el que se hizo. El raster de la pantalla se genera a partir
+ * de aquí, así que se puede volver a pintar a cualquier resolución (p. ej. al
+ * exportar) y siempre igual (la variación aleatoria usa `seed`).
  */
 export interface StrokeEntry {
   whatTask: "stroke";
   id: string;
-  brush: BrushType;
+  brush: BrushPresetId;
   color: Rgba;
-  /** Grosor en píxeles del documento. */
+  /** Diámetro en píxeles del documento. */
   size: number;
+  /** Opacidad del trazo completo, de 0 a 1. */
+  opacity: number;
+  seed: number;
+  /** Se hizo con un lápiz que mide la presión. */
+  hasPressure: boolean;
   points: StrokePoint[];
 }
 
