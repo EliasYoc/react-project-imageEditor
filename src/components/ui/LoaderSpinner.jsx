@@ -1,4 +1,3 @@
-import React from "react";
 import styled from "styled-components";
 
 const Spinner = styled.span`
@@ -24,8 +23,7 @@ const Spinner = styled.span`
   }
 `;
 
-const index = () => {
-  return <Spinner />;
-};
+/** Indicador de carga a pantalla completa (anunciado a lectores de pantalla). */
+const LoaderSpinner = () => <Spinner role="status" aria-label="Cargando" />;
 
-export default index;
+export default LoaderSpinner;

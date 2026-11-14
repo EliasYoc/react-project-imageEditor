@@ -56,7 +56,7 @@ function App() {
       )}
 
       {isBusy && (
-        <FixedContainer zIndex="1000">
+        <FixedContainer zIndex="var(--z-loader)">
           <LoaderSpinner />
         </FixedContainer>
       )}

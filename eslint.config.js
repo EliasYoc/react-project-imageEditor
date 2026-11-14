@@ -6,6 +6,13 @@ import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
+const hookRulesAsWarnings = Object.fromEntries(
+  Object.keys(reactHooks.configs.flat.recommended.rules).map((rule) => [
+    rule,
+    "warn",
+  ])
+);
+
 export default defineConfig([
   globalIgnores(["build", "coverage"]),
   {
@@ -25,22 +32,10 @@ export default defineConfig([
     rules: {
       // Las variables en PascalCase se usan como componentes JSX; ESLint core no las ve.
       "no-unused-vars": ["warn", { varsIgnorePattern: "^[A-Z_]" }],
-      // Fase 0: las reglas de hooks/React Compiler se dejan en "warn" para listar
-      // las malas prácticas actuales sin bloquear. En la Fase 1 (reescritura del
-      // estado y los componentes) se vuelven "error".
-      ...Object.fromEntries(
-        Object.keys(reactHooks.configs.flat.recommended.rules).map((rule) => [
-          rule,
-          "warn",
-        ])
-      ),
-      // Los contextos y constantes viven junto a los componentes; se separan en la Fase 1.
-      "react-refresh/only-export-components": "warn",
     },
   },
   {
-    // Código nuevo en TypeScript (núcleo del editor). Aquí las reglas de hooks
-    // van en "error" desde el principio.
+    // Código nuevo en TypeScript (núcleo del editor).
     files: ["**/*.{ts,tsx}"],
     extends: [
       js.configs.recommended,
@@ -53,6 +48,12 @@ export default defineConfig([
       ecmaVersion: "latest",
       globals: { ...globals.browser },
     },
+  },
+  {
+    // Código que se reemplaza en las Fases 2 y 4 (Konva): se toca lo mínimo,
+    // así que sus avisos de hooks no bloquean. Desaparece con esas carpetas.
+    files: ["**/legacy/**/*.{js,jsx}"],
+    rules: hookRulesAsWarnings,
   },
   {
     files: ["**/*.test.{js,jsx,ts,tsx}", "src/setupTests.js"],

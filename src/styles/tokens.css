@@ -1,0 +1,52 @@
+/*
+ * Tokens de diseño: la única fuente de colores, espacios, radios, tamaños y
+ * capas (z-index). Los componentes usan var(--…) en lugar de valores sueltos,
+ * así un cambio de diseño (Fase 6) se hace aquí y no archivo por archivo.
+ */
+:root {
+  /* Colores */
+  --color-bg-start: #111111;
+  --color-bg-end: #1d1d1d;
+  --color-surface: #2e2e2ee0; /* barras y menús */
+  --color-surface-strong: #282828; /* hojas inferiores */
+  --color-surface-active: #4d4c4c; /* botón presionado o seleccionado */
+  --color-surface-hover: rgba(166, 166, 166, 0.1);
+  --color-backdrop: #00000091;
+  --color-text: #a6a6a6bf;
+  --color-text-active: #c4c4c4;
+  --color-text-strong: #fff;
+  --color-danger: #ff3b60;
+  --color-accent-start: #8339e9;
+  --color-accent-end: #00adff;
+  --color-focus: rgb(68, 171, 255);
+
+  /* Espaciado */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 1rem;
+  --space-4: 1.5rem;
+
+  /* Radios */
+  --radius-sm: 0.5rem;
+  --radius-md: 1rem;
+  --radius-pill: 100px;
+
+  /* Tamaños */
+  --size-touch: 45px; /* área mínima cómoda para tocar con el dedo */
+  --font-size-sm: 14px;
+  --font-size-md: 1rem;
+  --font-size-icon: 1.5rem;
+
+  /*
+   * Capas (z-index), de abajo arriba. Los valores son los que ya usaba la
+   * app (antes eran números sueltos: 1, 10, 15, 100, 1000); ahora cada uno
+   * tiene un nombre por su función. La Fase 6 puede reequilibrarlos.
+   */
+  --z-canvas: 1;
+  --z-backdrop: 10; /* fondo oscuro mientras se escribe un texto */
+  --z-elements: 15; /* textos e imágenes (BASE_Z_INDEX en el store) */
+  --z-toolbar: 100; /* barra inferior y slider de tamaño */
+  --z-menu: 100; /* menú de opciones y diálogo de descarga */
+  --z-sheet: 1000; /* hojas inferiores (selector de color, gradiente) */
+  --z-loader: 1000;
+}

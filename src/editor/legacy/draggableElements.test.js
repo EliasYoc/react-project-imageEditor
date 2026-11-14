@@ -1,18 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { getMoveableGeometry, measureElement } from "./draggableElements";
+import { getElementGeometry, measureElement } from "./draggableElements";
 
-describe("getMoveableGeometry", () => {
-  it("lee traslación, escala y el rectángulo en pantalla de Moveable", () => {
+const fakeElement = (rect) => ({
+  offsetLeft: 5,
+  offsetTop: 6,
+  getBoundingClientRect: () => rect,
+});
+
+describe("getElementGeometry", () => {
+  it("toma el rectángulo del DOM y la traslación/escala de Moveable", () => {
     const moveable = {
+      // matriz 4x4 de CSS: [0]=scaleX, [5]=scaleY, [12]=translateX, [13]=translateY
       state: {
-        target: { offsetLeft: 5, offsetTop: 6 },
-        // matriz 4x4 de CSS: [0]=scaleX, [5]=scaleY, [12]=translateX, [13]=translateY
         targetMatrix: [2, 0, 0, 0, 0, 3, 0, 0, 0, 0, 1, 0, 40, 50, 0, 1],
-        targetClientRect: { width: 100, height: 60, top: 10, left: 20 },
       },
     };
+    const element = fakeElement({ left: 20, top: 10, width: 100, height: 60 });
 
-    expect(getMoveableGeometry(moveable)).toEqual({
+    expect(getElementGeometry(element, moveable)).toEqual({
       translate: [40, 50],
       scale: [2, 3],
       offsetLeft: 5,
@@ -24,8 +29,11 @@ describe("getMoveableGeometry", () => {
     });
   });
 
-  it("devuelve null si Moveable no tiene un elemento seleccionado", () => {
-    expect(getMoveableGeometry({ state: { target: null } })).toBeNull();
+  it("sin Moveable devuelve igualmente el rectángulo (lo que usa la exportación)", () => {
+    const element = fakeElement({ left: 1, top: 2, width: 200, height: 120 });
+    const geometry = getElementGeometry(element, undefined);
+    expect(geometry).toMatchObject({ realWidth: 200, realHeight: 120 });
+    expect(geometry).not.toHaveProperty("translate");
   });
 });
 

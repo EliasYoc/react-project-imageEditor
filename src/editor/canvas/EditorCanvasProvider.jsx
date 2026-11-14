@@ -7,9 +7,6 @@ export default function EditorCanvasProvider({ children }) {
   // Objeto creado una sola vez: el valor del contexto es estable.
   const [value] = useState(() => ({ mainCanvasRef, overlayCanvasRef }));
 
-  return (
-    <EditorCanvasContext.Provider value={value}>
-      {children}
-    </EditorCanvasContext.Provider>
-  );
+  // React 19: el contexto se usa directamente como proveedor (antes .Provider).
+  return <EditorCanvasContext value={value}>{children}</EditorCanvasContext>;
 }
