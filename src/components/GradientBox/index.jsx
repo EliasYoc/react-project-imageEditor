@@ -72,7 +72,6 @@ const GradientBox = ({ handleOpenGradientBox }) => {
     options: canvasSize,
     expectedMaxPixelsSize: 300,
   });
-  console.log(newWidth, newHeight);
 
   const handleMultiInputRangeChange = (e) => {
     dispatch(
@@ -96,7 +95,6 @@ const GradientBox = ({ handleOpenGradientBox }) => {
     );
     if (filteredIdListOfInputRange.length) {
       const lastRangeThumbId = filteredIdListOfInputRange.at(-1);
-      console.log("last id ", lastRangeThumbId);
       dispatch(deleteInputRange({ id: thumbId }));
       setThumbId(lastRangeThumbId);
     }
@@ -148,7 +146,6 @@ const GradientBox = ({ handleOpenGradientBox }) => {
         >
           Not supported
         </canvas>
-        {console.log(multipleInputRange, thumbId)}
 
         <WrapperColorPicker>
           {thumbId && (

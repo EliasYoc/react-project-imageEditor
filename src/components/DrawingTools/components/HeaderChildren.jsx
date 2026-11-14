@@ -1,16 +1,13 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useState } from "react";
 import { FiX } from "react-icons/fi";
 import { GrUndo } from "react-icons/gr";
 import { BiDotsVerticalRounded, BiDownload } from "react-icons/bi";
 import { MdOutlineGradient } from "react-icons/md";
 import { ContextConfiguration } from "../../../context/ConfigurationProvider";
 import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
+import { GlobalButton, LayoutToolBox } from "../../../utils/styledComponents";
 import {
-  GlobalButton,
-  LayoutToolBox,
-  ProgressBar,
-} from "../../../utils/styledComponents";
-import {
+  canvasToBlob,
   deleteCanvasWithTransparency,
   getCalculatedCoordsOfContainCanvas,
   getDominantCellSizeOfContainCanvas,
@@ -18,8 +15,7 @@ import {
   redrawGlobalDrawingLogs,
   transformElementSizeIntoCanvasElementSize,
 } from "../../../utils/canvas";
-import { dataUrlToBlob } from "../../../utils/helper";
-import { useEffect } from "react";
+import { downloadBlob, getDownloadFileName } from "../../../utils/helper";
 import ListOptionsLayout from "../../ListOptionsLayout";
 import Option from "../../ListOptionsLayout/components/Option";
 import PortalNormalModal from "../../Layout/PortalNormalModal";
@@ -43,65 +39,32 @@ const HeaderChildren = () => {
     imageFile,
   } = useContext(ContextConfiguration);
   const { setFullHeightSumForCanvas } = useContext(ContextToolBoxes);
-  const [dataURLBlob, setDataURLBlob] = useState(null);
-  const [percentDownloading, setPercentDownloading] = useState(0);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
   const [isOpenGradientBox, setIsOpenGradientBox] = useState(false);
   const [openDownloadNameModal, setOpenDownloadNameModal] = useState(false);
   const [downloadName, setDownloadName] = useState("");
   const [isDownloadNameEmpty, setIsDownloadNameEmpty] = useState(false);
-  const anchor = useRef();
-
-  useEffect(() => {
-    async function progressDownload() {
-      const eventTarget = await readImageProgressFromDataURLBlob(dataURLBlob);
-      anchor.current = document.createElement("a");
-
-      eventTarget.addEventListener("progress", function (event) {
-        const percent = Math.round(event.detail.percent);
-        if (event.detail.image) {
-          // o tambien puedo usar la propiedad blobChunks y usar URL.createObjectURL()
-          const url = event.detail.image.src;
-          anchor.current.href = url;
-          anchor.current.download = downloadName;
-          anchor.current.click();
-          anchor.current.remove();
-
-          setTimeout(() => {
-            setDataURLBlob(null);
-            setPercentDownloading(0);
-            URL.revokeObjectURL(url);
-            window.location.reload();
-          }, 400);
-        }
-        setPercentDownloading(percent);
-      });
-    }
-    if (dataURLBlob) progressDownload();
-  }, [dataURLBlob, downloadName]);
 
   const configureImageCanvasBeforeDownloading = async () => {
     setIsLoadingImage(true);
-    const $canvasLayerWithImage = document.createElement("canvas");
-    const $canvasLayerCopy = document.createElement("canvas");
-    $canvasLayerCopy.width = $canvas.width;
-    $canvasLayerCopy.height = $canvas.height;
+    try {
+      const $canvasLayerWithImage = document.createElement("canvas");
+      const $canvasLayerCopy = document.createElement("canvas");
+      $canvasLayerCopy.width = $canvas.width;
+      $canvasLayerCopy.height = $canvas.height;
 
-    let layerCtxCopy = $canvasLayerCopy.getContext("2d", {
-      willReadFrequently: true,
-    });
-    let layerCtxWithImage = $canvasLayerWithImage.getContext("2d");
+      const layerCtxCopy = $canvasLayerCopy.getContext("2d");
+      const layerCtxWithImage = $canvasLayerWithImage.getContext("2d");
 
-    layerCtxCopy.drawImage(
-      $canvas,
-      0,
-      0,
-      principalImageLoaded ? principalImageLoaded.width : $canvas.width,
-      principalImageLoaded ? principalImageLoaded.height : $canvas.height
-    );
-    await draggableItemIntoCanvas(layerCtxCopy);
+      layerCtxCopy.drawImage(
+        $canvas,
+        0,
+        0,
+        principalImageLoaded ? principalImageLoaded.width : $canvas.width,
+        principalImageLoaded ? principalImageLoaded.height : $canvas.height
+      );
+      await draggableItemIntoCanvas(layerCtxCopy);
 
-    setTimeout(async () => {
       if (principalImageLoaded) {
         $canvasLayerWithImage.width = principalImageLoaded.width;
         $canvasLayerWithImage.height = principalImageLoaded.height;
@@ -123,27 +86,29 @@ const HeaderChildren = () => {
         );
       }
 
-      let dataURL = principalImageLoaded
-        ? $canvasLayerWithImage.toDataURL(
-            (imageFile && imageFile.type) || "image/png"
+      // toBlob codifica la imagen sin crear un data URL gigante en memoria
+      // (antes: toDataURL -> fetch -> blob -> lectura por trozos con setTimeout).
+      const blob = principalImageLoaded
+        ? await canvasToBlob(
+            $canvasLayerWithImage,
+            imageFile?.type || "image/png"
           )
-        : $canvasLayerCopy.toDataURL("image/png");
-      // i need the blob in order to do the progress bar
-      const dataBlob = await dataUrlToBlob(dataURL);
+        : await canvasToBlob($canvasLayerCopy, "image/png");
 
+      // Si el navegador no soporta el formato original (p. ej. GIF), toBlob
+      // devuelve PNG: la extensión se calcula con el tipo real del blob.
+      downloadBlob(blob, getDownloadFileName(downloadName, blob.type));
+    } catch (error) {
+      console.error(error);
+    } finally {
       setIsLoadingImage(false);
-      setDataURLBlob(dataBlob);
-      $canvasLayerWithImage.remove();
-      $canvasLayerCopy.remove();
-      URL.revokeObjectURL(dataURL);
-      dataURL = null;
-      layerCtxCopy = null;
-      layerCtxWithImage = null;
-    }, 500);
+    }
   };
 
   const draggableItemIntoCanvas = async (targetContext) => {
-    const sortedDraggables = refGlobalDrawingLogs.current.sort((a, b) => {
+    // Se ordena una COPIA: ordenar el array original cambiaba el orden del
+    // historial (los trazos no tienen zIndex) y rompía el "deshacer".
+    const sortedDraggables = [...refGlobalDrawingLogs.current].sort((a, b) => {
       if (a.zIndex < b.zIndex) return -1;
       if (a.zIndex > b.zIndex) return 1;
       return 0;
@@ -196,30 +161,7 @@ const HeaderChildren = () => {
             yCoord: y,
           });
 
-          console.log(`real:
-          imgW: ${principalImageLoaded?.width}
-          imgH: ${principalImageLoaded?.height}
-          cWidth:${$canvas.width}
-          cHeight:${$canvas.height}
-          styleW: ${width}
-          styleH: ${height}
-          `);
-
-          console.log(`real:
-          x:${x}
-          y:${y}
-          w: ${log.realWidth}
-          h: ${log.realHeight}
-          `);
-
-          const msg = await imageOnLoad(img);
-          console.log(`${msg}: 
-                ${img}
-                x: ${coordX}
-                y: ${coordY}
-                w: ${newElementWidth}
-                h: ${newElementHeight}
-              `);
+          await imageOnLoad(img);
           targetContext.drawImage(
             img,
             coordX,
@@ -243,47 +185,6 @@ const HeaderChildren = () => {
       image.onload = () => resolve("image loaded");
       image.onerror = () => reject("error");
     });
-
-  const readImageProgressFromDataURLBlob = async (dataURLBlob) => {
-    const eventTarget = new EventTarget();
-    const reader = dataURLBlob.stream().getReader();
-
-    let downloadedBytes = 0;
-    let totalBytes = dataURLBlob.size;
-    let chunks = [];
-
-    function read() {
-      reader.read().then(function (result) {
-        if (result.done) {
-          const url = URL.createObjectURL(dataURLBlob);
-          const $image = new Image();
-          $image.src = url;
-          $image.onload = function () {
-            eventTarget.dispatchEvent(
-              new CustomEvent("progress", {
-                detail: {
-                  percent: 100,
-                  blobChunks: new Blob(chunks, { type: dataURLBlob.type }),
-                  image: $image,
-                },
-              })
-            );
-            URL.revokeObjectURL(url);
-          };
-          return;
-        }
-        chunks.push(result.value);
-        downloadedBytes += result.value.length;
-        let percentage = totalBytes ? (downloadedBytes / totalBytes) * 100 : 0;
-        eventTarget.dispatchEvent(
-          new CustomEvent("progress", { detail: { percent: percentage } })
-        );
-        setTimeout(read, 150);
-      });
-    }
-    read();
-    return eventTarget;
-  };
 
   const handleOpenOptions = () => setIsOptionsOpen(!isOptionsOpen);
 
@@ -315,7 +216,6 @@ const HeaderChildren = () => {
 
   return (
     <>
-      <ProgressBar width={`${percentDownloading}%`} />
       <div
         style={{ display: "flex", alignItems: "center", userSelect: "none" }}
       >
@@ -354,11 +254,7 @@ const HeaderChildren = () => {
             fontSize="14px"
             flexShrink="0"
           >
-            <span>Cargando...</span>
-          </GlobalButton>
-        ) : percentDownloading ? (
-          <GlobalButton fontSize="14px" flexShrink="0">
-            <span>{percentDownloading}%</span>
+            <span>Exportando…</span>
           </GlobalButton>
         ) : (
           <GlobalButton

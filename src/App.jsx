@@ -44,8 +44,6 @@ function App() {
     }
   }, [footerSize, handleSumHeightForCanvas]);
 
-  console.log("APP");
-
   useEffect(() => {
     if (headerSize) {
       const { height, marginTop, marginBottom } = headerSize;

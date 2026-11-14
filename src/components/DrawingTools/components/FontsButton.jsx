@@ -150,7 +150,6 @@ const FontsButton = ({ onClick }) => {
 
   const handleSelectFont = (e) => {
     const $draggableElementText = document.getElementById(draggableTextId);
-    console.log(e.target.value);
     $draggableElementText.style.fontFamily = e.target.value;
     $draggableElementText.dataset.fontName = e.target.dataset.fontName;
     $draggableElementText.dataset.fontFamily = e.target.value;
@@ -192,20 +191,18 @@ const FontsButton = ({ onClick }) => {
           }}
         >
           {fonts.map((font) => (
-            <>
-              <FontLabel fontFamily={font.font} htmlFor={font.id}>
-                <FontInput
-                  checked={selectedFontName === font.label}
-                  data-font-name={font.label}
-                  onChange={handleSelectFont}
-                  name="font"
-                  id={font.id}
-                  type="radio"
-                  value={font.font}
-                ></FontInput>
-                {font.label}
-              </FontLabel>
-            </>
+            <FontLabel key={font.id} fontFamily={font.font} htmlFor={font.id}>
+              <FontInput
+                checked={selectedFontName === font.label}
+                data-font-name={font.label}
+                onChange={handleSelectFont}
+                name="font"
+                id={font.id}
+                type="radio"
+                value={font.font}
+              ></FontInput>
+              {font.label}
+            </FontLabel>
           ))}
         </div>
       </FontBox>

@@ -31,12 +31,13 @@ export const updateDraggableRect = (
     if (draggable.id === draggableElementId) {
       return {
         ...draggable,
-        translate:
-          [moveable.state.targetMatrix[12], moveable.state.targetMatrix[13]] ||
-          draggable.translate,
-        scale:
-          [moveable.state.targetMatrix[0], moveable.state.targetMatrix[5]] ||
-          draggable.scale,
+        // Un array literal siempre es "truthy": el antiguo `|| draggable.translate`
+        // nunca se usaba, así que se quita sin cambiar el comportamiento.
+        translate: [
+          moveable.state.targetMatrix[12],
+          moveable.state.targetMatrix[13],
+        ],
+        scale: [moveable.state.targetMatrix[0], moveable.state.targetMatrix[5]],
         offsetLeft: moveable.state.target.offsetLeft,
         offsetTop: moveable.state.target.offsetTop,
         realWidth: moveable.state.targetClientRect.width,

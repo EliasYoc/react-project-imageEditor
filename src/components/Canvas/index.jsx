@@ -28,7 +28,6 @@ const Canvas = () => {
     [ctx, canvasSize, lowQualityDataImageLoaded]
   );
 
-  console.log("render canvas");
   return (
     <canvas
       id="myCanvas"
