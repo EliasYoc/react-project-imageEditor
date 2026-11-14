@@ -20,7 +20,7 @@ const ConfirmModal = ({
       onClose={onClose}
       background="#2e2e2ee0"
       position="absolute"
-      zIndex="100"
+      zIndex="var(--z-menu)"
       style={{
         display: "flex",
         justifyContent: "center",

@@ -8,15 +8,14 @@ import Option from "../../components/layout/ListOption";
 import ListOptionsLayout from "../../components/layout/ListOptionsLayout";
 import PortalNormalModal from "../../components/layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
-import {
-  GlobalButton,
-  LayoutToolBox,
-} from "../../components/ui/legacy/styledComponents";
+import { Button, IconButton } from "../../components/ui/Button";
+import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
 import { useEditorCanvas } from "../../editor/canvas/editorCanvasContext";
 import { redrawGlobalDrawingLogs } from "../../editor/legacy/canvasUtils";
 import { editorStore, useEditorStore } from "../../editor/store/editorStore";
 import { exportImage } from "../export/legacy/exportImage";
 import GradientBox from "../gradient/GradientBox";
+import styles from "./EditorHeader.module.css";
 import {
   InputDownloadName,
   WarningEmptyNameField,
@@ -79,15 +78,17 @@ const EditorHeader = () => {
 
   return (
     <>
-      <div
-        style={{ display: "flex", alignItems: "center", userSelect: "none" }}
-      >
+      <div className={styles.history}>
         {historyLength > 0 && (
-          <GlobalButton onClick={handleUndo}>
-            <GrUndo />
-          </GlobalButton>
+          <IconButton
+            icon={GrUndo}
+            aria-label="Deshacer"
+            onClick={handleUndo}
+          />
         )}
-        <span style={{ fontSize: "14px" }}>{historyLength}</span>
+        <span className={styles.historyCount} title="Acciones en el historial">
+          {historyLength}
+        </span>
       </div>
       <LayoutToolBox
         backgroundColor="transparent"
@@ -98,41 +99,35 @@ const EditorHeader = () => {
         position="relative"
       >
         {historyLength > 0 && (
-          <GlobalButton
-            onClick={handleClearAll}
-            width="100%"
-            height="auto"
-            borderRadius="1rem"
-            fontSize="14px"
-          >
-            Borrar Todo
-          </GlobalButton>
+          <Button size="sm" onClick={handleClearAll}>
+            Borrar todo
+          </Button>
         )}
 
         {isExporting ? (
-          <GlobalButton
-            width="auto"
-            height="auto"
-            borderRadius="1rem"
-            fontSize="14px"
-            flexShrink="0"
-          >
-            <span>Exportando…</span>
-          </GlobalButton>
+          <span role="status" className={styles.status}>
+            Exportando…
+          </span>
         ) : (
-          <GlobalButton flexShrink="0" onClick={() => setMode("home")}>
-            <FiX />
-          </GlobalButton>
+          <IconButton
+            icon={FiX}
+            aria-label="Cerrar el editor"
+            onClick={() => setMode("home")}
+          />
         )}
 
-        <GlobalButton onClick={toggleOptions} flexShrink="0">
-          <BiDotsVerticalRounded />
-        </GlobalButton>
+        <IconButton
+          icon={BiDotsVerticalRounded}
+          aria-label="Más opciones"
+          aria-haspopup="menu"
+          aria-expanded={isOptionsOpen}
+          onClick={toggleOptions}
+        />
       </LayoutToolBox>
       <PortalNormalModal
         isOpen={isOptionsOpen}
         onClose={toggleOptions}
-        zIndex="100"
+        zIndex="var(--z-menu)"
       >
         <ListOptionsLayout
           background="#2e2e2ee0"

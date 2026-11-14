@@ -41,13 +41,19 @@ src/
     canvas/     Refs a los <canvas>
     legacy/     Utilidades de canvas que se reemplazan con Konva (Fase 2)
   features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
-  components/   Piezas reutilizables: layout/ y ui/
-  styles/       CSS global, fuentes y tema
+  components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton…)
+  styles/       tokens.css (colores, espacios, capas), CSS global y fuentes
   lib/          Utilidades puras
 ```
 
-Las carpetas `legacy/` contienen código que se va a reemplazar (Konva en las Fases 2 y 4): se tocan lo mínimo.
+Las carpetas `legacy/` contienen código que se va a reemplazar (Konva en las Fases 2 y 4): se tocan lo mínimo y sus avisos de hooks no bloquean el lint.
+
+## Estilos
+
+- Los valores de diseño (colores, espaciado, radios, z-index) viven en `src/styles/tokens.css` y se usan con `var(--…)`.
+- Los componentes nuevos usan **CSS Modules** (`*.module.css`). styled-components se va retirando a medida que se reconstruye cada parte.
+- Para botones usa `Button` o `IconButton` de `components/ui/Button`: son `<button>` reales, accesibles con teclado. `IconButton` exige `aria-label`.
 
 ## Stack
 
-React 18 · Vite · Zustand · TypeScript (gradual) · styled-components · Vitest + Testing Library · ESLint + Prettier
+React 19 · Vite · Zustand · TypeScript (gradual) · CSS Modules · styled-components (en retirada) · Vitest + Testing Library · ESLint + Prettier

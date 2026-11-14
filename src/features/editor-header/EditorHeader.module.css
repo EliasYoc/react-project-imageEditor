@@ -1,0 +1,15 @@
+.history {
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
+
+.historyCount {
+  font-size: var(--font-size-sm);
+}
+
+/* Texto "Exportando…": ocupa el sitio del botón de cerrar mientras dura. */
+.status {
+  padding: var(--space-2);
+  font-size: var(--font-size-sm);
+}

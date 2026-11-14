@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import Moveable from "react-moveable";
 import { useEditorCanvas } from "../../../editor/canvas/editorCanvasContext";
 import {
-  getMoveableGeometry,
+  getElementGeometry,
   measureElement,
 } from "../../../editor/legacy/draggableElements";
 import { rgbaToCss } from "../../../editor/model/color";
@@ -35,22 +35,13 @@ const ElementEditable = ({ element, containerRef, setCheckInput }) => {
   // useMemo: la versión con debounce tiene que ser la misma entre renders.
   const geometrySync = useMemo(() => {
     const sync = () => {
-      if (!refMoveable.current) return;
-      refMoveable.current.updateRect();
-      // updateRect() actualiza el estado interno de Moveable con setState, que
-      // React aplica después: leerlo en la misma línea devolvía medidas viejas
-      // (p. ej. una imagen recién cargada quedaba con ancho 0 y no se exportaba).
-      requestAnimationFrame(() => {
-        const moveable = refMoveable.current;
-        const domElement = refElement.current;
-        if (!moveable || !domElement) return;
-        const geometry = getMoveableGeometry(moveable.getManager());
-        if (geometry) {
-          updateElement(id, {
-            ...geometry,
-            cssTransform: domElement.style.transform || null,
-          });
-        }
+      const domElement = refElement.current;
+      if (!domElement) return;
+      // Ajusta la caja azul de Moveable al nuevo tamaño del elemento.
+      refMoveable.current?.updateRect();
+      updateElement(id, {
+        ...getElementGeometry(domElement, refMoveable.current?.getManager()),
+        cssTransform: domElement.style.transform || null,
       });
     };
     return { now: sync, debounced: debounce(sync, 150) };

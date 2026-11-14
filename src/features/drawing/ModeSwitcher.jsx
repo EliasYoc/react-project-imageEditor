@@ -1,9 +1,15 @@
 import ToolBox from "../../components/layout/ToolBox";
-import { GlobalButton } from "../../components/ui/legacy/styledComponents";
+import { Button } from "../../components/ui/Button";
 import { useEditorStore } from "../../editor/store/editorStore";
+
+const MODES = [
+  { mode: "draw", label: "Dibujar" },
+  { mode: "text", label: "Texto" },
+];
 
 /** Cambia entre los modos "Dibujar" y "Texto" del editor. */
 const ModeSwitcher = () => {
+  const currentMode = useEditorStore((state) => state.mode);
   const setMode = useEditorStore((state) => state.setMode);
 
   return (
@@ -16,22 +22,15 @@ const ModeSwitcher = () => {
       gap="1rem"
       backgroundColor="none"
     >
-      <GlobalButton
-        onClick={() => setMode("draw")}
-        fontSize="1rem"
-        width="auto"
-        height="auto"
-      >
-        Dibujar
-      </GlobalButton>
-      <GlobalButton
-        onClick={() => setMode("text")}
-        fontSize="1rem"
-        width="auto"
-        height="auto"
-      >
-        Texto
-      </GlobalButton>
+      {MODES.map(({ mode, label }) => (
+        <Button
+          key={mode}
+          aria-pressed={currentMode === mode}
+          onClick={() => setMode(mode)}
+        >
+          {label}
+        </Button>
+      ))}
     </ToolBox>
   );
 };

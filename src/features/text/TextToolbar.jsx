@@ -8,7 +8,6 @@ import {
 import { rgbaToCss } from "../../editor/model/color";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
-import { themeColor } from "../../styles/theme";
 import IncludeImageButton from "../images/IncludeImageButton";
 import BoldButton from "./BoldButton";
 import FontsButton from "./FontsButton";
@@ -35,7 +34,7 @@ const TextToolbar = () => {
       <BoldButton />
       <FontsButton />
       <GlobalButton
-        border={`3px solid ${themeColor.textColor}`}
+        border="3px solid var(--color-text)"
         backgroundColor="#eee"
         backgroundImage="linear-gradient(45deg, rgba(0,0,0,.25) 25%,
                   transparent 0, transparent 75%, rgba(0,0,0,.25) 0),
