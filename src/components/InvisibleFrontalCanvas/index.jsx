@@ -273,9 +273,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       }
     }
 
-    console.log(refPaintingLogs.current);
-    console.log(refGlobalDrawingLogs.current);
-
     setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
     pointCounter = 0;
     isPainting = false;
@@ -284,7 +281,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     allowOneDotAfterPaintingWholeCanvas = false;
   };
 
-  console.log("frontal canvas");
   const handleSetPencilSize = (thumbValue) => {
     dispatch(setSizePencil(maxValue - thumbValue[0] + minValue));
     dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
@@ -312,7 +308,6 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
 
   const doNothing = () => {};
 
-  console.log(draggableTextId);
   return (
     <div
       className="scrollable"

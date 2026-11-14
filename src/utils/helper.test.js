@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   debounce,
   distanceBetween,
+  getDownloadFileName,
   middlePointBetween,
   reduceAspectRatioQualityOfIncomingImage,
 } from "./helper";
@@ -60,5 +61,22 @@ describe("reduceAspectRatioQualityOfIncomingImage", () => {
         expectedMaxPixelsSize: 300,
       })
     ).toEqual({ newWidth: 150, newHeight: 300 });
+  });
+});
+
+describe("getDownloadFileName", () => {
+  it("añade la extensión según el tipo MIME", () => {
+    expect(getDownloadFileName("mi dibujo", "image/jpeg")).toBe(
+      "mi dibujo.jpg"
+    );
+    expect(getDownloadFileName("mi dibujo", "image/png")).toBe("mi dibujo.png");
+  });
+
+  it("respeta la extensión si el usuario ya la escribió", () => {
+    expect(getDownloadFileName("foto.PNG", "image/png")).toBe("foto.PNG");
+  });
+
+  it("usa png y un nombre por defecto en casos raros", () => {
+    expect(getDownloadFileName("  ", "image/gif")).toBe("imagen.png");
   });
 });

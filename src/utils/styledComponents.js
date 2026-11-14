@@ -134,16 +134,6 @@ export const PencilBackgroundColor = styled.span`
     backgroundColor || "transparent"};
 `;
 
-export const ProgressBar = styled.div`
-  position: absolute;
-  width: ${({ width }) => width};
-  height: 5px;
-  background: #2499c7;
-  top: 100%;
-  left: 0;
-  transition: width 0.2s ease;
-`;
-
 export const GlobalSpinner = styled.span`
   width: ${({ width }) => width || "48px"};
   height: ${({ height }) => height || "48px"};
