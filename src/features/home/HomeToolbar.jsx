@@ -1,0 +1,102 @@
+import { BiImageAlt, BiPalette } from "react-icons/bi";
+import {
+  GlobalButton,
+  LayoutToolBox,
+} from "../../components/ui/legacy/styledComponents";
+import { useEditorStore } from "../../editor/store/editorStore";
+import {
+  readFile,
+  reduceAspectRatioQualityOfIncomingImage,
+} from "../../lib/helper";
+
+/** Las imágenes más grandes que esto se reducen a MAX_IMAGE_SIDE píxeles. */
+const HEAVY_IMAGE_SIDE = 2800;
+const MAX_IMAGE_SIDE = 2048;
+
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    image.src = src;
+  });
+
+/** Barra de la pantalla de inicio: abrir el editor o cargar una imagen. */
+const HomeToolbar = () => {
+  const setMode = useEditorStore((state) => state.setMode);
+  const setStatus = useEditorStore((state) => state.setStatus);
+  const loadBackground = useEditorStore((state) => state.loadBackground);
+
+  const handleLoadImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setStatus("loading");
+
+    try {
+      const { result } = await readFile({ file });
+      const image = await loadImage(result);
+
+      const isHeavy =
+        image.width > HEAVY_IMAGE_SIDE || image.height > HEAVY_IMAGE_SIDE;
+      const { newWidth: width, newHeight: height } = isHeavy
+        ? reduceAspectRatioQualityOfIncomingImage({
+            options: image,
+            expectedMaxPixelsSize: MAX_IMAGE_SIDE,
+          })
+        : { newWidth: image.width, newHeight: image.height };
+
+      // Versión ligera para mostrar de fondo; la original se usa al exportar.
+      const previewCanvas = document.createElement("canvas");
+      previewCanvas.width = width;
+      previewCanvas.height = height;
+      previewCanvas.getContext("2d").drawImage(image, 0, 0, width, height);
+
+      loadBackground({
+        image,
+        previewUrl: previewCanvas.toDataURL("image/jpeg"),
+        mimeType: file.type,
+        size: { width, height },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setStatus("idle");
+      // Permite volver a elegir el mismo archivo.
+      e.target.value = "";
+    }
+  };
+
+  return (
+    <LayoutToolBox
+      className="animationAppearUp"
+      gap="1rem"
+      display="flex"
+      justifyContent="center"
+      borderRadius="50px"
+      margin="10px auto"
+      bottom="0"
+      padding="0 .5rem"
+      width="clamp(300px, 90% ,500px)"
+    >
+      {/* Cambia de modo al instante. Antes esperaba al final de la animación
+          (onTransitionEnd) y, si el navegador no animaba, la app se atascaba. */}
+      <GlobalButton onClick={() => setMode("draw")}>
+        <BiPalette />
+      </GlobalButton>
+      <label htmlFor="open-image">
+        <input
+          style={{ display: "none" }}
+          type="file"
+          id="open-image"
+          accept="image/*"
+          onChange={handleLoadImage}
+        />
+        <GlobalButton flexShrink="0">
+          <BiImageAlt />
+        </GlobalButton>
+      </label>
+    </LayoutToolBox>
+  );
+};
+
+export default HomeToolbar;
