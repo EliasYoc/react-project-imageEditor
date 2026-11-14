@@ -1,12 +1,12 @@
-import { forwardRef } from "react";
 import { LayoutToolBox } from "../ui/legacy/styledComponents";
 
-const ToolBox = forwardRef(({ children, ...rest }, ref) => {
+// React 19: `ref` llega como una prop más; ya no hace falta forwardRef.
+const ToolBox = ({ children, ref, ...rest }) => {
   return (
     <LayoutToolBox {...rest} ref={ref}>
       {children}
     </LayoutToolBox>
   );
-});
+};
 
 export default ToolBox;
