@@ -38,7 +38,8 @@ src/
   editor/       Núcleo del editor
     model/      Tipos del documento (TypeScript)
     store/      Store de Zustand: la única fuente de verdad del documento y su historial
-    engine/     Motor puro, sin React ni Konva: vista, trazos, raster con checkpoints, puntero
+    engine/     Motor puro, sin React ni Konva: vista, raster con checkpoints, puntero
+      brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, estabilizador, presets
     stage/      Lienzo con Konva (react-konva) y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
   components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton…)
@@ -56,16 +57,28 @@ Las carpetas `legacy/` contienen código que se va a reemplazar (textos e imáge
 - La entrada usa **Pointer Events** (ratón, dedo y lápiz con el mismo código). `editor/stage/useStageInput.ts` decide si un puntero dibuja, desplaza o hace zoom.
 - La **vista** (zoom y desplazamiento) vive en su propio store (`editor/stage/viewStore.ts`): no es parte del dibujo ni del historial.
 
+## Pinceles
+
+Hay dos motores en `editor/engine/brushes/`:
+
+- **Tinta** (Pluma, Marcador): perfect-freehand calcula el contorno del trazo y se rellena. El grosor sigue la presión del lápiz o, con ratón y dedo, la velocidad.
+- **Sellos** (Lápiz, Tiza, Aerógrafo, Spray, Resaltador, borradores): se estampa una punta a lo largo del recorrido, con espaciado, flujo, dureza, curvas de presión y variación aleatoria.
+
+Cada trazo se pinta primero en un **búfer** y luego se compone con su **opacidad** y su **modo de fusión**: un marcador semitransparente no se oscurece donde se cruza consigo mismo, pero sí sobre otro trazo. La variación aleatoria usa una **semilla** guardada en el trazo, así que se repinta siempre igual (al deshacer o al exportar). El **estabilizador** (una "cuerda" medida en píxeles de pantalla) se aplica al capturar los puntos.
+
+Los presets están en `presets.ts`: cambiar uno cambia cómo se ven los trazos ya hechos.
+
 ## Uso
 
-| Acción                    | Ratón / teclado                                          | Pantalla táctil           |
-| ------------------------- | -------------------------------------------------------- | ------------------------- |
-| Dibujar                   | Clic izquierdo y arrastrar                               | Un dedo o el lápiz        |
-| Acercar / alejar          | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / − | Pellizcar con dos dedos   |
-| Desplazar                 | Rueda, espacio + arrastrar o botón central               | Arrastrar con dos dedos   |
-| Ajustar a la pantalla     | Ctrl/⌘ + 0                                               | Doble toque con dos dedos |
-| Deshacer / rehacer        | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera    |
-| Pincel / spray / borrador | B / S / E                                                | Barra inferior            |
+| Acción                | Ratón / teclado                                          | Pantalla táctil           |
+| --------------------- | -------------------------------------------------------- | ------------------------- |
+| Dibujar               | Clic izquierdo y arrastrar                               | Un dedo o el lápiz        |
+| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / − | Pellizcar con dos dedos   |
+| Desplazar             | Rueda, espacio + arrastrar o botón central               | Arrastrar con dos dedos   |
+| Ajustar a la pantalla | Ctrl/⌘ + 0                                               | Doble toque con dos dedos |
+| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera    |
+| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)    | Barra inferior            |
+| Tamaño del pincel     | [ / ] (o el slider lateral)                              | Slider lateral            |
 
 El zoom solo está en modo Dibujar: en modo Texto el lienzo se ve ajustado (los textos pasan a Konva en la Fase 4) y al volver a Dibujar se recupera el zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 
