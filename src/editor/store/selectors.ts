@@ -49,8 +49,13 @@ export const selectSelectedText = (state: EditorStore) => {
   return isTextElement(element) ? element : null;
 };
 
+/** Ajustes (tamaño, opacidad, estabilización) del preset actual. */
 export const selectCurrentBrush = (state: EditorStore) =>
-  state.brush.settings[state.brush.type];
+  state.brush.settings[state.brush.presetId];
+
+export const selectBrushPresetId = (state: EditorStore) => state.brush.presetId;
+
+export const selectBrushColor = (state: EditorStore) => state.brush.color;
 
 export const selectIsEditorOpen = (state: EditorStore) => state.mode !== "home";
 

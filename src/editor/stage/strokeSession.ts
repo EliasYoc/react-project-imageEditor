@@ -1,13 +1,12 @@
 import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import { get2dContext } from "../../lib/canvas";
-import { toStrokePoint, type PointerSample } from "../engine/pointer";
 import {
-  createSprayState,
-  renderStroke,
-  stampSpray,
-  strokeComposite,
-  type SprayState,
-} from "../engine/renderStroke";
+  createLiveRenderer,
+  strokeBlend,
+  type LiveRenderer,
+} from "../engine/brushes/paint";
+import { ropeLength, stabilizePoints } from "../engine/brushes/stabilizer";
+import { toStrokePoint, type PointerSample } from "../engine/pointer";
 import { createStroke } from "../model/factories";
 import type { StrokeEntry, StrokePoint } from "../model/types";
 import { editorStore } from "../store/editorStore";
@@ -15,8 +14,14 @@ import { viewStore } from "./viewStore";
 
 interface ActiveStroke {
   stroke: StrokeEntry;
+  /** Puntos ya estabilizados (los que se guardan). */
   points: StrokePoint[];
-  spray: SprayState;
+  /** Ancla del estabilizador y último punto real del puntero. */
+  anchor: StrokePoint | null;
+  lastRaw: StrokePoint | null;
+  /** Longitud de la cuerda del estabilizador, en píxeles del documento. */
+  rope: number;
+  renderer: LiveRenderer;
   startedAt: number;
 }
 
@@ -32,8 +37,13 @@ interface StrokeSessionOptions {
 type Rect = Pick<DOMRect, "left" | "top">;
 
 /**
- * El trazo que se está dibujando: lo muestra en el canvas del trazo en curso
- * y, al terminar, lo guarda en el store (el raster se actualiza solo).
+ * El trazo que se está dibujando: lo estabiliza, lo muestra en el canvas del
+ * trazo en curso y, al terminar, lo guarda en el store (el raster se
+ * actualiza solo).
+ *
+ * El canvas del trazo en curso es el "búfer" del trazo: la opacidad y el modo
+ * de fusión del pincel se los aplica el nodo de Konva al mostrarlo, igual que
+ * `paintStroke` al pintarlo en el raster.
  *
  * Vive en variables locales, no en estado de React: dibujar no provoca
  * ningún render.
@@ -49,24 +59,20 @@ export const createStrokeSession = ({
   const clearLive = () =>
     ctx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
 
-  const extend = (samples: readonly PointerSample[], rect: Rect) => {
-    if (!active) return;
-    const { view } = viewStore.getState();
-    const newPoints = samples.map((sample) =>
-      toStrokePoint(sample, rect, view)
-    );
-    active.points.push(...newPoints);
-
-    if (active.stroke.brush === "spray") {
-      // Las manchas del spray se acumulan: basta con pintar las nuevas.
-      active.spray = stampSpray(ctx, active.stroke, newPoints, active.spray);
-    } else {
-      // La línea se repinta entera: si solo se añadiera el último tramo, las
-      // uniones de un color semitransparente se verían más oscuras.
-      clearLive();
-      renderStroke(ctx, { ...active.stroke, points: active.points });
-    }
+  const addPoints = (raw: StrokePoint[]) => {
+    if (!active || !raw.length) return;
+    active.lastRaw = raw[raw.length - 1];
+    const { points, anchor } = stabilizePoints(active.anchor, raw, active.rope);
+    active.anchor = anchor;
+    if (!points.length) return;
+    active.points.push(...points);
+    active.renderer.update(active.points, points);
     requestDraw();
+  };
+
+  const extend = (samples: readonly PointerSample[], rect: Rect) => {
+    const { view } = viewStore.getState();
+    addPoints(samples.map((sample) => toStrokePoint(sample, rect, view)));
   };
 
   return {
@@ -75,14 +81,24 @@ export const createStrokeSession = ({
 
     start(sample: PointerSample, rect: Rect) {
       const { brush } = editorStore.getState();
-      const stroke = createStroke(brush.type, brush.settings[brush.type]);
-      // El trazo en curso se dibuja opaco en su canvas; el modo de fusión (p.
-      // ej. borrar) se aplica al mostrarlo sobre la capa de pintura.
-      liveNode?.globalCompositeOperation(strokeComposite(stroke));
+      const settings = brush.settings[brush.presetId];
+      const stroke = createStroke({
+        brush: brush.presetId,
+        settings,
+        color: brush.color,
+        // Solo el lápiz mide la presión de verdad (el ratón y el dedo no).
+        hasPressure: sample.pointerType === "pen",
+      });
+      liveNode?.opacity(stroke.opacity);
+      liveNode?.globalCompositeOperation(strokeBlend(stroke));
+      clearLive();
       active = {
         stroke,
         points: [],
-        spray: createSprayState(),
+        anchor: null,
+        lastRaw: null,
+        rope: ropeLength(settings.stabilizer, viewStore.getState().view.scale),
+        renderer: createLiveRenderer(ctx, stroke),
         startedAt: performance.now(),
       };
       extend([sample], rect);
@@ -92,9 +108,16 @@ export const createStrokeSession = ({
 
     finish() {
       if (!active) return;
-      const { stroke, points } = active;
+      const { stroke, points, anchor, lastRaw } = active;
       active = null;
-      editorStore.getState().addStroke({ ...stroke, points });
+      // El estabilizador va por detrás del puntero: el trazo termina donde se
+      // soltó, no donde se quedó la cuerda.
+      const isBehind =
+        lastRaw && anchor && (lastRaw.x !== anchor.x || lastRaw.y !== anchor.y);
+      const finalPoints = isBehind ? [...points, lastRaw] : points;
+      if (finalPoints.length) {
+        editorStore.getState().addStroke({ ...stroke, points: finalPoints });
+      }
       clearLive();
       requestDraw();
     },
