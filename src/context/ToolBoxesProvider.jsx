@@ -17,7 +17,6 @@ const ToolBoxesProvider = ({ children }) => {
     width: null,
     height: null,
   });
-  console.log("ToolBox provider");
   const handleSumHeightForCanvas = useCallback((...fullHeight) => {
     const fullHeightSum = fullHeight.reduce(
       (prevNum, num) => prevNum + parseFloat(num),

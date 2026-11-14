@@ -69,7 +69,6 @@ const ElementEditable = ({
 
   useEffect(
     function refreshMoveable() {
-      console.log("updating");
       saveUpdatedMoveableRect();
     },
     [fontFamily, fontWeight]

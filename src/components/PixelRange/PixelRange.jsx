@@ -1,10 +1,16 @@
 import { WrapperRange } from "./styles";
-import RangeSlider from "react-range-slider-input";
+import RangeSliderModule from "react-range-slider-input";
 import "react-range-slider-input/dist/style.css";
 import "./RangeSlider.css";
 import { useDispatch } from "react-redux";
 import { setRangeValues } from "../../features/paintingSlice";
 import { useEffect } from "react";
+
+// El paquete declara "module" pero publica CommonJS, y con Vite la importación
+// por defecto llega como `{ default: Componente }`. Webpack (CRA) lo resolvía
+// solo. Este slider se sustituye en la Fase 6.
+const RangeSlider = RangeSliderModule.default ?? RangeSliderModule;
+
 const PixelRange = ({ pixelSize, minValue = 10, maxValue = 150, onInput }) => {
   const dispatch = useDispatch();
   useEffect(() => {

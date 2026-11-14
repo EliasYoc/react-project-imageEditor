@@ -288,6 +288,19 @@ export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
   return gradient;
 }
 
+/** Versión con promesa de canvas.toBlob. */
+export const canvasToBlob = (canvas, mimeType = "image/png", quality) =>
+  new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob
+          ? resolve(blob)
+          : reject(new Error("No se pudo exportar la imagen")),
+      mimeType,
+      quality
+    );
+  });
+
 export const transformElementSizeIntoCanvasElementSize = (
   elementWidth = 0,
   elementHeight = 0,

@@ -46,7 +46,10 @@ export const LayoutToolBox = styled.div`
   font-size: ${({ fontSize }) => fontSize || "12px"};
   overflow: ${({ overflow }) => overflow || "visible"};
   flex-shrink: 0;
-  transition: transform 0.3s ease, height 0.3s ease, width 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    height 0.3s ease,
+    width 0.3s ease;
   &.closeDown {
     transform: translateY(calc(100% + 10px));
   }
@@ -129,16 +132,6 @@ export const PencilBackgroundColor = styled.span`
   transition: background 0.3s ease;
   background-color: ${({ backgroundColor }) =>
     backgroundColor || "transparent"};
-`;
-
-export const ProgressBar = styled.div`
-  position: absolute;
-  width: ${({ width }) => width};
-  height: 5px;
-  background: #2499c7;
-  top: 100%;
-  left: 0;
-  transition: width 0.2s ease;
 `;
 
 export const GlobalSpinner = styled.span`
