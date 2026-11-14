@@ -1,0 +1,4 @@
+/* Herramienta activa (pincel o borrador): fondo resaltado, como antes. */
+.tool[aria-pressed="true"] {
+  background: var(--color-surface-active);
+}

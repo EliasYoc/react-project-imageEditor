@@ -109,7 +109,7 @@ export function useStageInput({
       const { view } = viewStore.getState();
       const radius = Math.max(
         1,
-        (brush.settings[brush.type].size / 2) * view.scale
+        (brush.settings[brush.presetId].size / 2) * view.scale
       );
       cursor.position(point);
       for (const circle of cursor.getChildren()) {
@@ -178,6 +178,19 @@ export function useStageInput({
 
     // ------------------------------------------------ puntero
 
+    /**
+     * Mide el área del lienzo y, si cambió y el ResizeObserver aún no avisó
+     * (p. ej. se empieza a dibujar en el mismo frame en que aparece la
+     * cabecera), actualiza la vista antes de convertir coordenadas.
+     */
+    const measure = () => {
+      rect = container.getBoundingClientRect();
+      const { stageSize, setStageSize } = viewStore.getState();
+      if (rect.width !== stageSize.width || rect.height !== stageSize.height) {
+        setStageSize({ width: rect.width, height: rect.height });
+      }
+    };
+
     const capture = (pointerId: number) => {
       try {
         container.setPointerCapture(pointerId);
@@ -187,7 +200,7 @@ export function useStageInput({
     };
 
     const onPointerDown = (event: PointerEvent) => {
-      rect = container.getBoundingClientRect();
+      measure();
       const point = local(event);
 
       if (event.pointerType === "touch") {
@@ -297,7 +310,7 @@ export function useStageInput({
     const onWheel = (event: WheelEvent) => {
       // Sin esto, Ctrl + rueda haría zoom de toda la página.
       event.preventDefault();
-      rect = container.getBoundingClientRect();
+      measure();
       const lineHeight = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
       const dx = event.deltaX * lineHeight;
       const dy = event.deltaY * lineHeight;

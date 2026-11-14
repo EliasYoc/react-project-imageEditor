@@ -1,6 +1,8 @@
 import { useEffect } from "react";
+import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
 import { ZOOM_STEP, viewStore } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
+import { selectCurrentBrush } from "../../editor/store/selectors";
 import { isTypingTarget } from "../../lib/isTypingTarget";
 import { getShortcutAction, type ShortcutAction } from "./getShortcutAction";
 
@@ -18,8 +20,21 @@ const run = (action: ShortcutAction) => {
       return view.zoomBy(ZOOM_STEP);
     case "zoomOut":
       return view.zoomBy(1 / ZOOM_STEP);
-    case "brush":
-      return editor.setBrushType(action.brush);
+    case "drawBrush":
+      return editor.selectDrawBrush();
+    case "eraser":
+      return editor.selectEraser();
+    case "brushSize": {
+      const { size } = selectCurrentBrush(editor);
+      const scaled = Math.round(size * action.factor);
+      // Al menos 1 px de cambio: con pinceles pequeños, ×1.25 redondeado no
+      // movería el tamaño.
+      const next =
+        scaled === size ? size + Math.sign(action.factor - 1) : scaled;
+      return editor.setBrushSize(
+        Math.min(BRUSH_SIZE_RANGE.max, Math.max(BRUSH_SIZE_RANGE.min, next))
+      );
+    }
   }
 };
 

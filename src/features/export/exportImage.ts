@@ -1,4 +1,4 @@
-import { paintStroke } from "../../editor/engine/renderStroke";
+import { paintStroke } from "../../editor/engine/brushes/paint";
 import { viewStore } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
 import { selectElements, selectStrokes } from "../../editor/store/selectors";
@@ -66,7 +66,11 @@ export const renderDocument = async (documentFrame: HTMLElement | null) => {
     paint.width / canvasSize.width,
     paint.height / canvasSize.height
   );
-  for (const stroke of selectStrokes(state)) paintStroke(paintCtx, stroke);
+  // Búfer de cada trazo, a la resolución de salida (opacidad y modo de fusión).
+  const scratch = createCanvas(output);
+  for (const stroke of selectStrokes(state)) {
+    paintStroke(paintCtx, stroke, scratch);
+  }
   ctx.drawImage(paint, 0, 0);
 
   const elements = selectElements(state);

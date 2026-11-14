@@ -8,10 +8,11 @@ import {
   selectCurrentBrush,
   selectSelectedText,
 } from "../../editor/store/selectors";
+import { SLIDER_STEPS, sizeToSlider, sliderToSize } from "./sizeScale";
 
 /**
- * Slider lateral de tamaño: el del pincel en modo Dibujar y el del texto
- * seleccionado en modo Texto.
+ * Slider lateral de tamaño: el del pincel en modo Dibujar (con escala
+ * cuadrática, ver sizeScale) y el del texto seleccionado en modo Texto.
  */
 const SizeSlider = () => {
   const mode = useEditorStore((state) => state.mode);
@@ -23,10 +24,12 @@ const SizeSlider = () => {
   if (mode === "draw") {
     return (
       <PixelRange
-        value={brushSize}
-        min={BRUSH_SIZE_RANGE.min}
-        max={BRUSH_SIZE_RANGE.max}
-        onChange={setBrushSize}
+        value={sizeToSlider(brushSize, BRUSH_SIZE_RANGE)}
+        min={0}
+        max={SLIDER_STEPS}
+        onChange={(position) =>
+          setBrushSize(sliderToSize(position, BRUSH_SIZE_RANGE))
+        }
       />
     );
   }

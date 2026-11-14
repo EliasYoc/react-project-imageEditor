@@ -7,6 +7,7 @@ import {
 import type { StrokeEntry, TextElement } from "../model/types";
 import { MAX_HISTORY, createEditorStore } from "./editorStore";
 import {
+  selectBrushColor,
   selectCanRedo,
   selectCanUndo,
   selectCurrentBrush,
@@ -17,7 +18,11 @@ import {
 } from "./selectors";
 
 const stroke = (size = 10): StrokeEntry => ({
-  ...createStroke("normal", { size, color: { r: 0, g: 0, b: 0, a: 1 } }),
+  ...createStroke({
+    brush: "marker",
+    settings: { size, opacity: 1, stabilizer: 0 },
+    color: { r: 0, g: 0, b: 0, a: 1 },
+  }),
   points: [{ x: 0, y: 0, pressure: 0.5 }],
 });
 
@@ -221,32 +226,58 @@ describe("elementos", () => {
 });
 
 describe("pinceles", () => {
-  it("tamaño y color se guardan por tipo de pincel", () => {
-    state().setBrushType("spray");
-    state().setBrushSize(120);
-    state().setBrushColor({ r: 1, g: 2, b: 3, a: 1 });
+  it("empieza con la Pluma y cada preset recuerda sus propios ajustes", () => {
+    expect(state().brush.presetId).toBe("pen");
+    state().setBrushSize(7);
+    state().setBrushOpacity(0.5);
+    state().setBrushStabilizer(0.8);
 
+    state().setBrushPreset("chalk");
+    expect(selectCurrentBrush(state()).size).toBe(40); // el de la Tiza
+
+    state().setBrushPreset("pen");
     expect(selectCurrentBrush(state())).toEqual({
-      size: 120,
-      color: { r: 1, g: 2, b: 3, a: 1 },
+      size: 7,
+      opacity: 0.5,
+      stabilizer: 0.8,
     });
-
-    state().setBrushType("normal");
-    expect(selectCurrentBrush(state()).size).toBe(50);
   });
 
-  it("createStroke copia el color: cambiar el pincel después no altera el trazo", () => {
+  it("el color es el mismo para todos los pinceles", () => {
+    state().setBrushColor({ r: 1, g: 2, b: 3, a: 1 });
+    state().setBrushPreset("pencil");
+    expect(selectBrushColor(state())).toEqual({ r: 1, g: 2, b: 3, a: 1 });
+  });
+
+  it("recuerda el último pincel y el último borrador para alternar entre ambos", () => {
+    state().setBrushPreset("pencil");
+    state().setBrushPreset("eraserSoft");
+    state().selectDrawBrush();
+    expect(state().brush.presetId).toBe("pencil");
+    state().selectEraser();
+    expect(state().brush.presetId).toBe("eraserSoft");
+  });
+
+  it("createStroke copia el pincel: cambiarlo después no altera el trazo", () => {
     const color = { r: 1, g: 2, b: 3, a: 1 };
-    const created = createStroke("spray", { size: 20, color });
+    const created = createStroke({
+      brush: "spray",
+      settings: { size: 20, opacity: 0.6, stabilizer: 0 },
+      color,
+      hasPressure: true,
+    });
     color.r = 200;
     expect(created).toMatchObject({
       whatTask: "stroke",
       brush: "spray",
       size: 20,
+      opacity: 0.6,
+      hasPressure: true,
       color: { r: 1 },
       points: [],
     });
     expect(created.id).toEqual(expect.any(String));
+    expect(created.seed).toEqual(expect.any(Number));
   });
 });
 

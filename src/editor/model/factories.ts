@@ -1,8 +1,11 @@
 import { createId } from "../../lib/createId";
+import { BRUSH_PRESETS, BRUSH_PRESET_IDS } from "../engine/brushes/presets";
+import { createSeed } from "../engine/brushes/random";
 import type {
+  BrushPresetId,
   BrushSettings,
   BrushState,
-  BrushType,
+  Rgba,
   ElementGeometry,
   GradientState,
   ImageElement,
@@ -27,27 +30,38 @@ export const DEFAULT_TEXT_STYLE: TextStyle = {
 /** Límites del tamaño de texto que ofrece el slider. */
 export const TEXT_SIZE_RANGE = { min: 12, max: 50 } as const;
 /** Límites del tamaño de pincel que ofrece el slider. */
-export const BRUSH_SIZE_RANGE = { min: 15, max: 200 } as const;
+export const BRUSH_SIZE_RANGE = { min: 1, max: 200 } as const;
 
 export const createInitialBrushState = (): BrushState => ({
-  type: "normal",
-  settings: {
-    normal: { size: 50, color: { r: 0, g: 0, b: 0, a: 1 } },
-    spray: { size: 100, color: { r: 211, g: 13, b: 13, a: 0.45 } },
-    eraser: { size: 50, color: { r: 255, g: 255, b: 255, a: 1 } },
-  },
+  presetId: "pen",
+  lastDrawPresetId: "pen",
+  lastEraserPresetId: "eraserHard",
+  color: { r: 0, g: 0, b: 0, a: 1 },
+  settings: Object.fromEntries(
+    BRUSH_PRESET_IDS.map((id) => [id, { ...BRUSH_PRESETS[id].defaults }])
+  ) as Record<BrushPresetId, BrushSettings>,
 });
 
 /** Trazo nuevo (sin puntos todavía) con una copia del pincel actual. */
-export const createStroke = (
-  brush: BrushType,
-  { size, color }: BrushSettings
-): StrokeEntry => ({
+export const createStroke = ({
+  brush,
+  settings,
+  color,
+  hasPressure = false,
+}: {
+  brush: BrushPresetId;
+  settings: BrushSettings;
+  color: Rgba;
+  hasPressure?: boolean;
+}): StrokeEntry => ({
   whatTask: "stroke",
   id: createId(),
   brush,
   color: { ...color },
-  size,
+  size: settings.size,
+  opacity: settings.opacity,
+  seed: createSeed(),
+  hasPressure,
   points: [],
 });
 

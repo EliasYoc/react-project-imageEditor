@@ -2,6 +2,7 @@ import { useStore } from "zustand";
 import { devtools } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 import { createId } from "../../lib/createId";
+import { getBrushPreset } from "../engine/brushes/presets";
 import {
   DEFAULT_CANVAS_SIZE,
   MAX_GRADIENT_STOPS,
@@ -13,8 +14,9 @@ import {
 import {
   isEditorElement,
   type Background,
+  type BrushPresetId,
   type BrushState,
-  type BrushType,
+  type BrushSettings,
   type EditorElement,
   type GradientState,
   type ImageElement,
@@ -71,8 +73,17 @@ export interface EditorActions {
   /** Selecciona un elemento y lo trae al frente (null deselecciona). */
   selectElement: (id: string | null) => void;
 
-  setBrushType: (type: BrushType) => void;
+  /** Elige un preset (pincel o borrador). */
+  setBrushPreset: (id: BrushPresetId) => void;
+  /** Vuelve al último pincel de dibujo usado. */
+  selectDrawBrush: () => void;
+  /** Vuelve al último borrador usado. */
+  selectEraser: () => void;
+  /** Ajustes del preset actual (cada preset recuerda los suyos). */
   setBrushSize: (size: number) => void;
+  setBrushOpacity: (opacity: number) => void;
+  setBrushStabilizer: (stabilizer: number) => void;
+  /** Color compartido por todos los pinceles. */
   setBrushColor: (color: Rgba) => void;
 
   addGradientStop: () => void;
@@ -150,17 +161,17 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
   createStore<EditorStore>()(
     devtools(
       (set, get) => {
-        const updateBrush = (
-          name: string,
-          patch: Partial<BrushState["settings"][BrushType]>
-        ) =>
+        const updateBrush = (name: string, patch: Partial<BrushSettings>) =>
           set(
             ({ brush }) => ({
               brush: {
                 ...brush,
                 settings: {
                   ...brush.settings,
-                  [brush.type]: { ...brush.settings[brush.type], ...patch },
+                  [brush.presetId]: {
+                    ...brush.settings[brush.presetId],
+                    ...patch,
+                  },
                 },
               },
             }),
@@ -335,14 +346,35 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             );
           },
 
-          setBrushType: (type) =>
+          setBrushPreset: (presetId) =>
             set(
-              ({ brush }) => ({ brush: { ...brush, type } }),
+              ({ brush }) => ({
+                brush: {
+                  ...brush,
+                  presetId,
+                  ...(getBrushPreset(presetId).kind === "eraser"
+                    ? { lastEraserPresetId: presetId }
+                    : { lastDrawPresetId: presetId }),
+                },
+              }),
               false,
-              "setBrushType"
+              "setBrushPreset"
             ),
+          selectDrawBrush: () =>
+            get().setBrushPreset(get().brush.lastDrawPresetId),
+          selectEraser: () =>
+            get().setBrushPreset(get().brush.lastEraserPresetId),
           setBrushSize: (size) => updateBrush("setBrushSize", { size }),
-          setBrushColor: (color) => updateBrush("setBrushColor", { color }),
+          setBrushOpacity: (opacity) =>
+            updateBrush("setBrushOpacity", { opacity }),
+          setBrushStabilizer: (stabilizer) =>
+            updateBrush("setBrushStabilizer", { stabilizer }),
+          setBrushColor: (color) =>
+            set(
+              ({ brush }) => ({ brush: { ...brush, color } }),
+              false,
+              "setBrushColor"
+            ),
 
           addGradientStop: () =>
             set(

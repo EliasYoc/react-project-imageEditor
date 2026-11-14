@@ -1,6 +1,6 @@
 import { createCanvas, get2dContext } from "../../lib/canvas";
 import type { Size, StrokeEntry } from "../model/types";
-import { paintStroke } from "./renderStroke";
+import { paintStroke } from "./brushes/paint";
 
 export type CanvasFactory = (size: Size) => HTMLCanvasElement;
 
@@ -15,7 +15,11 @@ interface Checkpoint {
 
 export interface PaintRasterOptions {
   createCanvas?: CanvasFactory;
-  paint?: (ctx: CanvasRenderingContext2D, stroke: StrokeEntry) => void;
+  paint?: (
+    ctx: CanvasRenderingContext2D,
+    stroke: StrokeEntry,
+    scratch: HTMLCanvasElement | null
+  ) => void;
   /** Cada cuántos trazos se guarda una copia del raster. */
   checkpointInterval?: number;
   /** Copias como máximo (cada una ocupa ancho × alto × 4 bytes). */
@@ -44,6 +48,8 @@ export class PaintRaster {
   private rendered: StrokeEntry[] = [];
   private checkpoints: Checkpoint[] = [];
   private clock = 0;
+  /** Búfer del trazo (para la opacidad y el modo de fusión); se crea al usarse. */
+  private scratch: HTMLCanvasElement | null = null;
 
   constructor(size: Size, options: PaintRasterOptions = {}) {
     this.createCanvas = options.createCanvas ?? createCanvas;
@@ -96,13 +102,18 @@ export class PaintRaster {
 
     this.rendered = strokes.slice(0, start);
     for (let i = start; i < strokes.length; i++) {
-      this.paint(ctx, strokes[i]);
+      this.paint(ctx, strokes[i], this.getScratch());
       this.rendered.push(strokes[i]);
       if (this.rendered.length % this.checkpointInterval === 0) {
         this.saveCheckpoint();
       }
     }
     return result;
+  }
+
+  private getScratch() {
+    this.scratch ??= this.createCanvas(this.size);
+    return this.scratch;
   }
 
   private saveCheckpoint() {
