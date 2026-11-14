@@ -15,6 +15,7 @@ import {
   type Background,
   type BrushState,
   type BrushType,
+  type EditorElement,
   type GradientState,
   type ImageElement,
   type LogEntry,
@@ -31,8 +32,15 @@ export interface EditorState {
   status: Status;
   canvasSize: Size;
   background: Background;
-  /** Historial del dibujo: trazos y elementos (texto, imágenes) en orden. */
+  /** Contenido del documento: trazos y elementos (texto, imágenes) en orden. */
   log: LogEntry[];
+  /**
+   * Historial: versiones anteriores (`past`) y deshechas (`future`) del log.
+   * El log es inmutable, así que cada versión solo guarda referencias: no
+   * copia los trazos.
+   */
+  past: LogEntry[][];
+  future: LogEntry[][];
   selectedElementId: string | null;
   brush: BrushState;
   gradient: GradientState;
@@ -51,8 +59,10 @@ export interface EditorActions {
   /** Cambia la imagen de fondo conservando el dibujo (p. ej. un gradiente). */
   setBackgroundImage: (payload: Background) => void;
 
-  addLogEntry: (entry: StrokeEntry) => void;
+  addStroke: (stroke: StrokeEntry) => void;
   undo: () => void;
+  redo: () => void;
+  /** Borra todo el dibujo. Se puede deshacer. */
   clearLog: () => void;
 
   addText: () => string;
@@ -77,17 +87,56 @@ export type EditorStore = EditorState & EditorActions;
 /** zIndex inicial de los elementos (por encima del lienzo en modo texto). */
 const BASE_Z_INDEX = 15;
 
+/** Pasos que se pueden deshacer. */
+export const MAX_HISTORY = 100;
+
 const getMaxZIndex = (log: LogEntry[]) =>
   log
     .filter(isEditorElement)
     .reduce((max, element) => Math.max(max, element.zIndex), BASE_Z_INDEX - 1);
 
+/**
+ * Nueva versión del log que se puede deshacer: guarda la actual en `past` y
+ * vacía `future` (después de un cambio nuevo ya no se puede rehacer).
+ */
+const commit = (
+  { log, past }: Pick<EditorState, "log" | "past">,
+  nextLog: LogEntry[]
+) => ({
+  log: nextLog,
+  past: [...past, log].slice(-MAX_HISTORY),
+  future: [],
+});
+
+/**
+ * Versión del historial que se restaura con los elementos en su estado
+ * ACTUAL. Mover un texto o escribir en él no crea un paso del historial: sin
+ * esto, deshacer un trazo devolvería también el texto a como estaba antes.
+ */
+const withCurrentElements = (snapshot: LogEntry[], current: LogEntry[]) => {
+  const currentElements = new Map<string, EditorElement>();
+  for (const entry of current) {
+    if (isEditorElement(entry)) currentElements.set(entry.id, entry);
+  }
+  return snapshot.map((entry) =>
+    isEditorElement(entry) ? (currentElements.get(entry.id) ?? entry) : entry
+  );
+};
+
+/** Mantiene la selección solo si el elemento sigue existiendo. */
+const keepSelection = (log: LogEntry[], selectedElementId: string | null) =>
+  log.some((entry) => isEditorElement(entry) && entry.id === selectedElementId)
+    ? selectedElementId
+    : null;
+
 export const createInitialState = (): EditorState => ({
   mode: "home",
   status: "idle",
   canvasSize: { ...DEFAULT_CANVAS_SIZE },
-  background: { image: null, previewUrl: null, mimeType: null },
+  background: { source: null, preview: null, mimeType: null },
   log: [],
+  past: [],
+  future: [],
   selectedElementId: null,
   brush: createInitialBrushState(),
   gradient: createInitialGradient(),
@@ -150,6 +199,8 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
                 background,
                 canvasSize: size,
                 log: [],
+                past: [],
+                future: [],
                 selectedElementId: null,
               },
               false,
@@ -159,35 +210,65 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
           setBackgroundImage: (background) =>
             set({ background }, false, "setBackgroundImage"),
 
-          addLogEntry: (entry) =>
-            set(({ log }) => ({ log: [...log, entry] }), false, "addLogEntry"),
+          addStroke: (stroke) =>
+            set(
+              (state) => commit(state, [...state.log, stroke]),
+              false,
+              "addStroke"
+            ),
 
           undo: () =>
             set(
-              ({ log, selectedElementId }) => {
-                const removed = log.at(-1);
-                if (!removed) return {};
-                const removedWasSelected =
-                  isEditorElement(removed) && removed.id === selectedElementId;
+              ({ log, past, future, selectedElementId }) => {
+                const previous = past.at(-1);
+                if (!previous) return {};
+                const restored = withCurrentElements(previous, log);
                 return {
-                  log: log.slice(0, -1),
-                  selectedElementId: removedWasSelected
-                    ? null
-                    : selectedElementId,
+                  log: restored,
+                  past: past.slice(0, -1),
+                  future: [...future, log],
+                  selectedElementId: keepSelection(restored, selectedElementId),
                 };
               },
               false,
               "undo"
             ),
 
+          redo: () =>
+            set(
+              ({ log, past, future, selectedElementId }) => {
+                const next = future.at(-1);
+                if (!next) return {};
+                const restored = withCurrentElements(next, log);
+                return {
+                  log: restored,
+                  past: [...past, log].slice(-MAX_HISTORY),
+                  future: future.slice(0, -1),
+                  selectedElementId: keepSelection(restored, selectedElementId),
+                };
+              },
+              false,
+              "redo"
+            ),
+
           clearLog: () =>
-            set({ log: [], selectedElementId: null }, false, "clearLog"),
+            set(
+              (state) =>
+                state.log.length
+                  ? { ...commit(state, []), selectedElementId: null }
+                  : {},
+              false,
+              "clearLog"
+            ),
 
           addText: () => {
             const id = createId();
             set(
-              ({ log }) => ({
-                log: [...log, createTextElement(id, getMaxZIndex(log) + 1)],
+              (state) => ({
+                ...commit(state, [
+                  ...state.log,
+                  createTextElement(id, getMaxZIndex(state.log) + 1),
+                ]),
                 selectedElementId: id,
               }),
               false,
@@ -199,11 +280,11 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
           addImage: (imageUrl) => {
             const id = createId();
             set(
-              ({ log }) => ({
-                log: [
-                  ...log,
-                  createImageElement(id, getMaxZIndex(log) + 1, imageUrl),
-                ],
+              (state) => ({
+                ...commit(state, [
+                  ...state.log,
+                  createImageElement(id, getMaxZIndex(state.log) + 1, imageUrl),
+                ]),
                 selectedElementId: id,
               }),
               false,
@@ -212,6 +293,8 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             return id;
           },
 
+          // Editar un elemento no crea un paso del historial (como antes); el
+          // cambio se conserva al deshacer/rehacer gracias a withCurrentElements.
           updateElement: (id, patch) =>
             set(
               ({ log }) => ({
