@@ -5,20 +5,21 @@ import Header from "../components/layout/Header";
 import ToolBox from "../components/layout/ToolBox";
 import LoaderSpinner from "../components/ui/LoaderSpinner";
 import { FixedContainer } from "../components/ui/legacy/styledComponents";
+import EditorStage from "../editor/stage/EditorStage";
 import EditorHeader from "../features/editor-header/EditorHeader";
 import HomeToolbar from "../features/home/HomeToolbar";
 import DrawingTools from "../features/drawing/DrawingTools";
 import ModeSwitcher from "../features/drawing/ModeSwitcher";
-import Canvas from "../features/drawing/legacy/Canvas";
-import DrawingOverlay from "../features/drawing/legacy/DrawingOverlay";
+import SizeSlider from "../features/drawing/SizeSlider";
 import TextToolbar from "../features/text/TextToolbar";
+import ElementsOverlay from "../features/text/legacy/ElementsOverlay";
 
 /**
  * Shell de la aplicación: cabecera | lienzo | barra inferior.
  *
- * El lienzo ocupa el espacio que sobra (flex: 1) y los dos <canvas> se
- * superponen dentro de él. Antes se calculaba su altura sumando en JS las
- * alturas del header y del footer.
+ * El lienzo ocupa el espacio que sobra (flex: 1): el Stage de Konva y, encima,
+ * la capa HTML con los textos e imágenes. Antes se calculaba su altura
+ * sumando en JS las alturas del header y del footer.
  */
 function App() {
   const mode = useEditorStore((state) => state.mode);
@@ -34,8 +35,15 @@ function App() {
       )}
 
       <main className={styles.stage}>
-        <Canvas />
-        {isEditorOpen ? <DrawingOverlay /> : <HomeToolbar />}
+        <EditorStage />
+        {isEditorOpen ? (
+          <>
+            <ElementsOverlay />
+            <SizeSlider />
+          </>
+        ) : (
+          <HomeToolbar />
+        )}
       </main>
 
       {isEditorOpen && (

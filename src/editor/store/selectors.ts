@@ -1,27 +1,40 @@
 import {
   isEditorElement,
+  isStroke,
   isTextElement,
   type EditorElement,
   type LogEntry,
+  type StrokeEntry,
 } from "../model/types";
 import type { EditorStore } from "./editorStore";
 
-let cachedLog: LogEntry[] | null = null;
-let cachedElements: EditorElement[] = [];
-
 /**
- * Elementos (texto e imágenes) del historial.
+ * Selector que filtra el log y se memoriza por su referencia.
  *
- * Se memoriza por referencia del log: un selector que devuelve un array nuevo
- * en cada llamada haría que el componente se volviera a renderizar sin parar.
+ * Un selector que devuelve un array nuevo en cada llamada haría que el
+ * componente se volviera a renderizar sin parar.
  */
-export const selectElements = (state: EditorStore): EditorElement[] => {
-  if (state.log !== cachedLog) {
-    cachedLog = state.log;
-    cachedElements = state.log.filter(isEditorElement);
-  }
-  return cachedElements;
+const memoizeByLog = <T>(filter: (log: LogEntry[]) => T[]) => {
+  let cachedLog: LogEntry[] | null = null;
+  let cached: T[] = [];
+  return (state: EditorStore): T[] => {
+    if (state.log !== cachedLog) {
+      cachedLog = state.log;
+      cached = filter(state.log);
+    }
+    return cached;
+  };
 };
+
+/** Elementos (texto e imágenes) del documento. */
+export const selectElements = memoizeByLog<EditorElement>((log) =>
+  log.filter(isEditorElement)
+);
+
+/** Trazos del documento, en el orden en que se pintan. */
+export const selectStrokes = memoizeByLog<StrokeEntry>((log) =>
+  log.filter(isStroke)
+);
 
 export const selectSelectedElement = (
   state: EditorStore
@@ -40,3 +53,6 @@ export const selectCurrentBrush = (state: EditorStore) =>
   state.brush.settings[state.brush.type];
 
 export const selectIsEditorOpen = (state: EditorStore) => state.mode !== "home";
+
+export const selectCanUndo = (state: EditorStore) => state.past.length > 0;
+export const selectCanRedo = (state: EditorStore) => state.future.length > 0;

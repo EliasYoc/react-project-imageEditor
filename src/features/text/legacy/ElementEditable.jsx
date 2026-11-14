@@ -1,13 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 import Moveable from "react-moveable";
-import { useEditorCanvas } from "../../../editor/canvas/editorCanvasContext";
-import {
-  getElementGeometry,
-  measureElement,
-} from "../../../editor/legacy/draggableElements";
 import { rgbaToCss } from "../../../editor/model/color";
+import { useStageHandles } from "../../../editor/stage/stageContext";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { debounce } from "../../../lib/helper";
+import { getElementGeometry, measureElement } from "./draggableElements";
 import {
   DraggableTextElement,
   SpanDraggableText,
@@ -21,7 +18,7 @@ import {
 const ElementEditable = ({ element, containerRef, setCheckInput }) => {
   const { id, whatTask, zIndex } = element;
   const isText = whatTask === "draggableText";
-  const { overlayCanvasRef } = useEditorCanvas();
+  const { documentFrameRef } = useStageHandles();
   const isEditingText = useEditorStore((state) => state.mode === "text");
   const isSelected = useEditorStore((state) => state.selectedElementId === id);
   const selectElement = useEditorStore((state) => state.selectElement);
@@ -30,8 +27,8 @@ const ElementEditable = ({ element, containerRef, setCheckInput }) => {
   const refEditable = useRef(null);
   const refMoveable = useRef(null);
 
-  // Guarda en el store la geometría de Moveable (se usa al exportar) y el
-  // transform CSS (para conservar la posición si el elemento se vuelve a montar).
+  // Guarda en el store la geometría de Moveable y el transform CSS (para
+  // conservar la posición si el elemento se vuelve a montar, p. ej. al rehacer).
   // useMemo: la versión con debounce tiene que ser la misma entre renders.
   const geometrySync = useMemo(() => {
     const sync = () => {
@@ -174,7 +171,8 @@ const ElementEditable = ({ element, containerRef, setCheckInput }) => {
           bottom: true,
         }}
         snapThreshold={4}
-        elementGuidelines={[overlayCanvasRef]}
+        // Guías de snapping: los bordes y el centro del documento.
+        elementGuidelines={[documentFrameRef]}
       />
     </>
   );

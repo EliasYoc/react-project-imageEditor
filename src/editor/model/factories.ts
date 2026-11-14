@@ -1,9 +1,13 @@
+import { createId } from "../../lib/createId";
 import type {
+  BrushSettings,
   BrushState,
+  BrushType,
   ElementGeometry,
   GradientState,
   ImageElement,
   Size,
+  StrokeEntry,
   TextElement,
   TextStyle,
 } from "./types";
@@ -32,6 +36,19 @@ export const createInitialBrushState = (): BrushState => ({
     spray: { size: 100, color: { r: 211, g: 13, b: 13, a: 0.45 } },
     eraser: { size: 50, color: { r: 255, g: 255, b: 255, a: 1 } },
   },
+});
+
+/** Trazo nuevo (sin puntos todavía) con una copia del pincel actual. */
+export const createStroke = (
+  brush: BrushType,
+  { size, color }: BrushSettings
+): StrokeEntry => ({
+  whatTask: "stroke",
+  id: createId(),
+  brush,
+  color: { ...color },
+  size,
+  points: [],
 });
 
 export const MAX_GRADIENT_STOPS = 8;
