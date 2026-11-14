@@ -1,0 +1,16 @@
+.stage {
+  position: absolute;
+  inset: 0;
+  /* Sin z-index: lo que viene después en el DOM (barra de inicio, textos e
+     imágenes) se pinta encima. */
+  /* El navegador no debe desplazar ni hacer zoom de la página al dibujar:
+     los gestos los maneja el lienzo. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.stage[data-drawing] {
+  cursor: crosshair;
+}

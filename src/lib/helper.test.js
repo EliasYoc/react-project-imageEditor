@@ -3,9 +3,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   debounce,
-  distanceBetween,
   getDownloadFileName,
-  middlePointBetween,
   reduceAspectRatioQualityOfIncomingImage,
 } from "./helper";
 
@@ -25,22 +23,6 @@ describe("debounce", () => {
     vi.advanceTimersByTime(1);
     expect(callback).toHaveBeenCalledTimes(1);
     expect(callback).toHaveBeenCalledWith("b");
-  });
-});
-
-describe("distanceBetween", () => {
-  it("calcula la distancia euclidiana", () => {
-    expect(
-      distanceBetween({ coordX: 0, coordY: 0 }, { coordX: 3, coordY: 4 })
-    ).toBe(5);
-  });
-});
-
-describe("middlePointBetween", () => {
-  it("devuelve el punto medio", () => {
-    expect(
-      middlePointBetween({ coordX: 0, coordY: 10 }, { coordX: 20, coordY: 30 })
-    ).toEqual({ coordX: 10, coordY: 20 });
   });
 });
 

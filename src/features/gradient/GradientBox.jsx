@@ -5,10 +5,11 @@ import {
   GlobalButton,
   GlobalSpinner,
 } from "../../components/ui/legacy/styledComponents";
-import { bestFitGradient } from "../../editor/legacy/canvasUtils";
 import { rgbaToCss } from "../../editor/model/color";
 import { useEditorStore } from "../../editor/store/editorStore";
+import { cloneCanvas } from "../../lib/canvas";
 import { reduceAspectRatioQualityOfIncomingImage } from "../../lib/helper";
+import { bestFitGradient } from "./bestFitGradient";
 import {
   ApplyGradientButton,
   GradientContainer,
@@ -107,12 +108,13 @@ const GradientBox = ({ onApplied }) => {
     setIsApplyingGradient(true);
     // setTimeout: deja que se pinte el spinner antes del trabajo pesado.
     setTimeout(() => {
-      const canvas = refCanvasPreview.current;
-      const image = new Image();
-      image.src = canvas.toDataURL("image/png");
+      // Copia del canvas de la vista previa: tiene el tamaño del documento y
+      // sirve tanto para mostrar como para exportar. Antes se mostraba un JPEG
+      // de calidad 0.1 (con bandas visibles).
+      const gradient = cloneCanvas(refCanvasPreview.current);
       setBackgroundImage({
-        image,
-        previewUrl: canvas.toDataURL("image/jpeg", ".1"),
+        source: gradient,
+        preview: gradient,
         mimeType: "image/png",
       });
       setIsApplyingGradient(false);
