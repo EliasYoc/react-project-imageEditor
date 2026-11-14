@@ -8,7 +8,9 @@ export const OptionsList = styled.ul`
   top: ${({ top }) => top};
   bottom: ${({ bottom }) => bottom};
   inset: ${({ inset }) => inset};
-  background: ${(background) => background};
+  /* Antes: (background) => background recibía TODAS las props y generaba
+     "background: [object Object]" (CSS inválido, el menú quedaba sin fondo). */
+  background: ${({ background }) => background};
   backdrop-filter: blur(5px);
   display: flex;
   flex-direction: column;
