@@ -1,21 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useContext } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useRef, useState } from "react";
 import PixelRange from "../../../components/ui/PixelRange/PixelRange";
-import { ContextConfiguration } from "../../../context/ConfigurationProvider";
-import {
-  applyDraggableTextFontSize,
-  applyDraggableTextId,
-  selectDraggableTextFontFamily,
-  selectDraggableTextId,
-  selectDraggableTextWeight,
-  selectKindOfPencil,
-  selectPencilSizeForRange,
-  selectPencilType,
-  selectRangeValues,
-  setPencilSizeForRangeSlider,
-  setSizePencil,
-} from "../../paintingSlice";
+import PortalNormalModal from "../../../components/layout/PortalNormalModal";
+import { useEditorCanvas } from "../../../editor/canvas/editorCanvasContext";
 import {
   deleteCanvasWithTransparency,
   drawCanvasCoordsCallback,
@@ -23,157 +9,131 @@ import {
   redrawLastPath,
   redrawSprayPoints,
 } from "../../../editor/legacy/canvasUtils";
+import { rgbaToCss } from "../../../editor/model/color";
+import {
+  BRUSH_SIZE_RANGE,
+  TEXT_SIZE_RANGE,
+} from "../../../editor/model/factories";
+import { editorStore, useEditorStore } from "../../../editor/store/editorStore";
+import {
+  selectCurrentBrush,
+  selectElements,
+  selectSelectedText,
+} from "../../../editor/store/selectors";
 import ElementEditable from "../../text/legacy/ElementEditable";
-import PortalNormalModal from "../../../components/layout/PortalNormalModal";
-import { debounce } from "../../../lib/helper";
-import { updateDraggableRect } from "../../../editor/legacy/draggableElements";
 
-const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
-  const {
-    refFrontalCanvas,
-    canvasSize,
-    lowQualityDataImageLoaded,
-    refGlobalDrawingLogs,
-    setDrawingHistoryLength,
-    drawingHistoryLength,
-    $canvas,
-    principalImageLoaded,
-    isDrawingToolsOpen,
-    isDrawing,
-    isEditingText,
-    ctx,
-  } = useContext(ContextConfiguration);
-  const pencilType = useSelector(selectPencilType);
-  const kindOfPencilStyle = useSelector(selectKindOfPencil);
-  const pencilSizeForRange = useSelector(selectPencilSizeForRange);
-  const { minValue, maxValue } = useSelector(selectRangeValues);
-  const draggableTextId = useSelector(selectDraggableTextId);
-  const fontFamily = useSelector(selectDraggableTextFontFamily);
-  const fontWeight = useSelector(selectDraggableTextWeight);
+/** Proporción del radio interior del spray respecto al exterior. */
+const SPRAY_INNER_RADIUS_RATIO = 1 - 89 / 100;
 
-  const dispatch = useDispatch();
+/**
+ * Capa transparente sobre el canvas principal: recibe el puntero mientras se
+ * dibuja, muestra la vista previa del trazo y contiene los elementos (texto,
+ * imágenes). Se reemplaza por Konva en la Fase 2.
+ */
+const DrawingOverlay = () => {
+  const { mainCanvasRef, overlayCanvasRef } = useEditorCanvas();
+  const mode = useEditorStore((state) => state.mode);
+  const canvasSize = useEditorStore((state) => state.canvasSize);
+  const previewUrl = useEditorStore((state) => state.background.previewUrl);
+  const elements = useEditorStore(selectElements);
+  const brushSize = useEditorStore((state) => selectCurrentBrush(state).size);
+  const selectedText = useEditorStore(selectSelectedText);
+  const setBrushSize = useEditorStore((state) => state.setBrushSize);
+  const updateElement = useEditorStore((state) => state.updateElement);
+  const addLogEntry = useEditorStore((state) => state.addLogEntry);
 
+  const isDrawing = mode === "draw";
+  const isEditingText = mode === "text";
   const [checkInput, setCheckInput] = useState(false);
-  const $frontalCanvas = refFrontalCanvas.current;
-  const frontalCanvasCtx = $frontalCanvas?.getContext("2d");
-  const { color, size } = kindOfPencilStyle[pencilType];
 
-  const { r, g, b, a: alpha } = color;
+  // Estado del trazo en curso. Son refs (no estado ni variables locales):
+  // no deben provocar renders y tienen que sobrevivir si hay uno a mitad del trazo.
+  const refContainer = useRef(null);
+  const refStroke = useRef(null);
   const refPaintingLogs = useRef([]);
+  const refIsPainting = useRef(false);
   const refWholeCanvasHasBeenPainted = useRef(false);
-  let { current: pressHoldTimeoutId } = useRef(null);
-  let { current: pointCounter } = useRef(0);
-  const refGradientCircleRadius = useRef(0);
-  const refPercentageOffForSecondCircle = useRef(89 / 100);
-  const refSecondCircleRadius = useRef();
-  let { current: allowOneDotAfterPaintingWholeCanvas } = useRef(false);
-  const refContainer = useRef();
-  let { current: dragRenderOnce } = useRef(1);
-
-  let isPainting = false;
+  const refPressHoldTimeout = useRef(null);
+  const refPointCounter = useRef(0);
+  const refAllowOneDotAfterPaintingWholeCanvas = useRef(false);
 
   useEffect(
-    function init() {
-      if (!frontalCanvasCtx) return;
-      if (lowQualityDataImageLoaded) {
-        frontalCanvasCtx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-        return;
-      }
-      paintWholeCanvas(
-        frontalCanvasCtx,
-        "rgba(255,255,23,0)",
-        canvasSize.width,
-        canvasSize.height
-      );
-      return () => {};
+    function clearOverlayWhenCanvasChanges() {
+      const canvas = overlayCanvasRef.current;
+      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
     },
-    [frontalCanvasCtx, canvasSize, lowQualityDataImageLoaded]
+    [overlayCanvasRef, canvasSize, previewUrl]
   );
 
-  const stringPxToNumber = (text) => parseFloat(text.split("px").join(""));
-  const headerHeight = stringPxToNumber(headerSize.height);
-  const footerHeight = stringPxToNumber(footerSize.height);
-  useEffect(
-    function painting() {
-      if (!frontalCanvasCtx) return;
-      if (isDrawingToolsOpen || drawingHistoryLength === 0) {
-        //config
-        ctx.lineCap = frontalCanvasCtx.lineCap = "round";
-        ctx.lineJoin = frontalCanvasCtx.lineJoin = "round";
-        ctx.globalCompositeOperation =
-          frontalCanvasCtx.globalCompositeOperation = "source-over";
+  const getCanvases = () => ({
+    $canvas: mainCanvasRef.current,
+    ctx: mainCanvasRef.current.getContext("2d"),
+    frontalCanvasCtx: overlayCanvasRef.current.getContext("2d"),
+  });
 
-        if (pencilType === "spray") {
-          refGradientCircleRadius.current = size / 2;
-          let resultRadiusRest =
-            refGradientCircleRadius.current *
-            refPercentageOffForSecondCircle.current;
-          refSecondCircleRadius.current =
-            refGradientCircleRadius.current - resultRadiusRest;
-        }
-        if (pencilType === "eraser") {
-          if (principalImageLoaded)
-            ctx.globalCompositeOperation =
-              frontalCanvasCtx.globalCompositeOperation = "destination-out";
-        }
-      }
-      return () => {
-        // ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-      };
-    },
-    [
-      ctx,
-      isDrawingToolsOpen,
-      frontalCanvasCtx,
-      pencilType,
-      r,
-      g,
-      b,
-      alpha,
+  const listenerStartPainting = () => {
+    // El pincel se lee al empezar el trazo y se guarda en un ref: los handlers
+    // no necesitan que el componente se vuelva a renderizar al cambiar de color.
+    const { brush, background } = editorStore.getState();
+    const { color, size } = brush.settings[brush.type];
+    const { ctx, frontalCanvasCtx } = getCanvases();
+    const startCircleRadius = size / 2;
+
+    refStroke.current = {
+      pencilType: brush.type,
+      color,
       size,
-      principalImageLoaded,
-      drawingHistoryLength,
-    ]
-  );
-  const listenerStartPaiting = (e) => {
-    if (!isDrawingToolsOpen) return;
+      cssColor: rgbaToCss(color),
+      startCircleRadius,
+      endCircleRadius: startCircleRadius * SPRAY_INNER_RADIUS_RATIO,
+    };
+
+    // Antes esta configuración vivía en un useEffect que dependía de renders
+    // posteriores (p. ej. tras deshacer) para restablecer el modo de fusión.
+    ctx.lineCap = frontalCanvasCtx.lineCap = "round";
+    ctx.lineJoin = frontalCanvasCtx.lineJoin = "round";
+    ctx.globalCompositeOperation = frontalCanvasCtx.globalCompositeOperation =
+      brush.type === "eraser" && background.image
+        ? "destination-out"
+        : "source-over";
     ctx.lineWidth = frontalCanvasCtx.lineWidth = size || 50;
-    ctx.strokeStyle =
-      frontalCanvasCtx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    ctx.strokeStyle = frontalCanvasCtx.strokeStyle = refStroke.current.cssColor;
     frontalCanvasCtx.beginPath();
     ctx.beginPath();
 
-    pressHoldTimeoutId = setTimeout(() => {
-      const canvasDataForPaintingLogs = {
-        canvasColor: { r, g, b, a: alpha },
-        whatTask: "paintingWholeCanvas",
-        globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
-      };
+    refPressHoldTimeout.current = setTimeout(() => {
       paintWholeCanvas(
         ctx,
-        `rgba(${r}, ${g}, ${b}, ${alpha})`,
+        refStroke.current.cssColor,
         canvasSize.width,
         canvasSize.height
       );
-      refGlobalDrawingLogs.current.push(canvasDataForPaintingLogs);
+      addLogEntry({
+        whatTask: "paintingWholeCanvas",
+        canvasColor: color,
+        globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
+      });
       refWholeCanvasHasBeenPainted.current = true;
       refPaintingLogs.current = [];
-      allowOneDotAfterPaintingWholeCanvas = false;
+      refAllowOneDotAfterPaintingWholeCanvas.current = false;
     }, 500);
 
-    isPainting = true;
-    allowOneDotAfterPaintingWholeCanvas = true;
+    refIsPainting.current = true;
+    refAllowOneDotAfterPaintingWholeCanvas.current = true;
   };
 
   const listenerPainting = (e) => {
-    if (!isDrawingToolsOpen) return;
-    if (isPainting) {
-      pointCounter = pointCounter + 1;
-      if (pressHoldTimeoutId && pointCounter > 8) {
-        // smarthphone avoiding executing paintWholeCanvas while keeping pressed after 10 points
-        clearTimeout(pressHoldTimeoutId);
-        pressHoldTimeoutId = null;
+    if (refIsPainting.current) {
+      refPointCounter.current += 1;
+      if (refPressHoldTimeout.current && refPointCounter.current > 8) {
+        // En el móvil: evita rellenar todo el lienzo si el dedo ya se movió.
+        clearTimeout(refPressHoldTimeout.current);
+        refPressHoldTimeout.current = null;
       }
+      const { pencilType, color, size, startCircleRadius, endCircleRadius } =
+        refStroke.current;
+      const { $canvas, ctx, frontalCanvasCtx } = getCanvases();
+
       drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
         refPaintingLogs.current.push({ coordX, coordY });
         if (pencilType === "eraser") {
@@ -186,17 +146,17 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
             ctx,
             coordX,
             coordY,
-            refGradientCircleRadius.current,
-            refSecondCircleRadius.current,
+            startCircleRadius,
+            endCircleRadius,
             size,
-            r,
-            g,
-            b,
-            alpha
+            color.r,
+            color.g,
+            color.b,
+            color.a
           );
           return;
         }
-        if (!allowOneDotAfterPaintingWholeCanvas) {
+        if (!refAllowOneDotAfterPaintingWholeCanvas.current) {
           deleteCanvasWithTransparency({
             canvasCtx: frontalCanvasCtx,
             canvasHeight: canvasSize.height,
@@ -206,13 +166,19 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
         }
       });
     }
-    if (allowOneDotAfterPaintingWholeCanvas)
-      allowOneDotAfterPaintingWholeCanvas = false;
+    if (refAllowOneDotAfterPaintingWholeCanvas.current)
+      refAllowOneDotAfterPaintingWholeCanvas.current = false;
   };
 
   const listenerStopPainting = (e) => {
-    if (!isDrawingToolsOpen) return;
-    clearTimeout(pressHoldTimeoutId);
+    // Soltar el botón sin haber empezado un trazo aquí (p. ej. se presionó
+    // fuera del lienzo) no debe dibujar nada.
+    if (!refIsPainting.current) return;
+    clearTimeout(refPressHoldTimeout.current);
+    const { pencilType, color, size, startCircleRadius, endCircleRadius } =
+      refStroke.current;
+    const { $canvas, ctx, frontalCanvasCtx } = getCanvases();
+
     if (!refWholeCanvasHasBeenPainted.current) {
       drawCanvasCoordsCallback(e, $canvas, (coordX, coordY) => {
         if (pencilType === "spray") {
@@ -220,19 +186,20 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
             ctx,
             coordX,
             coordY,
-            refGradientCircleRadius.current,
-            refSecondCircleRadius.current,
+            startCircleRadius,
+            endCircleRadius,
             size,
-            r,
-            g,
-            b,
-            alpha
+            color.r,
+            color.g,
+            color.b,
+            color.a
           );
           refPaintingLogs.current.push({ coordX, coordY });
         }
-        if (pencilType === "normal" && allowOneDotAfterPaintingWholeCanvas) {
-          // alert(refWholeCanvasHasBeenPainted.current);
-
+        if (
+          pencilType === "normal" &&
+          refAllowOneDotAfterPaintingWholeCanvas.current
+        ) {
           ctx.lineTo(coordX, coordY);
           ctx.stroke();
           refPaintingLogs.current.push({ coordX, coordY });
@@ -246,24 +213,21 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
     }
 
     if (refPaintingLogs.current.length) {
-      const defaultGlobalLogProperties = {
+      const defaultLogProperties = {
         data: refPaintingLogs.current,
-        color: kindOfPencilStyle[pencilType].color,
-        size: kindOfPencilStyle[pencilType].size,
+        color,
+        size,
         globalCompositeOperation: frontalCanvasCtx.globalCompositeOperation,
       };
       if (pencilType === "spray") {
-        refGlobalDrawingLogs.current.push({
-          ...defaultGlobalLogProperties,
+        addLogEntry({
+          ...defaultLogProperties,
           whatTask: "sprayPainting",
-          startCircleRadius: refGradientCircleRadius.current,
-          endCircleRadius: refSecondCircleRadius.current,
+          startCircleRadius,
+          endCircleRadius,
         });
       } else {
-        refGlobalDrawingLogs.current.push({
-          ...defaultGlobalLogProperties,
-          whatTask: "painting",
-        });
+        addLogEntry({ ...defaultLogProperties, whatTask: "painting" });
         deleteCanvasWithTransparency({
           canvasCtx: frontalCanvasCtx,
           canvasWidth: canvasSize.width,
@@ -273,113 +237,50 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       }
     }
 
-    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
-    pointCounter = 0;
-    isPainting = false;
+    refPointCounter.current = 0;
+    refIsPainting.current = false;
     refPaintingLogs.current = [];
     refWholeCanvasHasBeenPainted.current = false;
-    allowOneDotAfterPaintingWholeCanvas = false;
+    refAllowOneDotAfterPaintingWholeCanvas.current = false;
   };
 
-  const handleSetPencilSize = (thumbValue) => {
-    dispatch(setSizePencil(maxValue - thumbValue[0] + minValue));
-    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
-  };
-
-  const handleSetFontSize = (thumbValue) => {
-    dispatch(applyDraggableTextFontSize(maxValue - thumbValue[0] + minValue));
-    dispatch(setPencilSizeForRangeSlider(thumbValue[0]));
-  };
-
-  const updateDraggingLogDebounce = debounce((e) => {
-    const modifiedGlobalLogs = updateDraggableRect(
-      refGlobalDrawingLogs,
-      e.moveable,
-      draggableTextId
-    );
-    refGlobalDrawingLogs.current = modifiedGlobalLogs;
-  }, 150);
-
-  const selectDraggableId = (id) => {
-    dispatch(applyDraggableTextId(id));
-  };
-
-  const resetDragRenderOnceRef = debounce(() => (dragRenderOnce = 1), 300);
-
-  const doNothing = () => {};
+  const paintingHandlers = isDrawing
+    ? {
+        onMouseDown: listenerStartPainting,
+        onTouchStart: listenerStartPainting,
+        onMouseMove: listenerPainting,
+        onTouchMove: listenerPainting,
+        onMouseUp: listenerStopPainting,
+        onTouchEnd: listenerStopPainting,
+      }
+    : {};
 
   return (
     <div
-      className="scrollable"
       ref={refContainer}
-      style={{
-        width: "100%",
-        height: `calc(100% - ${headerHeight + footerHeight}px)`,
-        position: "absolute",
-        marginTop: `${headerHeight}px`,
-        overflow: "hidden",
-        left: 0,
-      }}
+      style={{ position: "absolute", inset: 0, overflow: "hidden" }}
     >
       <PortalNormalModal
         isOpen={checkInput}
         onClose={() => setCheckInput(false)}
       />
-      {refGlobalDrawingLogs.current
-        .filter(
-          (log) =>
-            log.whatTask === "draggableText" ||
-            log.whatTask === "draggableSticker" ||
-            log.whatTask === "draggableImage"
-        )
-        .map((draggable, i) => {
-          return (
-            <ElementEditable
-              i={i}
-              key={draggable.id}
-              zIndex={draggable.zIndex}
-              type={draggable.whatTask}
-              parentNode={refContainer.current}
-              setCheckInput={setCheckInput}
-              // checkInput={checkInput}
-              id={draggable.id}
-              onRender={(e) => {
-                e.target.style.cssText += e.cssText;
-                refContainer.current.scrollTo(0, 0);
-
-                if (dragRenderOnce === 1) selectDraggableId(e.target.id);
-                dragRenderOnce++;
-                resetDragRenderOnceRef();
-              }}
-              fontFamily={
-                draggable.id === draggableTextId ? fontFamily : undefined
-              }
-              fontWeight={
-                draggable.id === draggableTextId ? fontWeight : undefined
-              }
-              onRotate={updateDraggingLogDebounce}
-              onScale={updateDraggingLogDebounce}
-              onDrag={updateDraggingLogDebounce}
-              refGlobalDrawingLogs={refGlobalDrawingLogs}
-              draggableData={draggable}
-            />
-          );
-        })}
+      {elements.map((element) => (
+        <ElementEditable
+          key={element.id}
+          element={element}
+          containerRef={refContainer}
+          setCheckInput={setCheckInput}
+        />
+      ))}
 
       <canvas
-        onMouseDown={isDrawing ? listenerStartPaiting : doNothing}
-        onTouchStart={isDrawing ? listenerStartPaiting : doNothing}
-        onMouseMove={isDrawing ? listenerPainting : doNothing}
-        onTouchMove={isDrawing ? listenerPainting : doNothing}
-        onMouseUp={isDrawing ? listenerStopPainting : doNothing}
-        onTouchEnd={isDrawing ? listenerStopPainting : doNothing}
+        {...paintingHandlers}
         width={canvasSize.width}
         height={canvasSize.height}
-        ref={refFrontalCanvas}
+        ref={overlayCanvasRef}
         style={{
           position: "absolute",
           zIndex: isDrawing ? "100" : "1",
-          // background: "rgba(90,255,78,.3)",
           width: "100%",
           height: "100%",
           objectFit: "contain",
@@ -388,24 +289,24 @@ const InvisibleFrontalCanvas = ({ headerSize, footerSize }) => {
       >
         Este navegador no es compatible
       </canvas>
-      {isDrawingToolsOpen && isDrawing && (
+      {isDrawing && (
         <PixelRange
-          pixelSize={pencilSizeForRange}
-          minValue={15}
-          maxValue={200}
-          onInput={handleSetPencilSize}
+          value={brushSize}
+          min={BRUSH_SIZE_RANGE.min}
+          max={BRUSH_SIZE_RANGE.max}
+          onChange={setBrushSize}
         />
       )}
-      {isDrawingToolsOpen && isEditingText && (
+      {isEditingText && selectedText && (
         <PixelRange
-          pixelSize={pencilSizeForRange}
-          minValue={12}
-          maxValue={50}
-          onInput={handleSetFontSize}
+          value={selectedText.fontSize}
+          min={TEXT_SIZE_RANGE.min}
+          max={TEXT_SIZE_RANGE.max}
+          onChange={(fontSize) => updateElement(selectedText.id, { fontSize })}
         />
       )}
     </div>
   );
 };
 
-export default InvisibleFrontalCanvas;
+export default DrawingOverlay;

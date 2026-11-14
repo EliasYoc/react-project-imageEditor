@@ -11,10 +11,10 @@ export const readFile = ({ file }) => {
   return new Promise((resolve, reject) => {
     const readable = new FileReader();
     readable.readAsDataURL(file);
-    readable.addEventListener("load", (e) => {
+    readable.addEventListener("load", () => {
       resolve(readable);
     });
-    readable.addEventListener("error", (e) => {
+    readable.addEventListener("error", () => {
       reject(readable);
     });
   });

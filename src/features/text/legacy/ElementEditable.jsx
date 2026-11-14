@@ -1,17 +1,12 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-import React, { useContext, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Moveable from "react-moveable";
-import { useDispatch, useSelector } from "react-redux";
-import { ContextConfiguration } from "../../../context/ConfigurationProvider";
+import { useEditorCanvas } from "../../../editor/canvas/editorCanvasContext";
 import {
-  applyDraggableTextId,
-  selectDraggableTextFontSize,
-  selectDraggableTextId,
-} from "../../paintingSlice";
-import {
-  updateDraggableRect,
-  updateInitialDraggableTextElementSize,
+  getMoveableGeometry,
+  measureElement,
 } from "../../../editor/legacy/draggableElements";
+import { rgbaToCss } from "../../../editor/model/color";
+import { useEditorStore } from "../../../editor/store/editorStore";
 import { debounce } from "../../../lib/helper";
 import {
   DraggableTextElement,
@@ -19,182 +14,153 @@ import {
 } from "./ElementEditable.styles";
 
 /**
- *
- * @param {String} type draggableText | draggableImage
- * @returns a draggable component
+ * Elemento arrastrable (texto o imagen) sobre el lienzo, con react-moveable.
+ * Todo su contenido y estilo vienen del store; el DOM ya no es la fuente de
+ * verdad. Se reemplaza por Konva (Text + Transformer) en la Fase 4.
  */
-const ElementEditable = ({
-  parentNode,
-  setCheckInput,
-  onRender,
-  onRotate,
-  id,
-  checkInput,
-  onScale,
-  onDrag,
-  refGlobalDrawingLogs,
-  fontFamily,
-  fontWeight,
-  type,
-  draggableData,
-  i,
-  zIndex,
-}) => {
-  const { isEditingText, refFrontalCanvas } = useContext(ContextConfiguration);
-  const draggableTextId = useSelector(selectDraggableTextId);
-  const draggableTextFontSize = useSelector(selectDraggableTextFontSize);
-  const refEditableElement = useRef();
-  const refMoveable = useRef();
-  const dispatch = useDispatch();
-  const [updateRectTimes, setUpdateRectTimes] = useState(0);
-  const [zIndexDraggableElement, setZIndexDraggableElement] = useState(
-    zIndex + i
-  );
+const ElementEditable = ({ element, containerRef, setCheckInput }) => {
+  const { id, whatTask, zIndex } = element;
+  const isText = whatTask === "draggableText";
+  const { overlayCanvasRef } = useEditorCanvas();
+  const isEditingText = useEditorStore((state) => state.mode === "text");
+  const isSelected = useEditorStore((state) => state.selectedElementId === id);
+  const selectElement = useEditorStore((state) => state.selectElement);
+  const updateElement = useEditorStore((state) => state.updateElement);
+  const refElement = useRef(null);
+  const refEditable = useRef(null);
+  const refMoveable = useRef(null);
 
-  useEffect(() => {
-    setCheckInput(true);
-    if (type === "draggableText") {
-      refEditableElement.current.focus();
-    }
-  }, [setCheckInput]);
-
-  useEffect(
-    function initialUpdateOfDraggableElement() {
-      // puede que este forEach lo tenga que poner al descargar
-      updateInitialDraggableTextElementSize(refGlobalDrawingLogs, id);
-      dispatch(applyDraggableTextId(id));
-      return () => {
-        dispatch(applyDraggableTextId(null));
-      };
-    },
-    [refGlobalDrawingLogs, dispatch]
-  );
+  // Guarda en el store la geometría de Moveable (se usa al exportar) y el
+  // transform CSS (para conservar la posición si el elemento se vuelve a montar).
+  // useMemo: la versión con debounce tiene que ser la misma entre renders.
+  const geometrySync = useMemo(() => {
+    const sync = () => {
+      if (!refMoveable.current) return;
+      refMoveable.current.updateRect();
+      // updateRect() actualiza el estado interno de Moveable con setState, que
+      // React aplica después: leerlo en la misma línea devolvía medidas viejas
+      // (p. ej. una imagen recién cargada quedaba con ancho 0 y no se exportaba).
+      requestAnimationFrame(() => {
+        const moveable = refMoveable.current;
+        const domElement = refElement.current;
+        if (!moveable || !domElement) return;
+        const geometry = getMoveableGeometry(moveable.getManager());
+        if (geometry) {
+          updateElement(id, {
+            ...geometry,
+            cssTransform: domElement.style.transform || null,
+          });
+        }
+      });
+    };
+    return { now: sync, debounced: debounce(sync, 150) };
+  }, [id, updateElement]);
 
   useEffect(
-    function refreshMoveable() {
-      saveUpdatedMoveableRect();
-    },
-    [fontFamily, fontWeight]
-  );
-
-  useEffect(
-    function setMoveableSize() {
-      const moveable = refMoveable.current.getManager();
-      if (moveable.state.target && updateRectTimes > 0) {
-        const modifiedGlobalLogs = updateDraggableRect(
-          refGlobalDrawingLogs,
-          moveable,
-          id
-        );
-        refGlobalDrawingLogs.current = modifiedGlobalLogs;
+    function initElement() {
+      const domElement = refElement.current;
+      if (element.cssTransform)
+        domElement.style.transform = element.cssTransform;
+      if (isText) {
+        refEditable.current.innerText = element.text;
+        updateElement(id, measureElement(domElement));
+        if (!element.text) {
+          refEditable.current.focus();
+          setCheckInput(true);
+        }
+      } else if (element.realWidth === null) {
+        setCheckInput(true);
       }
     },
-    [updateRectTimes]
+    // Solo al montar: el contenido inicial del contentEditable se escribe una
+    // vez; después lo controla el usuario y se sincroniza con onInput.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
   );
 
   useEffect(
-    function reapplyFontSize() {
-      if (!draggableTextId) return;
-      const $draggableText = document.getElementById(draggableTextId);
-      $draggableText.style.fontSize = `${draggableTextFontSize}px`;
-      $draggableText.dataset.fontSize = draggableTextFontSize;
-      saveUpdatedMoveableRect();
+    function refreshMoveableBox() {
+      geometrySync.now();
     },
-    [draggableTextFontSize]
+    [
+      geometrySync,
+      element.fontFamily,
+      element.fontSize,
+      element.fontWeight,
+      element.text,
+    ]
   );
-  // no cambia el refGlobalDrawingLogs (fixed)
-  const saveUpdatedMoveableRect = async () => {
-    refMoveable.current.updateRect();
-    setUpdateRectTimes(updateRectTimes + 1);
-  };
 
-  const resetPosition = () => parentNode.scrollTo({ left: 0, top: 0 });
+  const resetScroll = () => containerRef.current?.scrollTo({ left: 0, top: 0 });
+  const select = () => selectElement(id);
 
-  const updateMoveableBlueArea = () => {
-    saveUpdatedMoveableRect();
-    resetPosition();
-  };
-
-  const upateMoveableRectDebounce = debounce(() => {
-    saveUpdatedMoveableRect();
-  }, 100);
-
-  useEffect(
-    function getZIndexDraggable() {
-      if (id === draggableTextId) {
-        const draggableElements = Array.from(
-          document.querySelectorAll(".draggable")
-        );
-
-        const zIndexElements = draggableElements.map((draggable) =>
-          parseInt(getComputedStyle(draggable).zIndex)
-        );
-
-        const maxDraggable = Math.max(...zIndexElements);
-
-        setZIndexDraggableElement(maxDraggable + 1);
-
-        refGlobalDrawingLogs.current.forEach((draggable) => {
-          if (draggable.id === id) draggable.zIndex = maxDraggable + 1;
-        });
+  const textStyle = isText
+    ? {
+        fontFamily: element.fontFamily,
+        fontSize: `${element.fontSize}px`,
+        fontWeight: element.fontWeight,
+        color: rgbaToCss(element.color),
       }
-    },
-    [draggableTextId]
-  );
+    : undefined;
 
   return (
     <>
       <DraggableTextElement
+        ref={refElement}
         id={id}
-        className={`target${id} draggable ${
-          type === "draggableText" ? "draggableText" : ""
-        }`}
-        onClick={() => dispatch(applyDraggableTextId(id))}
-        onTouchStart={() => dispatch(applyDraggableTextId(id))}
-        zIndex={zIndexDraggableElement}
+        className={`target${id} draggable ${isText ? "draggableText" : ""}`}
+        onClick={select}
+        onTouchStart={select}
+        zIndex={zIndex}
+        style={textStyle}
       >
-        {type === "draggableText" && (
+        {isText && (
           <SpanDraggableText
-            ref={refEditableElement}
-            onKeyDown={updateMoveableBlueArea}
-            onKeyUp={upateMoveableRectDebounce}
+            ref={refEditable}
+            contentEditable
+            onInput={(e) =>
+              updateElement(id, { text: e.currentTarget.innerText })
+            }
+            onKeyDown={resetScroll}
             onBlur={() => {
-              resetPosition();
+              resetScroll();
               setCheckInput(false);
             }}
             onTouchMove={(e) => {
               e.target.blur();
               setCheckInput(false);
             }}
-            contentEditable
-          ></SpanDraggableText>
+          />
         )}
-        {type === "draggableImage" && (
+        {whatTask === "draggableImage" && (
           <img
             alt="elemento imagen"
-            src={draggableData.imageUrl}
+            src={element.imageUrl}
             style={{ width: "100%", borderRadius: ".5rem" }}
-            onLoad={() => saveUpdatedMoveableRect()}
+            onLoad={geometrySync.now}
           />
         )}
       </DraggableTextElement>
       <Moveable
         ref={refMoveable}
-        checkInput={checkInput}
         target={`.target${id}`}
-        className={
-          id === draggableTextId && isEditingText ? "editing" : "drawing"
-        }
+        className={isSelected && isEditingText ? "editing" : "drawing"}
         scalable
         draggable
         rotatable
         keepRatio
         renderDirections={["w", "e", "s", "n"]}
         pinchable
-        onRotate={onRotate}
-        onDrag={onDrag}
-        onScale={onScale}
-        onRender={onRender}
+        onDragStart={select}
+        onScaleStart={select}
+        onRotateStart={select}
+        onDrag={geometrySync.debounced}
+        onScale={geometrySync.debounced}
+        onRotate={geometrySync.debounced}
+        onRender={(e) => {
+          e.target.style.cssText += e.cssText;
+          resetScroll();
+        }}
         onClick={(e) => {
           if (e.isDouble && e.inputTarget.contentEditable === "true") {
             e.inputTarget.focus();
@@ -217,10 +183,7 @@ const ElementEditable = ({
           bottom: true,
         }}
         snapThreshold={4}
-        elementGuidelines={[refFrontalCanvas]}
-
-        // onDrag={(e) => (e.target.style.transform = e.transform)}
-        // bounds={{ top: 0, left: 0, right: 0, bottom: 0, position: "css" }}
+        elementGuidelines={[overlayCanvasRef]}
       />
     </>
   );

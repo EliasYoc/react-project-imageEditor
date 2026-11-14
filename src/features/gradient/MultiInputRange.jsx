@@ -26,7 +26,7 @@ const MultiInputRange = ({
         onClickLine();
       }}
     >
-      {Object.values(inputPropListObj).map((inputProp, i) => {
+      {Object.values(inputPropListObj).map((inputProp) => {
         const { r, g, b, a } = inputProp.thumbBackground;
         return (
           <RangeStyled

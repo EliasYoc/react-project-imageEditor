@@ -1,106 +1,61 @@
 import "../styles/moveable.css";
-import Canvas from "../features/drawing/legacy/Canvas";
-import DrawingTools from "../features/drawing/DrawingTools";
-import PrincipalTools from "../features/home/HomeToolbar";
-import {
-  ContextConfiguration,
-  themeColor,
-} from "../context/ConfigurationProvider";
-import {
-  FittedPaintWrap,
-  FixedContainer,
-} from "../components/ui/legacy/styledComponents";
-import { useContext, useEffect } from "react";
+import styles from "./App.module.css";
+import { useEditorStore } from "../editor/store/editorStore";
 import Header from "../components/layout/Header";
-import CropTools from "../components/CropTools/index";
-import LoaderSpinner from "../components/ui/LoaderSpinner";
-import useFullSizeElement from "../hooks/useFullSizeElement";
-import { ContextToolBoxes } from "../context/ToolBoxesProvider";
-import InvisibleFrontalCanvas from "../features/drawing/legacy/DrawingOverlay";
 import ToolBox from "../components/layout/ToolBox";
-import DrawingNavigation from "../features/drawing/ModeSwitcher";
-import EditingTools from "../features/text/TextToolbar";
+import LoaderSpinner from "../components/ui/LoaderSpinner";
+import { FixedContainer } from "../components/ui/legacy/styledComponents";
+import EditorHeader from "../features/editor-header/EditorHeader";
+import HomeToolbar from "../features/home/HomeToolbar";
+import DrawingTools from "../features/drawing/DrawingTools";
+import ModeSwitcher from "../features/drawing/ModeSwitcher";
+import Canvas from "../features/drawing/legacy/Canvas";
+import DrawingOverlay from "../features/drawing/legacy/DrawingOverlay";
+import TextToolbar from "../features/text/TextToolbar";
 
+/**
+ * Shell de la aplicación: cabecera | lienzo | barra inferior.
+ *
+ * El lienzo ocupa el espacio que sobra (flex: 1) y los dos <canvas> se
+ * superponen dentro de él. Antes se calculaba su altura sumando en JS las
+ * alturas del header y del footer.
+ */
 function App() {
-  const {
-    isDrawingToolsOpen,
-    isCropToolsOpen,
-    isPrincipalToolsOpen,
-    openOptionPage,
-    headerChildrenState,
-    isLoadingImage,
-    isDrawing,
-    isEditingText,
-  } = useContext(ContextConfiguration);
-  const { handleSumHeightForCanvas } = useContext(ContextToolBoxes);
-  const { refElement: refFooter, elementSize: footerSize } = useFullSizeElement(
-    [isCropToolsOpen, isDrawingToolsOpen]
-  );
-  const { elementSize: headerSize, refElement: refHeader } = useFullSizeElement(
-    [isDrawingToolsOpen]
-  );
-
-  useEffect(() => {
-    if (footerSize) {
-      const { height, marginTop, marginBottom } = footerSize;
-      handleSumHeightForCanvas(height, marginTop, marginBottom);
-    }
-  }, [footerSize, handleSumHeightForCanvas]);
-
-  useEffect(() => {
-    if (headerSize) {
-      const { height, marginTop, marginBottom } = headerSize;
-      handleSumHeightForCanvas(height, marginTop, marginBottom);
-    }
-  }, [headerSize, handleSumHeightForCanvas]);
-
-  useEffect(() => {
-    openOptionPage({ isPrincipalToolsOpen: true });
-  }, [openOptionPage]);
+  const mode = useEditorStore((state) => state.mode);
+  const isBusy = useEditorStore((state) => state.status !== "idle");
+  const isEditorOpen = mode !== "home";
 
   return (
-    <div
-      style={{ background: "linear-gradient(45deg, #111111, #1d1d1d)" }}
-      className="App"
-    >
-      <FittedPaintWrap style={{ color: themeColor.textColor }}>
-        <div ref={refHeader}>
-          {isDrawingToolsOpen && <Header children={headerChildrenState} />}
-        </div>
+    <div className={styles.app}>
+      {isEditorOpen && (
+        <Header>
+          <EditorHeader />
+        </Header>
+      )}
+
+      <main className={styles.stage}>
         <Canvas />
-        {isPrincipalToolsOpen && <PrincipalTools />}
-        <div
-          ref={refFooter}
-          style={{ zIndex: "100", display: "flex", flexDirection: "column" }}
-        >
-          {isDrawingToolsOpen && (
-            <>
-              <ToolBox
-                // width={parentDrawinToolboxSize.width}
-                // height={parentDrawinToolboxSize.height}
-                display="flex"
-                borderRadius="50px"
-                position="relative"
-                margin="10px auto 0"
-                padding="0 1rem"
-                gap=".5rem"
-              >
-                {isDrawing && <DrawingTools />}
-                {isEditingText && <EditingTools />}
-              </ToolBox>
-              <DrawingNavigation />
-            </>
-          )}
-          {isCropToolsOpen && <CropTools />}
-        </div>
-        {isDrawingToolsOpen && (
-          <InvisibleFrontalCanvas
-            headerSize={headerSize}
-            footerSize={footerSize}
-          />
-        )}
-      </FittedPaintWrap>
-      {isLoadingImage && (
+        {isEditorOpen ? <DrawingOverlay /> : <HomeToolbar />}
+      </main>
+
+      {isEditorOpen && (
+        <footer className={styles.footer}>
+          <ToolBox
+            display="flex"
+            borderRadius="50px"
+            position="relative"
+            margin="10px auto 0"
+            padding="0 1rem"
+            gap=".5rem"
+          >
+            {mode === "draw" && <DrawingTools />}
+            {mode === "text" && <TextToolbar />}
+          </ToolBox>
+          <ModeSwitcher />
+        </footer>
+      )}
+
+      {isBusy && (
         <FixedContainer zIndex="1000">
           <LoaderSpinner />
         </FixedContainer>

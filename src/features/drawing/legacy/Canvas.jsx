@@ -1,48 +1,49 @@
-import { useContext, useEffect } from "react";
-import { ContextConfiguration } from "../../../context/ConfigurationProvider";
-import { ContextToolBoxes } from "../../../context/ToolBoxesProvider";
-import { paintWholeCanvas } from "../../../editor/legacy/canvasUtils";
-// const paintPixelByPixelCanvasExample = (canvasSize, ctx) => {
-//   for (var x = 0; x < canvasSize.width; x++) {
-//     for (var y = 0; y < canvasSize.height; y++) {
-//       ctx.fillStyle = "#" + Math.floor(Math.random() * 16777215).toString(16); // pick random color
-//       ctx.fillRect(x, y, 1, 1); // draw pixel on canvas
-//     }
-//   }
-// };
+import { useEffect } from "react";
+import { useEditorCanvas } from "../../../editor/canvas/editorCanvasContext";
+import { redrawGlobalDrawingLogs } from "../../../editor/legacy/canvasUtils";
+import { editorStore, useEditorStore } from "../../../editor/store/editorStore";
 
+/**
+ * Canvas principal: aquí quedan los trazos terminados. La imagen de fondo se
+ * muestra con CSS (background-image) debajo del canvas transparente.
+ * Se reemplaza por el Stage de Konva en la Fase 2.
+ */
 const Canvas = () => {
-  const { fullHeightSumForCanvas } = useContext(ContextToolBoxes);
-  const { refCanvas, ctx, canvasSize, lowQualityDataImageLoaded } =
-    useContext(ContextConfiguration);
+  const { mainCanvasRef } = useEditorCanvas();
+  const canvasSize = useEditorStore((state) => state.canvasSize);
+  const previewUrl = useEditorStore((state) => state.background.previewUrl);
 
   useEffect(
-    function init() {
-      if (!ctx) return;
-      if (lowQualityDataImageLoaded) {
-        ctx.clearRect(0, 0, canvasSize.width, canvasSize.height);
-        return;
-      }
-      paintWholeCanvas(ctx, "white", canvasSize.width, canvasSize.height);
+    function repaintWhenSizeOrBackgroundChanges() {
+      const canvas = mainCanvasRef.current;
+      // Se lee el historial con getState() para no repintar en cada trazo:
+      // los trazos nuevos ya se dibujan directamente mientras se pinta.
+      // Al cambiar el fondo (p. ej. un gradiente) los trazos se vuelven a pintar
+      // encima; antes desaparecían de la vista aunque seguían en el historial.
+      redrawGlobalDrawingLogs(
+        Boolean(previewUrl),
+        canvas,
+        canvas.getContext("2d"),
+        editorStore.getState().log
+      );
     },
-    [ctx, canvasSize, lowQualityDataImageLoaded]
+    [mainCanvasRef, canvasSize, previewUrl]
   );
 
   return (
     <canvas
-      id="myCanvas"
-      ref={refCanvas}
+      ref={mainCanvasRef}
       className="principal-canvas"
       style={{
-        backgroundImage: `url(${lowQualityDataImageLoaded})`,
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        backgroundImage: previewUrl ? `url(${previewUrl})` : "none",
         backgroundRepeat: "no-repeat",
         backgroundSize: "contain",
         backgroundPosition: "center",
-        width: "100%",
-        height: `calc(100% - ${fullHeightSumForCanvas || "0px"})`,
         objectFit: "contain",
-        transition: "height .3s ease",
-        // imageRendering: "pixelated",
       }}
       width={canvasSize.width}
       height={canvasSize.height}

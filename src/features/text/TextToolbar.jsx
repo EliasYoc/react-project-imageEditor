@@ -1,120 +1,30 @@
-import React, { useContext, useState, useEffect } from "react";
-import {
-  ContextConfiguration,
-  themeColor,
-} from "../../context/ConfigurationProvider";
+import { useState } from "react";
+import { RgbaColorPicker } from "react-colorful";
+import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
 import {
   GlobalButton,
   PencilBackgroundColor,
 } from "../../components/ui/legacy/styledComponents";
-import { v4 as uuidv4 } from "uuid";
-import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  applyDraggableTextColor,
-  selectDraggableTextColor,
-  selectDraggableTextId,
-} from "../paintingSlice";
-import { RgbaColorPicker } from "react-colorful";
-import { debounce } from "../../lib/helper";
-import FontsButton from "./FontsButton";
-import BoldButton from "./BoldButton";
+import { rgbaToCss } from "../../editor/model/color";
+import { useEditorStore } from "../../editor/store/editorStore";
+import { selectSelectedText } from "../../editor/store/selectors";
+import { themeColor } from "../../styles/theme";
 import IncludeImageButton from "../images/IncludeImageButton";
+import BoldButton from "./BoldButton";
+import FontsButton from "./FontsButton";
 
-const EditingTools = () => {
-  const { refGlobalDrawingLogs, setDrawingHistoryLength } =
-    useContext(ContextConfiguration);
-  const color = useSelector(selectDraggableTextColor);
-  const draggableTextId = useSelector(selectDraggableTextId);
-  const dispatch = useDispatch();
-  const [isOpenPortalsEditingModal, setIsOpenPortalsEditingModal] =
-    useState(false);
-  const [disablePickColorButton, setDisablePickColorButton] = useState(true);
+const TextToolbar = () => {
+  const selectedText = useEditorStore(selectSelectedText);
+  const addText = useEditorStore((state) => state.addText);
+  const updateElement = useEditorStore((state) => state.updateElement);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
-  useEffect(() => {
-    if (draggableTextId) {
-      const draggableTextList = document.querySelectorAll(".draggableText");
-      const hasDraggableTexts = draggableTextList.length > 0;
-
-      const draggableText = document.getElementById(draggableTextId);
-      if (
-        draggableText.classList.contains("draggableText") &&
-        hasDraggableTexts
-      ) {
-        setDisablePickColorButton(false);
-      } else {
-        setDisablePickColorButton(true);
-      }
-    }
-  }, [draggableTextId]);
-
-  useEffect(
-    function updatePickerTextColor() {
-      if (draggableTextId) {
-        const $draggable = document.getElementById(draggableTextId);
-        const indexOfFirstParenthesis = $draggable.style.color.indexOf("(");
-        const indesOfLastParenthesis = -1;
-        const arrColor = $draggable.style.color
-          .slice(indexOfFirstParenthesis + 1, indesOfLastParenthesis)
-          .split(", ");
-
-        const objColor = {
-          r: parseInt(arrColor[0] || 0),
-          g: parseInt(arrColor[1] || 0),
-          b: parseInt(arrColor[2] || 0),
-          a: !arrColor[3] ? 1 : parseInt(arrColor[3]),
-        };
-        dispatch(applyDraggableTextColor(objColor));
-      }
-    },
-    [draggableTextId, dispatch]
-  );
-
-  const handleAddText = () => {
-    const initialDraggableElement = {
-      id: uuidv4(),
-      color: { r: 0, g: 0, b: 0, a: 1 },
-      background: { r: 255, g: 255, b: 255, a: 1 },
-      whatTask: "draggableText",
-      size: 12,
-      scale: [1, 1],
-      translate: [0, 0],
-      left: null,
-      top: null,
-      realLeft: null,
-      realTop: null,
-      offsetLeft: null,
-      offsetTop: null,
-      realWidth: null,
-      realHeight: null,
-      initialWidth: null,
-      initialHeight: null,
-      zIndex: 15,
-    };
-    refGlobalDrawingLogs.current.push(initialDraggableElement);
-    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
-  };
-
-  const handleOpenEditingModal = () => {
-    if (disablePickColorButton) return;
-    setIsOpenPortalsEditingModal(!isOpenPortalsEditingModal);
-  };
-
-  const hanldleApplyColor = ({ r, g, b, a }) => {
-    const $draggable = document.getElementById(draggableTextId);
-    $draggable.style.color = `rgba(${r}, ${g}, ${b}, ${a})`;
-
-    saveColor({ r, g, b, a });
-  };
-
-  const saveColor = debounce(({ r, g, b, a }) => {
-    dispatch(applyDraggableTextColor({ r, g, b, a }));
-  }, 300);
+  const canPickColor = selectedText !== null;
 
   return (
     <>
       <GlobalButton
-        onClick={handleAddText}
+        onClick={addText}
         width="auto"
         height="auto"
         fontSize="1rem"
@@ -133,7 +43,7 @@ const EditingTools = () => {
                   transparent 0, transparent 75%, rgba(0,0,0,.25) 0);"
         backgroundPosition="0 0, 7.5px 7.5px"
         backgroundSize="15px 15px"
-        onClick={handleOpenEditingModal}
+        onClick={() => canPickColor && setIsColorPickerOpen(true)}
         padding="0"
       >
         <PencilBackgroundColor
@@ -142,21 +52,24 @@ const EditingTools = () => {
             borderRadius: "50px",
           }}
           backgroundColor={
-            disablePickColorButton
-              ? "transparent"
-              : `rgba(${color.r}, ${color.g},${color.b},${color.a} )`
+            canPickColor ? rgbaToCss(selectedText.color) : "transparent"
           }
         />
       </GlobalButton>
       <PortalsSwipeableMenuLayout
         title="Escoge un color individual"
-        isOpen={isOpenPortalsEditingModal}
-        onClose={handleOpenEditingModal}
+        isOpen={isColorPickerOpen && canPickColor}
+        onClose={() => setIsColorPickerOpen(false)}
       >
-        <RgbaColorPicker color={color} onChange={hanldleApplyColor} />
+        {canPickColor && (
+          <RgbaColorPicker
+            color={selectedText.color}
+            onChange={(color) => updateElement(selectedText.id, { color })}
+          />
+        )}
       </PortalsSwipeableMenuLayout>
     </>
   );
 };
 
-export default EditingTools;
+export default TextToolbar;

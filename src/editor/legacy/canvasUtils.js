@@ -49,8 +49,15 @@ export const getCalculatedCoordsOfContainCanvas = ({
   xCoord,
   yCoord,
 }) => {
-  let originalCanvasWidth = canvasElement.getBoundingClientRect().width;
-  let originalCanvasHeight = canvasElement.getBoundingClientRect().height;
+  // Posición en pantalla (viewport), en el mismo sistema que clientX/clientY.
+  // Antes se usaba offsetLeft/offsetTop, que solo coincidía mientras el
+  // contenedor del lienzo empezaba en la esquina superior de la página.
+  const {
+    left,
+    top,
+    width: originalCanvasWidth,
+    height: originalCanvasHeight,
+  } = canvasElement.getBoundingClientRect();
 
   const { dominantCellSize } = getDominantCellSizeOfContainCanvas(
     originalCanvasWidth,
@@ -58,16 +65,15 @@ export const getCalculatedCoordsOfContainCanvas = ({
     canvasHeightPixel,
     canvasWidthPixel
   );
-  // investigar este calculo
   let coordX = Math.floor(
     (xCoord -
-      canvasElement.offsetLeft -
+      left -
       (originalCanvasWidth - dominantCellSize * canvasWidthPixel) / 2) /
       dominantCellSize
   );
   let coordY = Math.floor(
     (yCoord -
-      canvasElement.offsetTop -
+      top -
       (originalCanvasHeight - dominantCellSize * canvasHeightPixel) / 2) /
       dominantCellSize
   );
@@ -113,11 +119,12 @@ export const drawCanvasCoordsCallback = (
   callback(coordX, coordY);
 };
 
+/** Vuelve a pintar todo el historial (`drawingLogs`) sobre el canvas principal. */
 export const redrawGlobalDrawingLogs = (
   canvasHasImage = false,
   canvasElement,
   ctx,
-  refGlobalDrawingLogs
+  drawingLogs
 ) => {
   canvasHasImage
     ? deleteCanvasWithTransparency({
@@ -130,8 +137,7 @@ export const redrawGlobalDrawingLogs = (
   // para dibujar los ultimos paths y evitar lentitud (pendiente por si es necesario), aplica solo cuando pinto todo el canvas manteniendo presionado,
   // let globalDrawingLogs = refGlobalDrawingLogs.current;
   // const indexToStartDrawing = redrawGlobalDrawingLogs.current.findLastIndex(el=> el.color.a < 1 && el.whatTask === "paintingWholeCanvas" )
-  for (let i = 0; i < refGlobalDrawingLogs.current.length; i++) {
-    const drawingLog = refGlobalDrawingLogs.current[i];
+  for (const drawingLog of drawingLogs) {
     if (drawingLog.whatTask === "painting") {
       const path = drawingLog.data;
       if (!path.length) continue;
@@ -281,7 +287,7 @@ export function bestFitGradient({ angle, colorList = [], w, h, ctx }) {
   // add colours
 
   colorList.forEach(
-    (color, i) =>
+    (color) =>
       color && gradient.addColorStop(color.opacity, color.backgroundString)
   );
 

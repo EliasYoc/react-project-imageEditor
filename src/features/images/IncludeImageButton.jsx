@@ -1,39 +1,18 @@
-import React, { useContext } from "react";
 import { BiImages } from "react-icons/bi";
 import { GlobalButton } from "../../components/ui/legacy/styledComponents";
-import { v4 as uuidv4 } from "uuid";
-import { ContextConfiguration } from "../../context/ConfigurationProvider";
+import { useEditorStore } from "../../editor/store/editorStore";
 
 const IncludeImageButton = () => {
-  const { refGlobalDrawingLogs, setDrawingHistoryLength } =
-    useContext(ContextConfiguration);
+  const addImage = useEditorStore((state) => state.addImage);
 
-  const addImageToCanvas = (e) => {
+  const handleChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const imageUrl = URL.createObjectURL(file);
-    const initialDraggableElement = {
-      id: uuidv4(),
-      whatTask: "draggableImage",
-      scale: [1, 1],
-      translate: [0, 0],
-      left: null,
-      top: null,
-      realLeft: null,
-      realTop: null,
-      offsetLeft: null,
-      offsetTop: null,
-      realWidth: null,
-      realHeight: null,
-      initialWidth: null,
-      initialHeight: null,
-      imageUrl,
-      zIndex: 15,
-    };
-
-    refGlobalDrawingLogs.current.push(initialDraggableElement);
-    setDrawingHistoryLength(refGlobalDrawingLogs.current.length);
+    addImage(URL.createObjectURL(file));
+    // Permite volver a elegir el mismo archivo.
+    e.target.value = "";
   };
+
   return (
     <GlobalButton>
       <label htmlFor="includeImage" style={{ display: "flex" }}>
@@ -43,8 +22,7 @@ const IncludeImageButton = () => {
           style={{ display: "none" }}
           type="file"
           accept="image/*"
-          alt="incluir imagen"
-          onChange={addImageToCanvas}
+          onChange={handleChange}
         />
       </label>
     </GlobalButton>

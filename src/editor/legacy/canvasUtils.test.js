@@ -46,10 +46,13 @@ describe("getDominantCellSizeOfContainCanvas", () => {
 });
 
 describe("getCalculatedCoordsOfContainCanvas", () => {
-  const fakeCanvas = (rectWidth, rectHeight) => ({
-    offsetLeft: 0,
-    offsetTop: 0,
-    getBoundingClientRect: () => ({ width: rectWidth, height: rectHeight }),
+  const fakeCanvas = (rectWidth, rectHeight, left = 0, top = 0) => ({
+    getBoundingClientRect: () => ({
+      left,
+      top,
+      width: rectWidth,
+      height: rectHeight,
+    }),
   });
 
   it("convierte el centro de la pantalla al centro del canvas (object-fit: contain)", () => {
@@ -76,6 +79,19 @@ describe("getCalculatedCoordsOfContainCanvas", () => {
     });
     expect(coordX).toBe(0);
     expect(coordY).toBe(0);
+  });
+
+  it("descuenta la posición del lienzo en la pantalla (p. ej. debajo del header)", () => {
+    // El mismo lienzo, pero empezando 60px más abajo (hay un header encima).
+    const { coordX, coordY } = getCalculatedCoordsOfContainCanvas({
+      canvasElement: fakeCanvas(500, 1000, 0, 60),
+      canvasWidthPixel: 1000,
+      canvasHeightPixel: 1000,
+      xCoord: 250,
+      yCoord: 560,
+    });
+    expect(coordX).toBe(500);
+    expect(coordY).toBe(500);
   });
 });
 

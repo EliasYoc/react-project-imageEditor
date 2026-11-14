@@ -1,50 +1,32 @@
-import { useContext, useState } from "react";
-import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
-import ButtonTool from "./BrushButton";
+import { useState } from "react";
 import { BiPaint, BiSprayCan } from "react-icons/bi";
 import { BsEraser } from "react-icons/bs";
-import { themeColor } from "../../context/ConfigurationProvider";
 import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
-import ColorPickerMenu from "./BrushColorPicker";
 import {
   GlobalButton,
   PencilBackgroundColor,
 } from "../../components/ui/legacy/styledComponents";
-import { useSelector } from "react-redux";
-import { selectKindOfPencil, selectPencilType } from "../paintingSlice";
+import { rgbaToCss } from "../../editor/model/color";
+import { useEditorStore } from "../../editor/store/editorStore";
+import { selectCurrentBrush } from "../../editor/store/selectors";
+import { themeColor } from "../../styles/theme";
+import BrushButton from "./BrushButton";
+import BrushColorPicker from "./BrushColorPicker";
 
 const DrawingTools = () => {
-  const { activeButtonPosition } = useContext(ContextToolBoxes);
-  const [isOpenPortalsDrawingModal, setIsOpenPortalsDrawingModal] =
-    useState(false);
-  const kindOfPencil = useSelector(selectKindOfPencil);
-  const pencilType = useSelector(selectPencilType);
-  const { r, g, b, a } = kindOfPencil[pencilType].color;
+  const brushType = useEditorStore((state) => state.brush.type);
+  const color = useEditorStore((state) => selectCurrentBrush(state).color);
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
-  const handleOpenCloseModal = () => {
-    if (pencilType === "eraser") return;
-    setIsOpenPortalsDrawingModal(!isOpenPortalsDrawingModal);
-  };
+  // El borrador no tiene color propio.
+  const canPickColor = brushType !== "eraser";
+
   return (
     <>
-      <GlobalButton
-        backgroundColor={themeColor.activeBgColor}
-        position="absolute"
-        width={activeButtonPosition.width}
-        height={activeButtonPosition.height}
-        left={activeButtonPosition.left}
-        zIndex="1"
-      />
-      <ButtonTool
-        icon={BiPaint}
-        htmlFor="normal"
-        name="drawingTools"
-        selectedButton
-      />
-      <ButtonTool icon={BiSprayCan} htmlFor="spray" name="drawingTools" />
-      {/* <ButtonTool icon={BiPaint} htmlFor="chalk" name="drawingTools" /> */}
-      <ButtonTool icon={BsEraser} htmlFor="eraser" name="drawingTools" />
-      {/* The size of individual squares should be specified in the background-position property that should be twice smaller than background-size. */}
+      <BrushButton icon={BiPaint} brushType="normal" label="Pincel" />
+      <BrushButton icon={BiSprayCan} brushType="spray" label="Spray" />
+      <BrushButton icon={BsEraser} brushType="eraser" label="Borrador" />
+      {/* El tamaño de cada cuadro del fondo a cuadros es la mitad de background-size. */}
       <GlobalButton
         border={`3px solid ${themeColor.textColor}`}
         backgroundColor="#eee"
@@ -54,7 +36,7 @@ const DrawingTools = () => {
                   transparent 0, transparent 75%, rgba(0,0,0,.25) 0);"
         backgroundPosition="0 0, 7.5px 7.5px"
         backgroundSize="15px 15px"
-        onClick={handleOpenCloseModal}
+        onClick={() => canPickColor && setIsColorPickerOpen(true)}
         padding="0"
       >
         <PencilBackgroundColor
@@ -62,16 +44,16 @@ const DrawingTools = () => {
             border: `4px solid black`,
             borderRadius: "50px",
           }}
-          backgroundColor={`rgba(${r}, ${g},${b},${a} )`}
+          backgroundColor={rgbaToCss(color)}
         />
       </GlobalButton>
 
       <PortalsSwipeableMenuLayout
         title="Escoge un color individual"
-        isOpen={isOpenPortalsDrawingModal}
-        onClose={handleOpenCloseModal}
+        isOpen={isColorPickerOpen && canPickColor}
+        onClose={() => setIsColorPickerOpen(false)}
       >
-        <ColorPickerMenu />
+        <BrushColorPicker />
       </PortalsSwipeableMenuLayout>
     </>
   );

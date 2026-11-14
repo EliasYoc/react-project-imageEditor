@@ -1,6 +1,3 @@
-.App {
-  height: 100dvh;
-}
 .animationAppearUp {
   animation: appearUp 0.5s ease;
 }

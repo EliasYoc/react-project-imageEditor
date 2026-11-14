@@ -57,6 +57,7 @@ const createEmptyGeometry = (): ElementGeometry => ({
   realHeight: null,
   initialWidth: null,
   initialHeight: null,
+  cssTransform: null,
 });
 
 export const createTextElement = (id: string, zIndex: number): TextElement => ({

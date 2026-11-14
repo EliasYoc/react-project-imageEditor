@@ -1,52 +1,42 @@
-export const updateInitialDraggableTextElementSize = (
-  refGlobalDrawingLogs,
-  draggableTextId
-) => {
-  refGlobalDrawingLogs.current.forEach((log) => {
-    if (log.whatTask === "draggableText" && log.id === draggableTextId) {
-      const draggableElement = document.getElementById(log.id);
-      const { left, top } = draggableElement.getBoundingClientRect();
-      const { width, height } = getComputedStyle(draggableElement);
-      const floatWidth = parseFloat(width.slice(0, -2));
-      const floatHeight = parseFloat(height.slice(0, -2));
-      log.left = log.realLeft = left;
-      log.top = log.realTop = top;
-      log.offsetLeft = draggableElement.offsetLeft;
-      log.offsetTop = draggableElement.offsetTop;
-      log.initialWidth = log.realWidth = floatWidth;
-      log.initialHeight = log.realHeight = floatHeight;
-      // log.initialWidth = log.realWidth = log.realWidth || floatWidth;
-      // log.initialHeight = log.realHeight = log.realHeight || floatHeight;
-    }
-  });
+// Medidas de los elementos arrastrables (texto, imágenes) para la exportación.
+// Devuelven un "patch" para `updateElement` del store en lugar de modificar el
+// historial en el sitio. Se reemplaza en la Fase 4 (Konva Transformer).
+
+/** Mide un elemento recién montado (posición en pantalla y tamaño inicial). */
+export const measureElement = (element) => {
+  const { left, top } = element.getBoundingClientRect();
+  const { width, height } = getComputedStyle(element);
+  const floatWidth = parseFloat(width);
+  const floatHeight = parseFloat(height);
+  return {
+    left,
+    top,
+    realLeft: left,
+    realTop: top,
+    offsetLeft: element.offsetLeft,
+    offsetTop: element.offsetTop,
+    initialWidth: floatWidth,
+    realWidth: floatWidth,
+    initialHeight: floatHeight,
+    realHeight: floatHeight,
+  };
 };
 
-export const updateDraggableRect = (
-  refGlobalDrawingLogs,
-  moveable,
-  draggableElementId
-) => {
-  if (!moveable.state.target) return null;
-  return refGlobalDrawingLogs.current.map((draggable) => {
-    if (draggable.id === draggableElementId) {
-      return {
-        ...draggable,
-        // Un array literal siempre es "truthy": el antiguo `|| draggable.translate`
-        // nunca se usaba, así que se quita sin cambiar el comportamiento.
-        translate: [
-          moveable.state.targetMatrix[12],
-          moveable.state.targetMatrix[13],
-        ],
-        scale: [moveable.state.targetMatrix[0], moveable.state.targetMatrix[5]],
-        offsetLeft: moveable.state.target.offsetLeft,
-        offsetTop: moveable.state.target.offsetTop,
-        realWidth: moveable.state.targetClientRect.width,
-        realHeight: moveable.state.targetClientRect.height,
-        realTop: moveable.state.targetClientRect.top,
-        realLeft: moveable.state.targetClientRect.left,
-      };
-    } else {
-      return draggable;
-    }
-  });
+/**
+ * Lee la geometría actual que calcula react-moveable (traslación, escala y el
+ * rectángulo en pantalla). Devuelve null si Moveable no tiene elemento.
+ */
+export const getMoveableGeometry = (moveable) => {
+  const { target, targetMatrix, targetClientRect } = moveable.state;
+  if (!target) return null;
+  return {
+    translate: [targetMatrix[12], targetMatrix[13]],
+    scale: [targetMatrix[0], targetMatrix[5]],
+    offsetLeft: target.offsetLeft,
+    offsetTop: target.offsetTop,
+    realWidth: targetClientRect.width,
+    realHeight: targetClientRect.height,
+    realTop: targetClientRect.top,
+    realLeft: targetClientRect.left,
+  };
 };

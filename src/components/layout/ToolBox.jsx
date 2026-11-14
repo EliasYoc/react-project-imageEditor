@@ -1,7 +1,7 @@
-import React, { forwardRef } from "react";
+import { forwardRef } from "react";
 import { LayoutToolBox } from "../ui/legacy/styledComponents";
 
-const ToolBox = forwardRef(({ children, fullSize, ...rest }, ref) => {
+const ToolBox = forwardRef(({ children, ...rest }, ref) => {
   return (
     <LayoutToolBox {...rest} ref={ref}>
       {children}

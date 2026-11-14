@@ -1,134 +1,102 @@
-import React, { useContext, useRef } from "react";
+import { BiImageAlt, BiPalette } from "react-icons/bi";
 import {
   GlobalButton,
   LayoutToolBox,
 } from "../../components/ui/legacy/styledComponents";
-import { BiImageAlt, BiPalette } from "react-icons/bi";
-import { ContextConfiguration } from "../../context/ConfigurationProvider";
-import HeaderChildren from "../editor-header/EditorHeader";
+import { useEditorStore } from "../../editor/store/editorStore";
 import {
   readFile,
   reduceAspectRatioQualityOfIncomingImage,
 } from "../../lib/helper";
-const PrincipalTools = () => {
-  const {
-    openOptionPage,
-    insertElementToHeader,
-    refOpenDisplayProperty,
-    setCanvasSize,
-    setPrincipalImageLoaded,
-    setIsLoadingImage,
-    setLowQualityDataImageLoaded,
-    refGlobalDrawingLogs,
-    setDrawingHistoryLength,
-    setImageFile,
-  } = useContext(ContextConfiguration);
-  const refToolBox = useRef();
-  const handleAddClassListFade = () => {
-    refToolBox.current.classList.add("closeDown");
-  };
-  const handleLoadImage = async ({ target: $input }) => {
-    if (!$input.files[0]) return;
-    setIsLoadingImage(true);
-    setImageFile($input.files[0]);
+
+/** Las imágenes más grandes que esto se reducen a MAX_IMAGE_SIDE píxeles. */
+const HEAVY_IMAGE_SIDE = 2800;
+const MAX_IMAGE_SIDE = 2048;
+
+const loadImage = (src) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("No se pudo leer la imagen"));
+    image.src = src;
+  });
+
+/** Barra de la pantalla de inicio: abrir el editor o cargar una imagen. */
+const HomeToolbar = () => {
+  const setMode = useEditorStore((state) => state.setMode);
+  const setStatus = useEditorStore((state) => state.setStatus);
+  const loadBackground = useEditorStore((state) => state.loadBackground);
+
+  const handleLoadImage = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setStatus("loading");
 
     try {
-      const data = await readFile({ file: $input.files[0] });
-      const $img = new Image();
-      const heavyPixels = 2800;
-      $img.src = data.result;
+      const { result } = await readFile({ file });
+      const image = await loadImage(result);
 
-      $img.onload = () => {
-        let width;
-        let height;
+      const isHeavy =
+        image.width > HEAVY_IMAGE_SIDE || image.height > HEAVY_IMAGE_SIDE;
+      const { newWidth: width, newHeight: height } = isHeavy
+        ? reduceAspectRatioQualityOfIncomingImage({
+            options: image,
+            expectedMaxPixelsSize: MAX_IMAGE_SIDE,
+          })
+        : { newWidth: image.width, newHeight: image.height };
 
-        if ($img.width > heavyPixels || $img.height > heavyPixels) {
-          const { newHeight, newWidth } =
-            reduceAspectRatioQualityOfIncomingImage({
-              options: $img,
-              expectedMaxPixelsSize: 2048,
-            });
+      // Versión ligera para mostrar de fondo; la original se usa al exportar.
+      const previewCanvas = document.createElement("canvas");
+      previewCanvas.width = width;
+      previewCanvas.height = height;
+      previewCanvas.getContext("2d").drawImage(image, 0, 0, width, height);
 
-          width = newWidth;
-          height = newHeight;
-        } else {
-          width = $img.width;
-          height = $img.height;
-        }
-        setCanvasSize({ width, height });
-
-        const $newHiddenCanvas = document.createElement("canvas");
-        $newHiddenCanvas.width = width;
-        $newHiddenCanvas.height = height;
-        const newCtx = $newHiddenCanvas.getContext("2d");
-        newCtx.drawImage($img, 0, 0, width, height);
-        setLowQualityDataImageLoaded($newHiddenCanvas.toDataURL("image/jpeg"));
-        setIsLoadingImage(false);
-        setPrincipalImageLoaded($img);
-        refGlobalDrawingLogs.current = [];
-        setDrawingHistoryLength(0);
-      };
+      loadBackground({
+        image,
+        previewUrl: previewCanvas.toDataURL("image/jpeg"),
+        mimeType: file.type,
+        size: { width, height },
+      });
     } catch (error) {
       console.error(error);
-      setIsLoadingImage(false);
+    } finally {
+      setStatus("idle");
+      // Permite volver a elegir el mismo archivo.
+      e.target.value = "";
     }
   };
 
   return (
-    <>
-      <LayoutToolBox
-        className="animationAppearUp"
-        gap="1rem"
-        display="flex"
-        justifyContent="center"
-        borderRadius="50px"
-        margin="10px auto"
-        bottom="0"
-        padding="0 .5rem"
-        width="clamp(300px, 90% ,500px)"
-        ref={refToolBox}
-        onTransitionEnd={(e) => {
-          if (e.propertyName === "transform") {
-            openOptionPage({
-              [refOpenDisplayProperty.current]: true,
-              isDrawing:
-                refOpenDisplayProperty.current === "isDrawingToolsOpen",
-            });
-          }
-        }}
-      >
-        <GlobalButton
-          onClick={() => {
-            insertElementToHeader(<HeaderChildren />);
-            handleAddClassListFade();
-            refOpenDisplayProperty.current = "isDrawingToolsOpen";
-          }}
-        >
-          <BiPalette />
+    <LayoutToolBox
+      className="animationAppearUp"
+      gap="1rem"
+      display="flex"
+      justifyContent="center"
+      borderRadius="50px"
+      margin="10px auto"
+      bottom="0"
+      padding="0 .5rem"
+      width="clamp(300px, 90% ,500px)"
+    >
+      {/* Cambia de modo al instante. Antes esperaba al final de la animación
+          (onTransitionEnd) y, si el navegador no animaba, la app se atascaba. */}
+      <GlobalButton onClick={() => setMode("draw")}>
+        <BiPalette />
+      </GlobalButton>
+      <label htmlFor="open-image">
+        <input
+          style={{ display: "none" }}
+          type="file"
+          id="open-image"
+          accept="image/*"
+          onChange={handleLoadImage}
+        />
+        <GlobalButton flexShrink="0">
+          <BiImageAlt />
         </GlobalButton>
-        {/* <GlobalButton
-          onClick={() => {
-            handleAddClassListFade();
-            refOpenDisplayProperty.current = "isCropToolsOpen";
-          }}
-        >
-          <IoCrop />
-        </GlobalButton> */}
-        <label htmlFor="download-img">
-          <input
-            style={{ display: "none" }}
-            type="file"
-            id="download-img"
-            accept="image/*"
-            onChange={handleLoadImage}
-          />
-          <GlobalButton flexShrink="0">
-            <BiImageAlt />
-          </GlobalButton>
-        </label>
-      </LayoutToolBox>
-    </>
+      </label>
+    </LayoutToolBox>
   );
 };
 
-export default PrincipalTools;
+export default HomeToolbar;

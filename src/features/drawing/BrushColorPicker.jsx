@@ -1,26 +1,13 @@
 import { RgbaColorPicker } from "react-colorful";
-import { useDispatch, useSelector } from "react-redux";
-import {
-  selectKindOfPencil,
-  selectPencilType,
-  setColorPencil,
-} from "../paintingSlice";
-import { debounce } from "../../lib/helper";
+import { useEditorStore } from "../../editor/store/editorStore";
+import { selectCurrentBrush } from "../../editor/store/selectors";
 
-// this color picker only for pencils
-const ColorPickerMenu = () => {
-  const kindOfPencil = useSelector(selectKindOfPencil);
-  const pencilType = useSelector(selectPencilType);
-  const dispatch = useDispatch();
-  const handleChage = debounce((e) => dispatch(setColorPencil(e)), 300);
-  return (
-    <>
-      <RgbaColorPicker
-        color={kindOfPencil[pencilType].color}
-        onChange={handleChage}
-      />
-    </>
-  );
+/** Selector de color del pincel actual (cada pincel guarda el suyo). */
+const BrushColorPicker = () => {
+  const color = useEditorStore((state) => selectCurrentBrush(state).color);
+  const setBrushColor = useEditorStore((state) => state.setBrushColor);
+
+  return <RgbaColorPicker color={color} onChange={setBrushColor} />;
 };
 
-export default ColorPickerMenu;
+export default BrushColorPicker;

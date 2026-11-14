@@ -1,26 +1,14 @@
-import React, { useContext, useRef, useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { RgbaColorPicker } from "react-colorful";
 import { AiOutlineMinus, AiOutlinePlus } from "react-icons/ai";
-import { useDispatch, useSelector } from "react-redux";
-import { ContextConfiguration } from "../../context/ConfigurationProvider";
-import {
-  addNewInputRange,
-  changeColorMultiInputRange,
-  changeInpurRangeGradientDegree,
-  changeMultipleInputValue,
-  deleteInputRange,
-  initialBgMultiInputRange,
-  selectGradientInputRangeDegree,
-  selectGradientMultiIntputRange,
-} from "../paintingSlice";
-import {
-  debounce,
-  reduceAspectRatioQualityOfIncomingImage,
-} from "../../lib/helper";
 import {
   GlobalButton,
   GlobalSpinner,
 } from "../../components/ui/legacy/styledComponents";
-import MultiInputRange from "./MultiInputRange";
+import { bestFitGradient } from "../../editor/legacy/canvasUtils";
+import { rgbaToCss } from "../../editor/model/color";
+import { useEditorStore } from "../../editor/store/editorStore";
+import { reduceAspectRatioQualityOfIncomingImage } from "../../lib/helper";
 import {
   ApplyGradientButton,
   GradientContainer,
@@ -28,47 +16,81 @@ import {
   WrapperColorPicker,
   WrapperGradientOptions,
 } from "./GradientBox.styles";
-import { v4 as uuidv4 } from "uuid";
-import { bestFitGradient } from "../../editor/legacy/canvasUtils";
-import { RgbaColorPicker } from "react-colorful";
+import MultiInputRange from "./MultiInputRange";
 
-const GradientBox = ({ handleOpenGradientBox }) => {
-  const { canvasSize, setLowQualityDataImageLoaded, setPrincipalImageLoaded } =
-    useContext(ContextConfiguration);
-  const multipleInputRange = useSelector(selectGradientMultiIntputRange);
-  const inputRangeKeyList = Object.keys(multipleInputRange);
+const THUMB_BORDER = "2px solid black";
+const ANGLE_THUMB_COLOR = { r: 255, g: 255, b: 224, a: 1 };
 
-  const multipleInputRangeDegree = useSelector(selectGradientInputRangeDegree);
-  const dispatch = useDispatch();
-  const refCanvasPreview = useRef();
-  const [thumbId, setThumbId] = useState(inputRangeKeyList.at(-1));
+/** Editor de fondo degradado. Se rediseña en la Fase 5. */
+const GradientBox = ({ onApplied }) => {
+  const canvasSize = useEditorStore((state) => state.canvasSize);
+  const { stops, angle } = useEditorStore((state) => state.gradient);
+  const addGradientStop = useEditorStore((state) => state.addGradientStop);
+  const removeGradientStop = useEditorStore(
+    (state) => state.removeGradientStop
+  );
+  const setGradientStopOffset = useEditorStore(
+    (state) => state.setGradientStopOffset
+  );
+  const setGradientStopColor = useEditorStore(
+    (state) => state.setGradientStopColor
+  );
+  const setGradientAngle = useEditorStore((state) => state.setGradientAngle);
+  const setBackgroundImage = useEditorStore(
+    (state) => state.setBackgroundImage
+  );
+
+  const refCanvasPreview = useRef(null);
+  const [selectedStopId, setSelectedStopId] = useState(stops.at(-1).id);
   const [isApplyingGradient, setIsApplyingGradient] = useState(false);
 
+  // Si la parada elegida ya no existe (se borró), se usa la última.
+  const selectedStop =
+    stops.find((stop) => stop.id === selectedStopId) ?? stops.at(-1);
+
+  // Formato que espera MultiInputRange: { [id]: { id, thumbBackground, ... } }
+  const stopThumbs = useMemo(
+    () =>
+      Object.fromEntries(
+        stops.map((stop) => [
+          stop.id,
+          {
+            id: stop.id,
+            thumbBackground: stop.color,
+            thumbBorder: THUMB_BORDER,
+            thumbValue: stop.offset,
+          },
+        ])
+      ),
+    [stops]
+  );
+  const angleThumb = {
+    degree: {
+      id: "degree",
+      thumbBackground: ANGLE_THUMB_COLOR,
+      thumbBorder: THUMB_BORDER,
+      thumbValue: angle,
+    },
+  };
+
   useEffect(
-    function editingCanvasPreview() {
-      const ctx = refCanvasPreview.current.getContext("2d");
-      const colorList = Object.values(multipleInputRange).map(
-        (inputRangeProps) => {
-          const { r, g, b, a } = inputRangeProps.thumbBackground;
-          return {
-            opacity: inputRangeProps.thumbValue / 100,
-            backgroundString: `rgba(${r},${g},${b},${a})`,
-          };
-        }
-      );
-      const w = refCanvasPreview.current.width;
-      const h = refCanvasPreview.current.height;
-      const gradient = bestFitGradient({
-        angle: (multipleInputRangeDegree.degree.thumbValue * Math.PI) / 180,
+    function drawPreview() {
+      const canvas = refCanvasPreview.current;
+      const ctx = canvas.getContext("2d");
+      const colorList = stops.map((stop) => ({
+        opacity: stop.offset / 100,
+        backgroundString: rgbaToCss(stop.color),
+      }));
+      ctx.fillStyle = bestFitGradient({
+        angle: (angle * Math.PI) / 180,
         colorList,
         ctx,
-        w,
-        h,
+        w: canvas.width,
+        h: canvas.height,
       });
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, w, h);
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
     },
-    [multipleInputRange, multipleInputRangeDegree.degree.thumbValue]
+    [stops, angle, canvasSize]
   );
 
   const { newWidth, newHeight } = reduceAspectRatioQualityOfIncomingImage({
@@ -76,61 +98,25 @@ const GradientBox = ({ handleOpenGradientBox }) => {
     expectedMaxPixelsSize: 300,
   });
 
-  const handleMultiInputRangeChange = (e) => {
-    dispatch(
-      changeMultipleInputValue({ id: e.target.id, value: e.target.value })
-    );
-  };
-
-  const addInputRange = () => {
-    if (inputRangeKeyList.length >= 8) return;
-    dispatch(
-      addNewInputRange({
-        ...initialBgMultiInputRange.firstInputRange,
-        id: uuidv4(),
-      })
-    );
-  };
-
-  const deleteSelectedInputRange = () => {
-    const filteredIdListOfInputRange = inputRangeKeyList.filter(
-      (rangeId) => rangeId !== thumbId
-    );
-    if (filteredIdListOfInputRange.length) {
-      const lastRangeThumbId = filteredIdListOfInputRange.at(-1);
-      dispatch(deleteInputRange({ id: thumbId }));
-      setThumbId(lastRangeThumbId);
-    }
-  };
-
-  const handleMouseTouchStart = (e) => {
+  const handleSelectThumb = (e) => {
     e.target.focus();
-    setThumbId(e.target.id);
+    setSelectedStopId(e.target.id);
   };
-
-  const changeGradientDegree = (e) => {
-    dispatch(changeInpurRangeGradientDegree(e.target.value));
-  };
-
-  const changeGradientColorOfRange = debounce(
-    (e) => dispatch(changeColorMultiInputRange({ id: thumbId, background: e })),
-    300
-  );
 
   const applyGradientBackground = () => {
     setIsApplyingGradient(true);
+    // setTimeout: deja que se pinte el spinner antes del trabajo pesado.
     setTimeout(() => {
-      const lowQualityUrl = refCanvasPreview.current.toDataURL(
-        "image/jpeg",
-        ".1"
-      );
-      const url = refCanvasPreview.current.toDataURL("image/png");
-      const $img = new Image();
-      $img.src = url;
-      setLowQualityDataImageLoaded(lowQualityUrl);
-      setPrincipalImageLoaded($img);
-      handleOpenGradientBox(false);
+      const canvas = refCanvasPreview.current;
+      const image = new Image();
+      image.src = canvas.toDataURL("image/png");
+      setBackgroundImage({
+        image,
+        previewUrl: canvas.toDataURL("image/jpeg", ".1"),
+        mimeType: "image/png",
+      });
       setIsApplyingGradient(false);
+      onApplied();
     }, 0);
   };
 
@@ -151,31 +137,29 @@ const GradientBox = ({ handleOpenGradientBox }) => {
         </canvas>
 
         <WrapperColorPicker>
-          {thumbId && (
-            <RgbaColorPicker
-              color={multipleInputRange[thumbId].thumbBackground}
-              onChange={changeGradientColorOfRange}
-            />
-          )}
+          <RgbaColorPicker
+            color={selectedStop.color}
+            onChange={(color) => setGradientStopColor(selectedStop.id, color)}
+          />
           <WrapperGradientOptions>
-            <GlobalButton onClick={addInputRange}>
+            <GlobalButton onClick={addGradientStop}>
               <AiOutlinePlus />
             </GlobalButton>
-            {thumbId && (
-              <GlobalButton onClick={deleteSelectedInputRange}>
-                <AiOutlineMinus />
-              </GlobalButton>
-            )}
+            <GlobalButton onClick={() => removeGradientStop(selectedStop.id)}>
+              <AiOutlineMinus />
+            </GlobalButton>
           </WrapperGradientOptions>
         </WrapperColorPicker>
       </GradientPreviewContainer>
       <div>
         <MultiInputRange
           style={{ margin: "2.5rem 0" }}
-          onClickLine={addInputRange}
-          onMouseTouchStartThumb={handleMouseTouchStart}
-          onChange={handleMultiInputRangeChange}
-          inputPropListObj={multipleInputRange}
+          onClickLine={addGradientStop}
+          onMouseTouchStartThumb={handleSelectThumb}
+          onChange={(e) =>
+            setGradientStopOffset(e.target.id, Number(e.target.value))
+          }
+          inputPropListObj={stopThumbs}
           lineCursor="copy"
           thumbCursor="pointer"
           min="0"
@@ -184,9 +168,9 @@ const GradientBox = ({ handleOpenGradientBox }) => {
 
         <MultiInputRange
           style={{ margin: "2.5rem 0" }}
-          onChange={changeGradientDegree}
+          onChange={(e) => setGradientAngle(Number(e.target.value))}
           thumbCursor="pointer"
-          inputPropListObj={multipleInputRangeDegree}
+          inputPropListObj={angleThumb}
           min="0"
           max="360"
         ></MultiInputRange>

@@ -1,5 +1,5 @@
 import styled, { keyframes } from "styled-components";
-import { themeColor } from "../../../context/ConfigurationProvider";
+import { themeColor } from "../../../styles/theme";
 
 export const showUp = keyframes`
     0% {
@@ -53,13 +53,6 @@ export const LayoutToolBox = styled.div`
   &.closeDown {
     transform: translateY(calc(100% + 10px));
   }
-`;
-export const FittedPaintWrap = styled.div`
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
 `;
 
 export const GlobalButton = styled.div`

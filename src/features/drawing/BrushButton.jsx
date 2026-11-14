@@ -1,84 +1,28 @@
-import React, { useContext, useEffect, useRef } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { ContextToolBoxes } from "../../context/ToolBoxesProvider";
-import {
-  selectKindOfPencil,
-  selectPencilType,
-  selectRangeValues,
-  setPencilSizeForRangeSlider,
-  setPencilType,
-} from "../paintingSlice";
 import { GlobalButton } from "../../components/ui/legacy/styledComponents";
+import { useEditorStore } from "../../editor/store/editorStore";
 import { InputTool, LabelTool } from "./BrushButton.styles";
 
-const ButtonTool = ({
-  icon: Icon,
-  htmlFor = "radio",
-  children,
-  name = "globalButton",
-  width = "45px",
-  height = "45px",
-  fontSize,
-  onClick = () => {},
-}) => {
-  const { setActiveButtonPosition } = useContext(ContextToolBoxes);
-  const dispatch = useDispatch();
-  const pencilType = useSelector(selectPencilType);
-  const refToolLabel = useRef();
-  const refToolButton = useRef();
-  const kindOfPencilStyle = useSelector(selectKindOfPencil);
-  const { minValue, maxValue } = useSelector(selectRangeValues);
-  useEffect(() => {
-    if (pencilType === htmlFor) {
-      setActiveButtonPosition({
-        left: `${refToolLabel.current.offsetLeft}px`,
-        top: `${refToolButton.current.offsetTop}px`,
-        width: getComputedStyle(refToolButton.current).width,
-        height: getComputedStyle(refToolButton.current).height,
-      });
-    }
-  }, [
-    htmlFor,
-    refToolButton,
-    refToolLabel,
-    setActiveButtonPosition,
-    pencilType,
-    kindOfPencilStyle,
-    dispatch,
-  ]);
-  useEffect(() => {
-    if (pencilType === htmlFor) {
-      const pencilSizeForRange =
-        maxValue + minValue - kindOfPencilStyle[pencilType].size;
-      dispatch(setPencilSizeForRangeSlider(pencilSizeForRange));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [htmlFor, pencilType, dispatch, maxValue, minValue]);
+/** Botón de radio para elegir el tipo de pincel. */
+const BrushButton = ({ icon: Icon, brushType, label }) => {
+  const isActive = useEditorStore((state) => state.brush.type === brushType);
+  const setBrushType = useEditorStore((state) => state.setBrushType);
+  const inputId = `brush-${brushType}`;
 
   return (
-    <LabelTool onClick={(e) => onClick(e)} ref={refToolLabel} htmlFor={htmlFor}>
+    <LabelTool htmlFor={inputId} title={label}>
       <InputTool
-        onChange={(e) => {
-          dispatch(setPencilType(e.target.value));
-        }}
         type="radio"
-        id={htmlFor}
-        name={name}
-        checked={pencilType === htmlFor}
-        value={htmlFor}
-        title={htmlFor}
+        id={inputId}
+        name="brush"
+        value={brushType}
+        checked={isActive}
+        onChange={() => setBrushType(brushType)}
       />
-      <GlobalButton
-        ref={refToolButton}
-        fontSize={fontSize}
-        width={width}
-        height={height}
-      >
-        {Icon && <Icon />}
-        {children}
+      <GlobalButton>
+        <Icon />
       </GlobalButton>
     </LabelTool>
   );
 };
 
-export default ButtonTool;
+export default BrushButton;

@@ -1,10 +1,11 @@
-import React, { useContext } from "react";
-import { ContextConfiguration } from "../../context/ConfigurationProvider";
-import { GlobalButton } from "../../components/ui/legacy/styledComponents";
 import ToolBox from "../../components/layout/ToolBox";
+import { GlobalButton } from "../../components/ui/legacy/styledComponents";
+import { useEditorStore } from "../../editor/store/editorStore";
 
-const DrawingNavigation = () => {
-  const { openOptionPage } = useContext(ContextConfiguration);
+/** Cambia entre los modos "Dibujar" y "Texto" del editor. */
+const ModeSwitcher = () => {
+  const setMode = useEditorStore((state) => state.setMode);
+
   return (
     <ToolBox
       display="flex"
@@ -16,27 +17,15 @@ const DrawingNavigation = () => {
       backgroundColor="none"
     >
       <GlobalButton
-        onClick={() =>
-          openOptionPage({
-            isDrawing: true,
-            isDrawingToolsOpen: true,
-          })
-        }
+        onClick={() => setMode("draw")}
         fontSize="1rem"
         width="auto"
         height="auto"
       >
         Dibujar
       </GlobalButton>
-      {/* todo: make object array that contains the editing log */}
       <GlobalButton
-        onClick={() =>
-          openOptionPage({
-            isTextToolsOpen: true,
-            isEditingText: true,
-            isDrawingToolsOpen: true,
-          })
-        }
+        onClick={() => setMode("text")}
         fontSize="1rem"
         width="auto"
         height="auto"
@@ -47,4 +36,4 @@ const DrawingNavigation = () => {
   );
 };
 
-export default DrawingNavigation;
+export default ModeSwitcher;

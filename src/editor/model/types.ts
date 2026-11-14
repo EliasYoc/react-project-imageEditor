@@ -90,6 +90,8 @@ export interface ElementGeometry {
   realHeight: number | null;
   initialWidth: number | null;
   initialHeight: number | null;
+  /** Transform CSS que aplicó Moveable; se restaura si el elemento se vuelve a montar. */
+  cssTransform: string | null;
 }
 
 interface BaseElement extends ElementGeometry {
