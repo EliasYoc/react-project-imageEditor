@@ -28,7 +28,7 @@ const PortalsSwipeableMenuLayout = ({
       ref={refFixedContainer}
       onClick={hanldeCloseElement}
       onTransitionEnd={onClose}
-      zIndex="1000"
+      zIndex="var(--z-sheet)"
     >
       <SwipeableMenu
         ref={refSwipeableMenu}

@@ -10,7 +10,7 @@ export const WrapperRange = styled.div`
   :hover {
     transform: translate(0, -50%);
   }
-  z-index: 100;
+  z-index: var(--z-toolbar);
 `;
 /* me fue imposible hacer un rango vertical, appearance: slider-vertical hace vertical solo la apariencia y el comportamiento en el celular funcionara bien
 pero no se podrá dar estilos al ::-webkit-slider-thumb a menos que el input tenca appearance:none */

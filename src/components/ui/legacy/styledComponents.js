@@ -1,5 +1,4 @@
 import styled, { keyframes } from "styled-components";
-import { themeColor } from "../../../styles/theme";
 
 export const showUp = keyframes`
     0% {
@@ -32,7 +31,7 @@ export const LayoutToolBox = styled.div`
   align-items: ${({ alignItems }) => alignItems || "center"};
   justify-content: ${({ justifyContent }) => justifyContent || "center"};
   background-color: ${({ backgroundColor }) =>
-    backgroundColor || themeColor.boxesColor};
+    backgroundColor || "var(--color-surface)"};
   border-radius: ${({ borderRadius }) => borderRadius || "1rem"};
   width: ${({ width }) => width};
   height: ${({ height }) => height || "auto"};
@@ -90,7 +89,7 @@ export const GlobalButton = styled.div`
   }
 
   &:active {
-    background: ${themeColor.activeBgColor};
+    background: var(--color-surface-active);
     transition: background 0.4s ease;
   }
   @media only screen and (min-width: 600px) {
@@ -109,7 +108,7 @@ export const FixedContainer = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: ${({ zIndex }) => zIndex || "10"};
+  z-index: ${({ zIndex }) => zIndex || "var(--z-backdrop)"};
   animation: ${fadeIn} 0.3s ease;
   color: rgba(166, 166, 166, 0.75);
   &.close {

@@ -15,7 +15,7 @@ export const OptionsList = styled.ul`
   display: flex;
   flex-direction: column;
   border-radius: 0.5rem;
-  z-index: 100;
+  z-index: var(--z-menu);
 `;
 
 export const OptionLi = styled.li`

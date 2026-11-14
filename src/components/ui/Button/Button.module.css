@@ -1,0 +1,61 @@
+/* Mismo aspecto que el antiguo GlobalButton, pero sobre un <button> real. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+  margin: 0.2rem 0;
+  padding: var(--space-2);
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:active:not(:disabled) {
+  background: var(--color-surface-active);
+  transition: background 0.4s ease;
+}
+
+/* Solo se ve al navegar con teclado (Tab), no al hacer clic. */
+.button:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Hover solo en dispositivos con puntero (en el móvil se quedaría "pegado"). */
+@media (hover: hover) {
+  .button:hover:not(:disabled) {
+    background: var(--color-surface-hover);
+  }
+}
+
+/* Botones de alternancia (p. ej. el modo actual). */
+.button[aria-pressed="true"] {
+  color: var(--color-text-active);
+}
+
+.sm {
+  font-size: var(--font-size-sm);
+}
+
+.md {
+  font-size: var(--font-size-md);
+}
+
+.icon {
+  width: var(--size-touch);
+  height: var(--size-touch);
+  font-size: var(--font-size-icon);
+}

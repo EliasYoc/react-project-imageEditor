@@ -9,7 +9,6 @@ import {
 import { rgbaToCss } from "../../editor/model/color";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectCurrentBrush } from "../../editor/store/selectors";
-import { themeColor } from "../../styles/theme";
 import BrushButton from "./BrushButton";
 import BrushColorPicker from "./BrushColorPicker";
 
@@ -28,7 +27,7 @@ const DrawingTools = () => {
       <BrushButton icon={BsEraser} brushType="eraser" label="Borrador" />
       {/* El tamaño de cada cuadro del fondo a cuadros es la mitad de background-size. */}
       <GlobalButton
-        border={`3px solid ${themeColor.textColor}`}
+        border="3px solid var(--color-text)"
         backgroundColor="#eee"
         backgroundImage="linear-gradient(45deg, rgba(0,0,0,.25) 25%,
                   transparent 0, transparent 75%, rgba(0,0,0,.25) 0),

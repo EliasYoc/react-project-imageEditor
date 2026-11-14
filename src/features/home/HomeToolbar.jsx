@@ -1,8 +1,7 @@
+import { useRef } from "react";
 import { BiImageAlt, BiPalette } from "react-icons/bi";
-import {
-  GlobalButton,
-  LayoutToolBox,
-} from "../../components/ui/legacy/styledComponents";
+import { IconButton } from "../../components/ui/Button";
+import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
 import { useEditorStore } from "../../editor/store/editorStore";
 import {
   readFile,
@@ -26,6 +25,7 @@ const HomeToolbar = () => {
   const setMode = useEditorStore((state) => state.setMode);
   const setStatus = useEditorStore((state) => state.setStatus);
   const loadBackground = useEditorStore((state) => state.loadBackground);
+  const fileInputRef = useRef(null);
 
   const handleLoadImage = async (e) => {
     const file = e.target.files[0];
@@ -80,21 +80,26 @@ const HomeToolbar = () => {
     >
       {/* Cambia de modo al instante. Antes esperaba al final de la animación
           (onTransitionEnd) y, si el navegador no animaba, la app se atascaba. */}
-      <GlobalButton onClick={() => setMode("draw")}>
-        <BiPalette />
-      </GlobalButton>
-      <label htmlFor="open-image">
-        <input
-          style={{ display: "none" }}
-          type="file"
-          id="open-image"
-          accept="image/*"
-          onChange={handleLoadImage}
-        />
-        <GlobalButton flexShrink="0">
-          <BiImageAlt />
-        </GlobalButton>
-      </label>
+      <IconButton
+        icon={BiPalette}
+        aria-label="Abrir el editor"
+        onClick={() => setMode("draw")}
+      />
+      {/* El <input type="file"> está oculto; el botón visible lo abre. Así el
+          botón recibe foco y funciona con teclado (un <label> no). */}
+      <input
+        ref={fileInputRef}
+        hidden
+        type="file"
+        id="open-image"
+        accept="image/*"
+        onChange={handleLoadImage}
+      />
+      <IconButton
+        icon={BiImageAlt}
+        aria-label="Abrir una imagen"
+        onClick={() => fileInputRef.current.click()}
+      />
     </LayoutToolBox>
   );
 };
