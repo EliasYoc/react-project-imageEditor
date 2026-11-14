@@ -23,20 +23,27 @@ export const measureElement = (element) => {
 };
 
 /**
- * Lee la geometría actual que calcula react-moveable (traslación, escala y el
- * rectángulo en pantalla). Devuelve null si Moveable no tiene elemento.
+ * Geometría actual de un elemento arrastrable.
+ *
+ * El rectángulo en pantalla (lo que usa la exportación) se lee del DOM con
+ * getBoundingClientRect(), que es síncrono y siempre está al día. Antes se
+ * leía del estado interno de react-moveable, que se actualiza de forma
+ * asíncrona y podía devolver medidas viejas (p. ej. ancho 0 en una imagen
+ * recién cargada). Traslación y escala sí vienen de Moveable.
  */
-export const getMoveableGeometry = (moveable) => {
-  const { target, targetMatrix, targetClientRect } = moveable.state;
-  if (!target) return null;
+export const getElementGeometry = (domElement, moveable) => {
+  const { left, top, width, height } = domElement.getBoundingClientRect();
+  const matrix = moveable?.state.targetMatrix;
   return {
-    translate: [targetMatrix[12], targetMatrix[13]],
-    scale: [targetMatrix[0], targetMatrix[5]],
-    offsetLeft: target.offsetLeft,
-    offsetTop: target.offsetTop,
-    realWidth: targetClientRect.width,
-    realHeight: targetClientRect.height,
-    realTop: targetClientRect.top,
-    realLeft: targetClientRect.left,
+    ...(matrix && {
+      translate: [matrix[12], matrix[13]],
+      scale: [matrix[0], matrix[5]],
+    }),
+    offsetLeft: domElement.offsetLeft,
+    offsetTop: domElement.offsetTop,
+    realWidth: width,
+    realHeight: height,
+    realTop: top,
+    realLeft: left,
   };
 };
