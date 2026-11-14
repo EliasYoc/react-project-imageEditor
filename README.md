@@ -53,7 +53,21 @@ Las carpetas `legacy/` contienen código que se va a reemplazar (textos e imáge
 - Todo el dibujo se guarda en **coordenadas del documento** (píxeles de la imagen), nunca de la pantalla. `editor/engine/viewport.ts` convierte entre ambas.
 - Un **trazo es un vector** (puntos con presión + pincel). La pantalla muestra un raster en caché (`PaintRaster`) que se pone al día solo cuando cambia el store; al exportar, los trazos se vuelven a pintar a la resolución de la foto original.
 - **Deshacer/rehacer** guarda versiones del log (que es inmutable, así que solo copia referencias). El raster guarda una copia cada 20 trazos para no repintar todo al deshacer.
-- La entrada usa **Pointer Events** (ratón, dedo y lápiz con el mismo código).
+- La entrada usa **Pointer Events** (ratón, dedo y lápiz con el mismo código). `editor/stage/useStageInput.ts` decide si un puntero dibuja, desplaza o hace zoom.
+- La **vista** (zoom y desplazamiento) vive en su propio store (`editor/stage/viewStore.ts`): no es parte del dibujo ni del historial.
+
+## Uso
+
+| Acción                    | Ratón / teclado                                          | Pantalla táctil           |
+| ------------------------- | -------------------------------------------------------- | ------------------------- |
+| Dibujar                   | Clic izquierdo y arrastrar                               | Un dedo o el lápiz        |
+| Acercar / alejar          | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / − | Pellizcar con dos dedos   |
+| Desplazar                 | Rueda, espacio + arrastrar o botón central               | Arrastrar con dos dedos   |
+| Ajustar a la pantalla     | Ctrl/⌘ + 0                                               | Doble toque con dos dedos |
+| Deshacer / rehacer        | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera    |
+| Pincel / spray / borrador | B / S / E                                                | Barra inferior            |
+
+El zoom solo está en modo Dibujar: en modo Texto el lienzo se ve ajustado (los textos pasan a Konva en la Fase 4) y al volver a Dibujar se recupera el zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 
 ## Estilos
 

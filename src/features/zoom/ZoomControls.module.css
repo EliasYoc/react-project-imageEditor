@@ -1,0 +1,27 @@
+.controls {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  z-index: var(--z-toolbar);
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+/* En pantallas táctiles se acerca con el pellizco: menos botones sobre el dibujo. */
+@media (pointer: coarse) {
+  .controls .stepButton {
+    display: none;
+  }
+}
+
+.percent {
+  min-width: 3.5em;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  user-select: none;
+}

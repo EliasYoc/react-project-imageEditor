@@ -1,9 +1,11 @@
 import { paintStroke } from "../../editor/engine/renderStroke";
+import { viewStore } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
 import { selectElements, selectStrokes } from "../../editor/store/selectors";
 import type { Background, Size } from "../../editor/model/types";
 import { canvasToBlob, createCanvas, get2dContext } from "../../lib/canvas";
-import { downloadBlob, getDownloadFileName } from "../../lib/helper";
+import { getDownloadFileName } from "../../lib/helper";
+import { saveImage } from "../../lib/saveImage";
 import { drawDomElements } from "./legacy/drawDomElements";
 
 /** Tamaño real de la imagen de fondo (la original, no la del lienzo). */
@@ -11,6 +13,29 @@ const sourceSize = (source: NonNullable<Background["source"]>): Size =>
   source instanceof HTMLImageElement
     ? { width: source.naturalWidth, height: source.naturalHeight }
     : { width: source.width, height: source.height };
+
+const nextFrame = () =>
+  new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+/**
+ * Ejecuta `task` con la vista ajustada a pantalla y después devuelve el zoom
+ * que había. html2canvas no se lleva bien con elementos dentro de una capa
+ * escalada con CSS: así los textos e imágenes se miden y rasterizan sin zoom.
+ */
+const withFittedView = async <T>(task: () => Promise<T>) => {
+  const { view, isFitted } = viewStore.getState();
+  // Fuera del modo Dibujar la vista ya se muestra ajustada.
+  if (isFitted || editorStore.getState().mode !== "draw") return task();
+  viewStore.getState().fitToScreen();
+  // Un frame para que React aplique la vista nueva y otro para el layout.
+  await nextFrame();
+  await nextFrame();
+  try {
+    return await task();
+  } finally {
+    viewStore.getState().setView(view);
+  }
+};
 
 /**
  * Compone la imagen final a la resolución de la foto original:
@@ -46,13 +71,16 @@ export const renderDocument = async (documentFrame: HTMLElement | null) => {
 
   const elements = selectElements(state);
   if (elements.length && documentFrame) {
-    await drawDomElements(ctx, elements, documentFrame);
+    await withFittedView(() => drawDomElements(ctx, elements, documentFrame));
   }
 
   return canvas;
 };
 
-/** Compone la imagen y la descarga con el formato del archivo original. */
+/**
+ * Compone la imagen con el formato del archivo original y la entrega: hoja de
+ * compartir en el móvil o descarga en el escritorio.
+ */
 export const exportImage = async ({
   fileName,
   documentFrame,
@@ -66,5 +94,5 @@ export const exportImage = async ({
   // Si el navegador no soporta el formato original (p. ej. GIF), toBlob
   // devuelve PNG: la extensión se calcula con el tipo real del blob.
   const blob = await canvasToBlob(canvas, mimeType);
-  downloadBlob(blob, getDownloadFileName(fileName, blob.type));
+  return saveImage(blob, getDownloadFileName(fileName, blob.type));
 };

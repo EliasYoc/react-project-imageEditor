@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   IDENTITY_VIEW,
+  MAX_ZOOM,
+  clampPan,
   documentRectOnScreen,
   documentToScreen,
   fitView,
+  overlayTransform,
+  panBy,
+  pinchView,
   screenToDocument,
+  zoomAt,
+  zoomLimits,
+  type View,
 } from "./viewport";
 
 // Los mismos casos que fijaban el comportamiento del lienzo legacy
@@ -61,5 +69,84 @@ describe("conversión pantalla ↔ documento", () => {
       width: 500,
       height: 500,
     });
+  });
+});
+
+const expectPointClose = (
+  actual: { x: number; y: number },
+  expected: { x: number; y: number }
+) => {
+  expect(actual.x).toBeCloseTo(expected.x);
+  expect(actual.y).toBeCloseTo(expected.y);
+};
+
+describe("zoom y desplazamiento", () => {
+  const stage = { width: 800, height: 600 };
+  const doc = { width: 1600, height: 1200 };
+  const limits = zoomLimits(stage, doc); // ajuste = 0.5
+  const fit = fitView(stage, doc);
+
+  it("límites: de la mitad del ajuste a MAX_ZOOM", () => {
+    expect(limits).toEqual({ min: 0.25, max: MAX_ZOOM });
+  });
+
+  it("zoomAt mantiene fijo el punto bajo el cursor", () => {
+    const cursor = { x: 123, y: 456 };
+    const before = screenToDocument(cursor, fit);
+    const zoomed = zoomAt(fit, cursor, 3, limits);
+    expect(zoomed.scale).toBeCloseTo(1.5);
+    expectPointClose(screenToDocument(cursor, zoomed), before);
+  });
+
+  it("zoomAt respeta los límites", () => {
+    expect(zoomAt(fit, { x: 0, y: 0 }, 1000, limits).scale).toBe(MAX_ZOOM);
+    expect(zoomAt(fit, { x: 0, y: 0 }, 0.001, limits).scale).toBe(0.25);
+  });
+
+  it("panBy mueve la vista sin cambiar la escala", () => {
+    expect(panBy({ x: 10, y: 20, scale: 2 }, 5, -5)).toEqual({
+      x: 15,
+      y: 15,
+      scale: 2,
+    });
+  });
+
+  it("pinchView: separar los dedos acerca y el punto entre ellos sigue a los dedos", () => {
+    const start = { view: fit, mid: { x: 400, y: 300 }, distance: 100 };
+    const docUnderFingers = screenToDocument(start.mid, fit);
+
+    const view = pinchView(start, { x: 450, y: 320 }, 200, limits);
+    expect(view.scale).toBeCloseTo(1); // distancia ×2 → escala ×2
+    expectPointClose(
+      screenToDocument({ x: 450, y: 320 }, view),
+      docUnderFingers
+    );
+  });
+
+  it("clampPan no deja que el centro del documento salga del área", () => {
+    const lost: View = { x: 5000, y: -5000, scale: 0.5 };
+    const clamped = clampPan(lost, stage, doc);
+    const center = documentToScreen({ x: 800, y: 600 }, clamped);
+    expect(center.x).toBeCloseTo(stage.width);
+    expect(center.y).toBeCloseTo(0);
+  });
+});
+
+describe("overlayTransform", () => {
+  const fit: View = { x: 100, y: 0, scale: 0.5 };
+
+  it("en la vista ajustada no transforma nada", () => {
+    expect(overlayTransform(fit, fit)).toEqual({ x: 0, y: 0, scale: 1 });
+  });
+
+  it("lleva un punto de la vista ajustada al mismo punto del documento en la vista actual", () => {
+    const view: View = { x: -300, y: 50, scale: 2 };
+    const { x, y, scale } = overlayTransform(view, fit);
+    const docPoint = { x: 40, y: 70 };
+    const inFit = documentToScreen(docPoint, fit);
+    expectPointClose(
+      { x: inFit.x * scale + x, y: inFit.y * scale + y },
+      documentToScreen(docPoint, view)
+    );
   });
 });
