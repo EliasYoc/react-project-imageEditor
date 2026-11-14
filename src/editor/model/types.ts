@@ -30,6 +30,18 @@ export interface Point {
 
 export type BrushType = "normal" | "spray" | "eraser";
 
+/** Presets de pincel (sus parámetros están en editor/engine/brushes/presets.ts). */
+export type BrushPresetId =
+  | "pen"
+  | "marker"
+  | "pencil"
+  | "chalk"
+  | "airbrush"
+  | "spray"
+  | "highlighter"
+  | "eraserHard"
+  | "eraserSoft";
+
 export interface BrushSettings {
   size: number;
   color: Rgba;
