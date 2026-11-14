@@ -1,24 +1,31 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { DEFAULT_TEXT_STYLE, MAX_GRADIENT_STOPS } from "../model/factories";
-import type { PaintingEntry, TextElement } from "../model/types";
-import { createEditorStore } from "./editorStore";
 import {
+  DEFAULT_TEXT_STYLE,
+  MAX_GRADIENT_STOPS,
+  createStroke,
+} from "../model/factories";
+import type { StrokeEntry, TextElement } from "../model/types";
+import { MAX_HISTORY, createEditorStore } from "./editorStore";
+import {
+  selectCanRedo,
+  selectCanUndo,
   selectCurrentBrush,
   selectElements,
   selectSelectedElement,
   selectSelectedText,
+  selectStrokes,
 } from "./selectors";
 
-const stroke = (size = 10): PaintingEntry => ({
-  whatTask: "painting",
-  data: [{ coordX: 0, coordY: 0 }],
-  color: { r: 0, g: 0, b: 0, a: 1 },
-  size,
-  globalCompositeOperation: "source-over",
+const stroke = (size = 10): StrokeEntry => ({
+  ...createStroke("normal", { size, color: { r: 0, g: 0, b: 0, a: 1 } }),
+  points: [{ x: 0, y: 0, pressure: 0.5 }],
 });
+
+const emptyBackground = { source: null, preview: null, mimeType: null };
 
 let store: ReturnType<typeof createEditorStore>;
 const state = () => store.getState();
+const sizes = () => selectStrokes(state()).map((entry) => entry.size);
 
 beforeEach(() => {
   store = createEditorStore();
@@ -30,6 +37,8 @@ describe("estado inicial y modo", () => {
     expect(state().status).toBe("idle");
     expect(state().log).toEqual([]);
     expect(state().selectedElementId).toBeNull();
+    expect(selectCanUndo(state())).toBe(false);
+    expect(selectCanRedo(state())).toBe(false);
   });
 
   it("setMode y setStatus cambian el modo y el estado", () => {
@@ -41,12 +50,12 @@ describe("estado inicial y modo", () => {
 });
 
 describe("fondo", () => {
-  it("loadBackground cambia el tamaño del lienzo y empieza de cero", () => {
-    state().addLogEntry(stroke());
+  it("loadBackground cambia el tamaño del lienzo y empieza de cero, sin historial", () => {
+    state().addStroke(stroke());
     state().addText();
+    state().undo();
     state().loadBackground({
-      image: null,
-      previewUrl: "data:preview",
+      ...emptyBackground,
       mimeType: "image/jpeg",
       size: { width: 800, height: 600 },
     });
@@ -54,51 +63,97 @@ describe("fondo", () => {
     expect(state().background.mimeType).toBe("image/jpeg");
     expect(state().log).toEqual([]);
     expect(state().selectedElementId).toBeNull();
+    expect(selectCanUndo(state())).toBe(false);
+    expect(selectCanRedo(state())).toBe(false);
   });
 
   it("setBackgroundImage conserva el dibujo", () => {
-    state().addLogEntry(stroke());
-    state().setBackgroundImage({
-      image: null,
-      previewUrl: "data:gradient",
-      mimeType: "image/png",
-    });
-    expect(state().background.previewUrl).toBe("data:gradient");
+    state().addStroke(stroke());
+    state().setBackgroundImage({ ...emptyBackground, mimeType: "image/png" });
+    expect(state().background.mimeType).toBe("image/png");
     expect(state().log).toHaveLength(1);
   });
 });
 
 describe("historial", () => {
-  it("addLogEntry agrega trazos en orden", () => {
-    state().addLogEntry(stroke(1));
-    state().addLogEntry(stroke(2));
-    expect(state().log.map((entry) => (entry as PaintingEntry).size)).toEqual([
-      1, 2,
-    ]);
+  it("addStroke agrega trazos en orden", () => {
+    state().addStroke(stroke(1));
+    state().addStroke(stroke(2));
+    expect(sizes()).toEqual([1, 2]);
   });
 
-  it("undo quita el último registro y no falla con el historial vacío", () => {
+  it("undo quita el último cambio y no falla con el historial vacío", () => {
     state().undo();
-    state().addLogEntry(stroke(1));
-    state().addLogEntry(stroke(2));
+    state().addStroke(stroke(1));
+    state().addStroke(stroke(2));
     state().undo();
-    expect(state().log).toHaveLength(1);
+    expect(sizes()).toEqual([1]);
+  });
+
+  it("redo vuelve a aplicar lo deshecho, en orden", () => {
+    state().addStroke(stroke(1));
+    state().addStroke(stroke(2));
+    state().addStroke(stroke(3));
+    state().undo();
+    state().undo();
+    expect(sizes()).toEqual([1]);
+    state().redo();
+    expect(sizes()).toEqual([1, 2]);
+    state().redo();
+    state().redo(); // no queda nada que rehacer: no hace nada
+    expect(sizes()).toEqual([1, 2, 3]);
+  });
+
+  it("un cambio nuevo después de deshacer ya no permite rehacer", () => {
+    state().addStroke(stroke(1));
+    state().undo();
+    expect(selectCanRedo(state())).toBe(true);
+    state().addStroke(stroke(2));
+    expect(selectCanRedo(state())).toBe(false);
+    expect(sizes()).toEqual([2]);
   });
 
   it("undo de un elemento seleccionado limpia la selección", () => {
-    state().addLogEntry(stroke());
+    state().addStroke(stroke());
     state().addText();
     state().undo();
     expect(state().selectedElementId).toBeNull();
     expect(state().log).toHaveLength(1);
   });
 
-  it("clearLog borra todo y la selección", () => {
+  it("clearLog borra todo y se puede deshacer", () => {
     state().addText();
-    state().addLogEntry(stroke());
+    state().addStroke(stroke());
+    const before = state().log;
     state().clearLog();
     expect(state().log).toEqual([]);
     expect(state().selectedElementId).toBeNull();
+
+    state().undo();
+    expect(state().log).toEqual(before);
+  });
+
+  it("clearLog sin nada que borrar no crea un paso del historial", () => {
+    state().clearLog();
+    expect(selectCanUndo(state())).toBe(false);
+  });
+
+  it("deshacer un trazo conserva lo que se escribió en un texto después", () => {
+    const id = state().addText();
+    state().addStroke(stroke());
+    state().updateElement(id, { text: "Hola" });
+
+    state().undo(); // quita el trazo
+    expect(selectSelectedText(state())).toMatchObject({ text: "Hola" });
+
+    state().redo(); // y lo devuelve, sin perder el texto
+    expect(state().log).toHaveLength(2);
+    expect(selectSelectedText(state())).toMatchObject({ text: "Hola" });
+  });
+
+  it(`guarda como máximo ${MAX_HISTORY} pasos`, () => {
+    for (let i = 0; i < MAX_HISTORY + 5; i++) state().addStroke(stroke(i));
+    expect(state().past).toHaveLength(MAX_HISTORY);
   });
 });
 
@@ -133,6 +188,13 @@ describe("elementos", () => {
     expect(textA).toMatchObject({ id: a, fontWeight: 900, text: "Hola" });
     expect(textB).toBe(before[1]);
     expect(textB.id).toBe(b);
+  });
+
+  it("updateElement no crea un paso del historial", () => {
+    const id = state().addText();
+    const pastLength = state().past.length;
+    state().updateElement(id, { text: "Hola" });
+    expect(state().past).toHaveLength(pastLength);
   });
 
   it("selectElement trae el elemento al frente y null deselecciona", () => {
@@ -172,6 +234,20 @@ describe("pinceles", () => {
     state().setBrushType("normal");
     expect(selectCurrentBrush(state()).size).toBe(50);
   });
+
+  it("createStroke copia el color: cambiar el pincel después no altera el trazo", () => {
+    const color = { r: 1, g: 2, b: 3, a: 1 };
+    const created = createStroke("spray", { size: 20, color });
+    color.r = 200;
+    expect(created).toMatchObject({
+      whatTask: "stroke",
+      brush: "spray",
+      size: 20,
+      color: { r: 1 },
+      points: [],
+    });
+    expect(created.id).toEqual(expect.any(String));
+  });
 });
 
 describe("gradiente", () => {
@@ -201,12 +277,15 @@ describe("gradiente", () => {
 });
 
 describe("selectores", () => {
-  it("selectElements ignora trazos y devuelve la misma referencia si el log no cambia", () => {
-    state().addLogEntry(stroke());
+  it("selectElements y selectStrokes separan el log y devuelven la misma referencia si no cambia", () => {
+    state().addStroke(stroke());
     state().addText();
-    const first = selectElements(state());
-    expect(first).toHaveLength(1);
-    expect(selectElements(state())).toBe(first);
+    const elements = selectElements(state());
+    const strokes = selectStrokes(state());
+    expect(elements).toHaveLength(1);
+    expect(strokes).toHaveLength(1);
+    expect(selectElements(state())).toBe(elements);
+    expect(selectStrokes(state())).toBe(strokes);
   });
 
   it("selectSelectedText devuelve null si lo seleccionado es una imagen", () => {

@@ -1,0 +1,17 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  /* En modo Dibujar el puntero pasa al lienzo que está debajo. */
+  pointer-events: none;
+}
+
+.overlay[data-interactive] {
+  pointer-events: auto;
+}
+
+/* Rectángulo del documento en pantalla: invisible, solo para medir. */
+.documentFrame {
+  position: absolute;
+  pointer-events: none;
+}

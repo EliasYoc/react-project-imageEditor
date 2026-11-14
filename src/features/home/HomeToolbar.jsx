@@ -3,6 +3,7 @@ import { BiImageAlt, BiPalette } from "react-icons/bi";
 import { IconButton } from "../../components/ui/Button";
 import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
 import { useEditorStore } from "../../editor/store/editorStore";
+import { createCanvas, get2dContext } from "../../lib/canvas";
 import {
   readFile,
   reduceAspectRatioQualityOfIncomingImage,
@@ -45,17 +46,23 @@ const HomeToolbar = () => {
           })
         : { newWidth: image.width, newHeight: image.height };
 
-      // Versión ligera para mostrar de fondo; la original se usa al exportar.
-      const previewCanvas = document.createElement("canvas");
-      previewCanvas.width = width;
-      previewCanvas.height = height;
-      previewCanvas.getContext("2d").drawImage(image, 0, 0, width, height);
+      // Copia con el tamaño del documento para mostrar en el lienzo; la
+      // original se usa al exportar. Es un canvas, no un dataURL: no hay que
+      // codificarla a JPEG ni perder calidad.
+      const preview = createCanvas({ width, height });
+      get2dContext(preview).drawImage(
+        image,
+        0,
+        0,
+        preview.width,
+        preview.height
+      );
 
       loadBackground({
-        image,
-        previewUrl: previewCanvas.toDataURL("image/jpeg"),
+        source: image,
+        preview,
         mimeType: file.type,
-        size: { width, height },
+        size: { width: preview.width, height: preview.height },
       });
     } catch (error) {
       console.error(error);

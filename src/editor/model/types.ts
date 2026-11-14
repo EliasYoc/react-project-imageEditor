@@ -1,9 +1,9 @@
 /**
  * Modelo del documento del editor: la ÚNICA fuente de verdad del dibujo.
  *
- * Los nombres de los registros de dibujo (`whatTask`, `data`, `coordX`...) se
- * heredan del motor legacy para no tocar el redibujado actual. En la Fase 2
- * (Konva) los trazos pasan a capas raster con historial de comandos.
+ * Todo se guarda en coordenadas del DOCUMENTO (píxeles de la imagen), nunca de
+ * la pantalla: así el zoom, el tamaño de la ventana o la resolución de
+ * exportación no cambian el dibujo.
  */
 
 export type Mode = "home" | "draw" | "text";
@@ -19,6 +19,11 @@ export interface Rgba {
 export interface Size {
   width: number;
   height: number;
+}
+
+export interface Point {
+  x: number;
+  y: number;
 }
 
 // ---------------------------------------------------------------- pinceles
@@ -38,44 +43,32 @@ export interface BrushState {
 
 // ---------------------------------------------------------------- trazos
 
-/** Punto del trazo en píxeles del documento. */
-export interface StrokePoint {
-  coordX: number;
-  coordY: number;
+/** Punto de un trazo en píxeles del documento. */
+export interface StrokePoint extends Point {
+  /** Presión de 0 a 1 (el ratón no tiene presión: se guarda 0.5). */
+  pressure: number;
 }
 
-export interface PaintingEntry {
-  whatTask: "painting";
-  data: StrokePoint[];
+/**
+ * Un trazo es un VECTOR: los puntos que recorrió el puntero y el pincel con el
+ * que se hizo. El raster de la pantalla se genera a partir de aquí, así que se
+ * puede volver a pintar a cualquier resolución (p. ej. al exportar).
+ */
+export interface StrokeEntry {
+  whatTask: "stroke";
+  id: string;
+  brush: BrushType;
   color: Rgba;
+  /** Grosor en píxeles del documento. */
   size: number;
-  globalCompositeOperation: GlobalCompositeOperation;
+  points: StrokePoint[];
 }
-
-export interface SprayPaintingEntry {
-  whatTask: "sprayPainting";
-  data: StrokePoint[];
-  color: Rgba;
-  size: number;
-  globalCompositeOperation: GlobalCompositeOperation;
-  startCircleRadius: number;
-  endCircleRadius: number;
-}
-
-/** Relleno de todo el lienzo (mantener presionado; se elimina en la Fase 2). */
-export interface FillCanvasEntry {
-  whatTask: "paintingWholeCanvas";
-  canvasColor: Rgba;
-  globalCompositeOperation: GlobalCompositeOperation;
-}
-
-export type StrokeEntry = PaintingEntry | SprayPaintingEntry | FillCanvasEntry;
 
 // ---------------------------------------------------------------- elementos
 
 /**
- * Posición y tamaño que mide react-moveable en pantalla. Se usan al exportar
- * para colocar el elemento sobre la imagen (desaparece en la Fase 4).
+ * Posición y tamaño que mide react-moveable en pantalla (desaparece en la
+ * Fase 4, cuando los elementos pasen a Konva).
  */
 export interface ElementGeometry {
   translate: [number, number];
@@ -121,8 +114,11 @@ export interface ImageElement extends BaseElement {
 
 export type EditorElement = TextElement | ImageElement;
 
-/** Historial ordenado: deshacer quita el último registro, sea trazo o elemento. */
+/** Contenido del documento, en orden: trazos y elementos (texto, imágenes). */
 export type LogEntry = StrokeEntry | EditorElement;
+
+export const isStroke = (entry: LogEntry): entry is StrokeEntry =>
+  entry.whatTask === "stroke";
 
 export const isEditorElement = (entry: LogEntry): entry is EditorElement =>
   entry.whatTask === "draggableText" || entry.whatTask === "draggableImage";
@@ -134,10 +130,10 @@ export const isTextElement = (
 // ---------------------------------------------------------------- fondo
 
 export interface Background {
-  /** Imagen a resolución completa (se usa al exportar). */
-  image: HTMLImageElement | null;
-  /** Versión ligera que se muestra de fondo en el lienzo. */
-  previewUrl: string | null;
+  /** Imagen a resolución completa: es la que se usa al exportar. */
+  source: HTMLImageElement | HTMLCanvasElement | null;
+  /** Copia con el tamaño del documento: es la que se muestra en el lienzo. */
+  preview: HTMLCanvasElement | null;
   /** Tipo MIME con el que se exporta (el del archivo original). */
   mimeType: string | null;
 }

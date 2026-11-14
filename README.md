@@ -35,18 +35,25 @@ Producción: https://editoryoc.netlify.app/
 ```
 src/
   app/          Shell de la app (cabecera | lienzo | barra inferior)
-  editor/       Núcleo del editor, sin componentes visuales
+  editor/       Núcleo del editor
     model/      Tipos del documento (TypeScript)
-    store/      Store de Zustand: la única fuente de verdad del estado
-    canvas/     Refs a los <canvas>
-    legacy/     Utilidades de canvas que se reemplazan con Konva (Fase 2)
+    store/      Store de Zustand: la única fuente de verdad del documento y su historial
+    engine/     Motor puro, sin React ni Konva: vista, trazos, raster con checkpoints, puntero
+    stage/      Lienzo con Konva (react-konva) y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
   components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton…)
   styles/       tokens.css (colores, espacios, capas), CSS global y fuentes
   lib/          Utilidades puras
 ```
 
-Las carpetas `legacy/` contienen código que se va a reemplazar (Konva en las Fases 2 y 4): se tocan lo mínimo y sus avisos de hooks no bloquean el lint.
+Las carpetas `legacy/` contienen código que se va a reemplazar (textos e imágenes con react-moveable y html2canvas, que pasan a Konva en la Fase 4): se tocan lo mínimo y sus avisos de hooks no bloquean el lint.
+
+## Cómo funciona el lienzo
+
+- Todo el dibujo se guarda en **coordenadas del documento** (píxeles de la imagen), nunca de la pantalla. `editor/engine/viewport.ts` convierte entre ambas.
+- Un **trazo es un vector** (puntos con presión + pincel). La pantalla muestra un raster en caché (`PaintRaster`) que se pone al día solo cuando cambia el store; al exportar, los trazos se vuelven a pintar a la resolución de la foto original.
+- **Deshacer/rehacer** guarda versiones del log (que es inmutable, así que solo copia referencias). El raster guarda una copia cada 20 trazos para no repintar todo al deshacer.
+- La entrada usa **Pointer Events** (ratón, dedo y lápiz con el mismo código).
 
 ## Estilos
 
@@ -56,4 +63,4 @@ Las carpetas `legacy/` contienen código que se va a reemplazar (Konva en las Fa
 
 ## Stack
 
-React 19 · Vite · Zustand · TypeScript (gradual) · CSS Modules · styled-components (en retirada) · Vitest + Testing Library · ESLint + Prettier
+React 19 · Vite · Konva (react-konva) · Zustand · TypeScript (gradual) · CSS Modules · styled-components (en retirada) · Vitest + Testing Library · ESLint + Prettier

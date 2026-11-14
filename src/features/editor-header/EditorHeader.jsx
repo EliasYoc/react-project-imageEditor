@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { BiDotsVerticalRounded, BiDownload } from "react-icons/bi";
 import { FiX } from "react-icons/fi";
-import { GrUndo } from "react-icons/gr";
+import { GrRedo, GrUndo } from "react-icons/gr";
 import { MdOutlineGradient } from "react-icons/md";
 import ConfirmModal from "../../components/layout/ConfirmModal";
 import Option from "../../components/layout/ListOption";
@@ -10,10 +10,10 @@ import PortalNormalModal from "../../components/layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
 import { Button, IconButton } from "../../components/ui/Button";
 import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
-import { useEditorCanvas } from "../../editor/canvas/editorCanvasContext";
-import { redrawGlobalDrawingLogs } from "../../editor/legacy/canvasUtils";
-import { editorStore, useEditorStore } from "../../editor/store/editorStore";
-import { exportImage } from "../export/legacy/exportImage";
+import { useStageHandles } from "../../editor/stage/stageContext";
+import { useEditorStore } from "../../editor/store/editorStore";
+import { selectCanRedo, selectCanUndo } from "../../editor/store/selectors";
+import { exportImage } from "../export/exportImage";
 import GradientBox from "../gradient/GradientBox";
 import styles from "./EditorHeader.module.css";
 import {
@@ -21,24 +21,17 @@ import {
   WarningEmptyNameField,
 } from "./EditorHeader.styles";
 
-/** Repinta el canvas principal con el historial actual del store. */
-const redrawMainCanvas = (canvas) => {
-  const { background, log } = editorStore.getState();
-  redrawGlobalDrawingLogs(
-    Boolean(background.previewUrl),
-    canvas,
-    canvas.getContext("2d"),
-    log
-  );
-};
-
 const EditorHeader = () => {
-  const { mainCanvasRef } = useEditorCanvas();
-  const historyLength = useEditorStore((state) => state.log.length);
+  const { documentFrameRef } = useStageHandles();
+  const hasContent = useEditorStore((state) => state.log.length > 0);
+  const historyLength = useEditorStore((state) => state.past.length);
+  const canUndo = useEditorStore(selectCanUndo);
+  const canRedo = useEditorStore(selectCanRedo);
   const isExporting = useEditorStore((state) => state.status === "exporting");
   const setMode = useEditorStore((state) => state.setMode);
   const setStatus = useEditorStore((state) => state.setStatus);
   const undo = useEditorStore((state) => state.undo);
+  const redo = useEditorStore((state) => state.redo);
   const clearLog = useEditorStore((state) => state.clearLog);
 
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -47,25 +40,14 @@ const EditorHeader = () => {
   const [downloadName, setDownloadName] = useState("");
   const [isDownloadNameEmpty, setIsDownloadNameEmpty] = useState(false);
 
-  const handleUndo = () => {
-    undo();
-    redrawMainCanvas(mainCanvasRef.current);
-  };
-
-  const handleClearAll = () => {
-    clearLog();
-    redrawMainCanvas(mainCanvasRef.current);
-  };
-
+  // Deshacer, rehacer y borrar solo cambian el store: el lienzo se pone al
+  // día solo (antes había que repintar el canvas a mano después de cada uno).
   const handleExport = async () => {
-    const { background, log } = editorStore.getState();
     setStatus("exporting");
     try {
       await exportImage({
-        canvas: mainCanvasRef.current,
-        background,
-        log,
         fileName: downloadName,
+        documentFrame: documentFrameRef.current,
       });
     } catch (error) {
       console.error(error);
@@ -79,14 +61,24 @@ const EditorHeader = () => {
   return (
     <>
       <div className={styles.history}>
-        {historyLength > 0 && (
-          <IconButton
-            icon={GrUndo}
-            aria-label="Deshacer"
-            onClick={handleUndo}
-          />
-        )}
-        <span className={styles.historyCount} title="Acciones en el historial">
+        {/* Siempre visibles (deshabilitados si no hay nada): así los botones
+            no cambian de sitio mientras se dibuja. */}
+        <IconButton
+          icon={GrUndo}
+          aria-label="Deshacer"
+          disabled={!canUndo}
+          onClick={undo}
+        />
+        <IconButton
+          icon={GrRedo}
+          aria-label="Rehacer"
+          disabled={!canRedo}
+          onClick={redo}
+        />
+        <span
+          className={styles.historyCount}
+          title="Pasos que se pueden deshacer"
+        >
           {historyLength}
         </span>
       </div>
@@ -98,8 +90,8 @@ const EditorHeader = () => {
         margin="0"
         position="relative"
       >
-        {historyLength > 0 && (
-          <Button size="sm" onClick={handleClearAll}>
+        {hasContent && (
+          <Button size="sm" onClick={clearLog}>
             Borrar todo
           </Button>
         )}
