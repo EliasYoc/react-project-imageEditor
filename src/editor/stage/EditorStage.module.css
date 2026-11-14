@@ -14,3 +14,12 @@
 .stage[data-drawing] {
   cursor: crosshair;
 }
+
+/* Espacio apretado (listo para desplazar) y desplazando. */
+.stage[data-pan="ready"] {
+  cursor: grab;
+}
+
+.stage[data-pan="active"] {
+  cursor: grabbing;
+}
