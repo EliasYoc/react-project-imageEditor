@@ -70,6 +70,8 @@ Cada trazo se pinta primero en un **búfer** y luego se compone con su **opacida
 
 Los presets están en `presets.ts`: cambiar uno cambia cómo se ven los trazos ya hechos.
 
+El **resaltador** tiene su propia capa (`layers.ts`), entre el fondo y la pintura, que se **multiplica** con la foto (en el lienzo con `mix-blend-mode: multiply`; al exportar, con el mismo modo). Así tiñe la foto como un rotulador real en vez de verse como un color translúcido. Los borradores borran en las dos capas, y el resaltador queda siempre **debajo de la tinta**, aunque se pinte después (como al subrayar un texto impreso).
+
 Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del pincel actual (tamaño, opacidad y estabilización; cada preset recuerda los suyos) y todos los presets con una **vista previa real**, pintada con el mismo motor que el lienzo, con el color y los ajustes actuales.
 
 ## Uso
@@ -98,7 +100,8 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 ## Textos
 
 - **Fuentes propias** con [@fontsource](https://fontsource.org) (WOFF2), registradas en `editor/elements/fonts.ts`. Cada una se carga **bajo demanda** (import dinámico de su CSS) cuando un texto la usa o al abrir el selector, y solo se descarga el subconjunto latino: no hay peticiones a Google Fonts. Konva espera a que la fuente esté lista (`fontLoader.ts`) antes de medir el texto.
-- **Estilos**: alineación, interlineado, contorno, sombra y caja de fondo. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
+- **Estilos**: alineación, interlineado, degradado, contorno, sombra y caja de fondo. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
+- **Degradado en el texto** (lineal o radial, `editor/elements/textGradient.ts`): se reparte en la caja del texto ya medida, sin el margen interior, y abarca todas las líneas, como `background-clip: text`. El radial es un círculo hasta la esquina más lejana, porque Konva no deforma el degradado en elipse y no tiene cónico para las formas.
 
 ## Estilos
 
