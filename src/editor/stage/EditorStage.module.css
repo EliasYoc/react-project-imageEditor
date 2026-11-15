@@ -23,3 +23,24 @@
 .stage[data-pan="active"] {
   cursor: grabbing;
 }
+
+/* Textarea para escribir un texto, encima de su nodo de Konva. */
+.textEditor {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  border: none;
+  outline: 1px dashed rgb(68, 171, 255);
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: manipulation;
+  caret-color: rgb(68, 171, 255);
+}
+
+.textEditor[wrap="soft"] {
+  white-space: pre-wrap;
+}

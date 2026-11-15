@@ -28,6 +28,15 @@ const stroke = (size = 10): StrokeEntry => ({
 
 const emptyBackground = { source: null, preview: null, mimeType: null };
 
+const addText = (x = 0) => state().addText({ x, y: 0 }, 50);
+const addImage = () =>
+  state().addImage({
+    src: "blob:imagen",
+    width: 100,
+    height: 50,
+    center: { x: 500, y: 400 },
+  });
+
 let store: ReturnType<typeof createEditorStore>;
 const state = () => store.getState();
 const sizes = () => selectStrokes(state()).map((entry) => entry.size);
@@ -57,7 +66,7 @@ describe("estado inicial y modo", () => {
 describe("fondo", () => {
   it("loadBackground cambia el tamaño del lienzo y empieza de cero, sin historial", () => {
     state().addStroke(stroke());
-    state().addText();
+    addText();
     state().undo();
     state().loadBackground({
       ...emptyBackground,
@@ -120,14 +129,14 @@ describe("historial", () => {
 
   it("undo de un elemento seleccionado limpia la selección", () => {
     state().addStroke(stroke());
-    state().addText();
+    addText();
     state().undo();
     expect(state().selectedElementId).toBeNull();
     expect(state().log).toHaveLength(1);
   });
 
   it("clearLog borra todo y se puede deshacer", () => {
-    state().addText();
+    addText();
     state().addStroke(stroke());
     const before = state().log;
     state().clearLog();
@@ -143,17 +152,24 @@ describe("historial", () => {
     expect(selectCanUndo(state())).toBe(false);
   });
 
-  it("deshacer un trazo conserva lo que se escribió en un texto después", () => {
-    const id = state().addText();
-    state().addStroke(stroke());
-    state().updateElement(id, { text: "Hola" });
+  it("deshacer restaura la versión exacta: también se deshace mover un texto", () => {
+    const id = addText();
+    state().editElement(id, { text: "Hola" });
+    state().editElement(id, { x: 300, y: 200 });
 
-    state().undo(); // quita el trazo
-    expect(selectSelectedText(state())).toMatchObject({ text: "Hola" });
+    state().undo(); // vuelve a su sitio, con el texto escrito
+    expect(selectSelectedText(state())).toMatchObject({
+      x: 0,
+      y: 0,
+      text: "Hola",
+    });
 
-    state().redo(); // y lo devuelve, sin perder el texto
-    expect(state().log).toHaveLength(2);
-    expect(selectSelectedText(state())).toMatchObject({ text: "Hola" });
+    state().undo(); // vuelve a estar vacío
+    expect(selectSelectedText(state())).toMatchObject({ text: "" });
+
+    state().redo();
+    state().redo();
+    expect(selectSelectedText(state())).toMatchObject({ x: 300, text: "Hola" });
   });
 
   it(`guarda como máximo ${MAX_HISTORY} pasos`, () => {
@@ -163,31 +179,46 @@ describe("historial", () => {
 });
 
 describe("elementos", () => {
-  it("addText crea un texto con el estilo por defecto y lo selecciona", () => {
-    const id = state().addText();
-    const text = selectSelectedText(state());
-    expect(text).toMatchObject({ id, text: "", ...DEFAULT_TEXT_STYLE });
+  it("addText crea un texto vacío con el estilo por defecto, donde se pide, y lo selecciona", () => {
+    const id = state().addText({ x: 120, y: 80 }, 64);
+    expect(selectSelectedText(state())).toMatchObject({
+      id,
+      whatTask: "text",
+      text: "",
+      x: 120,
+      y: 80,
+      fontSize: 64,
+      rotation: 0,
+      scale: 1,
+      width: null,
+      ...DEFAULT_TEXT_STYLE,
+    });
     expect(state().selectedElementId).toBe(id);
   });
 
-  it("cada elemento nuevo queda por encima de los anteriores", () => {
-    state().addText();
-    state().addImage("blob:imagen");
+  it("addImage centra la imagen en el punto pedido y queda por encima", () => {
+    addText();
+    addImage();
     const [first, second] = selectElements(state());
     expect(second.zIndex).toBeGreaterThan(first.zIndex);
     expect(second).toMatchObject({
-      whatTask: "draggableImage",
-      imageUrl: "blob:imagen",
+      whatTask: "image",
+      src: "blob:imagen",
+      x: 450,
+      y: 375,
+      width: 100,
+      height: 50,
     });
   });
 
-  it("updateElement cambia solo ese elemento y sin mutar el anterior", () => {
-    const a = state().addText();
-    const b = state().addText();
+  it("editElement cambia solo ese elemento, sin mutar el anterior, y crea un paso", () => {
+    const a = addText();
+    const b = addText();
     const before = state().log;
-    state().updateElement(a, { fontWeight: 900, text: "Hola" });
+    const pastLength = state().past.length;
+    state().editElement(a, { fontWeight: 900, text: "Hola" });
 
-    expect(state().log).not.toBe(before);
+    expect(state().past).toHaveLength(pastLength + 1);
     expect(before[0]).toMatchObject({ fontWeight: 500, text: "" });
     const [textA, textB] = selectElements(state()) as TextElement[];
     expect(textA).toMatchObject({ id: a, fontWeight: 900, text: "Hola" });
@@ -195,16 +226,61 @@ describe("elementos", () => {
     expect(textB.id).toBe(b);
   });
 
-  it("updateElement no crea un paso del historial", () => {
-    const id = state().addText();
+  it("cambios seguidos con la misma clave se juntan en un solo paso", () => {
+    const id = addText();
     const pastLength = state().past.length;
-    state().updateElement(id, { text: "Hola" });
+    for (const fontSize of [60, 70, 80]) {
+      state().editElement(id, { fontSize }, `fontSize:${id}`);
+    }
+    expect(state().past).toHaveLength(pastLength + 1);
+
+    // Otro cambio distinto cierra el grupo: el siguiente tamaño es otro paso.
+    state().editElement(id, { fontWeight: 900 });
+    state().editElement(id, { fontSize: 90 }, `fontSize:${id}`);
+    expect(state().past).toHaveLength(pastLength + 3);
+
+    state().undo();
+    state().undo();
+    state().undo();
+    expect(selectSelectedText(state())?.fontSize).toBe(50);
+  });
+
+  it("removeElement lo quita, limpia la selección y se puede deshacer", () => {
+    const id = addText();
+    state().removeElement(id);
+    expect(selectElements(state())).toHaveLength(0);
+    expect(state().selectedElementId).toBeNull();
+    state().undo();
+    expect(selectElements(state())[0].id).toBe(id);
+  });
+
+  it("discardNewText quita un texto recién creado sin dejar rastro en el historial", () => {
+    state().addStroke(stroke());
+    const pastLength = state().past.length;
+    const id = addText();
+    state().startTextEditing(id);
+    state().stopTextEditing();
+    state().discardNewText(id);
+
+    expect(selectElements(state())).toHaveLength(0);
     expect(state().past).toHaveLength(pastLength);
+    expect(selectCanRedo(state())).toBe(false);
+  });
+
+  it("startTextEditing selecciona el texto y deshacerlo termina la edición", () => {
+    const id = addText();
+    state().startTextEditing(id);
+    expect(state()).toMatchObject({ editingTextId: id, selectedElementId: id });
+    state().undo();
+    expect(state()).toMatchObject({
+      editingTextId: null,
+      selectedElementId: null,
+    });
   });
 
   it("selectElement trae el elemento al frente y null deselecciona", () => {
-    const a = state().addText();
-    state().addText();
+    const a = addText();
+    addText();
     state().selectElement(a);
 
     const [textA, textB] = selectElements(state());
@@ -216,8 +292,8 @@ describe("elementos", () => {
   });
 
   it("seleccionar el elemento que ya está al frente no cambia su zIndex", () => {
-    state().addText();
-    const b = state().addText();
+    addText();
+    const b = addText();
     const zBefore = selectElements(state())[1].zIndex;
     state().selectElement(null);
     state().selectElement(b);
@@ -310,7 +386,7 @@ describe("gradiente", () => {
 describe("selectores", () => {
   it("selectElements y selectStrokes separan el log y devuelven la misma referencia si no cambia", () => {
     state().addStroke(stroke());
-    state().addText();
+    addText();
     const elements = selectElements(state());
     const strokes = selectStrokes(state());
     expect(elements).toHaveLength(1);
@@ -320,7 +396,7 @@ describe("selectores", () => {
   });
 
   it("selectSelectedText devuelve null si lo seleccionado es una imagen", () => {
-    state().addImage("blob:imagen");
+    addImage();
     expect(selectSelectedElement(state())).not.toBeNull();
     expect(selectSelectedText(state())).toBeNull();
   });

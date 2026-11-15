@@ -5,6 +5,7 @@ import {
   clampPan,
   fitView,
   panBy,
+  screenToDocument,
   zoomAt,
   zoomLimits,
   type View,
@@ -90,6 +91,15 @@ export const createViewStore = () =>
   });
 
 export const viewStore = createViewStore();
+
+/** Punto del documento que se ve en el centro del lienzo (donde aparecen los elementos nuevos). */
+export const documentPointAtViewCenter = (
+  state: ViewState = viewStore.getState()
+) =>
+  screenToDocument(
+    { x: state.stageSize.width / 2, y: state.stageSize.height / 2 },
+    state.view
+  );
 
 export const useViewStore = <T>(selector: (state: ViewState) => T): T =>
   useStore(viewStore, selector);

@@ -6,6 +6,8 @@
  * exportación no cambian el dibujo.
  */
 
+import type { FontId } from "../elements/fonts";
+
 export type Mode = "home" | "draw" | "text";
 export type Status = "idle" | "loading" | "exporting";
 
@@ -92,49 +94,45 @@ export interface StrokeEntry {
 // ---------------------------------------------------------------- elementos
 
 /**
- * Posición y tamaño que mide react-moveable en pantalla (desaparece en la
- * Fase 4, cuando los elementos pasen a Konva).
+ * Posición, giro y escala de un elemento en píxeles del DOCUMENTO (como los
+ * trazos): no dependen de la pantalla, el zoom ni la resolución de salida.
  */
-export interface ElementGeometry {
-  translate: [number, number];
-  scale: [number, number];
-  left: number | null;
-  top: number | null;
-  realLeft: number | null;
-  realTop: number | null;
-  offsetLeft: number | null;
-  offsetTop: number | null;
-  realWidth: number | null;
-  realHeight: number | null;
-  initialWidth: number | null;
-  initialHeight: number | null;
-  /** Transform CSS que aplicó Moveable; se restaura si el elemento se vuelve a montar. */
-  cssTransform: string | null;
-}
-
-interface BaseElement extends ElementGeometry {
+interface BaseElement {
   id: string;
   /** Orden de apilado: el mayor queda encima. */
   zIndex: number;
+  /** Esquina superior izquierda (antes de girar), en píxeles del documento. */
+  x: number;
+  y: number;
+  /** Giro en grados. */
+  rotation: number;
+  /** Escala uniforme. */
+  scale: number;
 }
 
 export interface TextStyle {
-  fontFamily: string;
-  /** Nombre visible de la fuente en el selector. */
-  fontName: string;
+  /** Fuente (ver editor/elements/fonts.ts). */
+  fontId: FontId;
+  /** Tamaño de letra en píxeles del documento. */
   fontSize: number;
   fontWeight: number;
   color: Rgba;
 }
 
 export interface TextElement extends BaseElement, TextStyle {
-  whatTask: "draggableText";
+  whatTask: "text";
   text: string;
+  /** Ancho de ajuste en píxeles del documento; null = ancho automático. */
+  width: number | null;
 }
 
 export interface ImageElement extends BaseElement {
-  whatTask: "draggableImage";
-  imageUrl: string;
+  whatTask: "image";
+  /** URL de la imagen (blob:). */
+  src: string;
+  /** Tamaño sin escalar, en píxeles del documento. */
+  width: number;
+  height: number;
 }
 
 export type EditorElement = TextElement | ImageElement;
@@ -146,11 +144,11 @@ export const isStroke = (entry: LogEntry): entry is StrokeEntry =>
   entry.whatTask === "stroke";
 
 export const isEditorElement = (entry: LogEntry): entry is EditorElement =>
-  entry.whatTask === "draggableText" || entry.whatTask === "draggableImage";
+  entry.whatTask === "text" || entry.whatTask === "image";
 
 export const isTextElement = (
   entry: LogEntry | null | undefined
-): entry is TextElement => entry?.whatTask === "draggableText";
+): entry is TextElement => entry?.whatTask === "text";
 
 // ---------------------------------------------------------------- fondo
 

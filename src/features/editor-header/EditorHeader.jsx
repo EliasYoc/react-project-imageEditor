@@ -10,7 +10,6 @@ import PortalNormalModal from "../../components/layout/PortalNormalModal";
 import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
 import { Button, IconButton } from "../../components/ui/Button";
 import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
-import { useStageHandles } from "../../editor/stage/stageContext";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../editor/store/selectors";
 import { exportImage } from "../export/exportImage";
@@ -22,7 +21,6 @@ import {
 } from "./EditorHeader.styles";
 
 const EditorHeader = () => {
-  const { documentFrameRef } = useStageHandles();
   const hasContent = useEditorStore((state) => state.log.length > 0);
   const historyLength = useEditorStore((state) => state.past.length);
   const canUndo = useEditorStore(selectCanUndo);
@@ -45,10 +43,7 @@ const EditorHeader = () => {
   const handleExport = async () => {
     setStatus("exporting");
     try {
-      await exportImage({
-        fileName: downloadName,
-        documentFrame: documentFrameRef.current,
-      });
+      await exportImage({ fileName: downloadName });
     } catch (error) {
       console.error(error);
     } finally {

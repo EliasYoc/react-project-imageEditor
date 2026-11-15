@@ -1,35 +1,55 @@
 import { useState } from "react";
 import { RgbaColorPicker } from "react-colorful";
+import { BiTrash } from "react-icons/bi";
+import { MdTextFields } from "react-icons/md";
 import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
+import { IconButton } from "../../components/ui/Button";
 import {
   GlobalButton,
   PencilBackgroundColor,
 } from "../../components/ui/legacy/styledComponents";
+import { defaultFontSize } from "../../editor/model/factories";
 import { rgbaToCss } from "../../editor/model/color";
-import { useEditorStore } from "../../editor/store/editorStore";
-import { selectSelectedText } from "../../editor/store/selectors";
+import { documentPointAtViewCenter } from "../../editor/stage/viewStore";
+import { editorStore, useEditorStore } from "../../editor/store/editorStore";
+import {
+  selectSelectedElement,
+  selectSelectedText,
+} from "../../editor/store/selectors";
 import IncludeImageButton from "../images/IncludeImageButton";
 import BoldButton from "./BoldButton";
 import FontsButton from "./FontsButton";
 
+/** Crea un texto en el centro de lo que se ve y abre el editor para escribirlo. */
+const addTextAtViewCenter = () => {
+  const { addText, startTextEditing, canvasSize } = editorStore.getState();
+  const fontSize = defaultFontSize(canvasSize);
+  const center = documentPointAtViewCenter();
+  // La esquina queda un poco a la izquierda y arriba del centro: el texto
+  // crece hacia la derecha al escribir.
+  const id = addText(
+    { x: center.x - fontSize, y: center.y - fontSize / 2 },
+    fontSize
+  );
+  startTextEditing(id);
+};
+
 const TextToolbar = () => {
   const selectedText = useEditorStore(selectSelectedText);
-  const addText = useEditorStore((state) => state.addText);
-  const updateElement = useEditorStore((state) => state.updateElement);
+  const selectedElement = useEditorStore(selectSelectedElement);
+  const editElement = useEditorStore((state) => state.editElement);
+  const removeElement = useEditorStore((state) => state.removeElement);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
 
   const canPickColor = selectedText !== null;
 
   return (
     <>
-      <GlobalButton
-        onClick={addText}
-        width="auto"
-        height="auto"
-        fontSize="1rem"
-      >
-        Agregar
-      </GlobalButton>
+      <IconButton
+        icon={MdTextFields}
+        aria-label="Agregar texto"
+        onClick={addTextAtViewCenter}
+      />
       <IncludeImageButton />
       <BoldButton />
       <FontsButton />
@@ -44,6 +64,7 @@ const TextToolbar = () => {
         backgroundSize="15px 15px"
         onClick={() => canPickColor && setIsColorPickerOpen(true)}
         padding="0"
+        aria-label="Color del texto"
       >
         <PencilBackgroundColor
           style={{
@@ -55,15 +76,28 @@ const TextToolbar = () => {
           }
         />
       </GlobalButton>
+      <IconButton
+        icon={BiTrash}
+        aria-label="Eliminar"
+        disabled={!selectedElement}
+        onClick={() => selectedElement && removeElement(selectedElement.id)}
+      />
       <PortalsSwipeableMenuLayout
-        title="Escoge un color individual"
+        title="Color del texto"
         isOpen={isColorPickerOpen && canPickColor}
         onClose={() => setIsColorPickerOpen(false)}
       >
         {canPickColor && (
           <RgbaColorPicker
             color={selectedText.color}
-            onChange={(color) => updateElement(selectedText.id, { color })}
+            // Arrastrar en el selector crea un solo paso del historial.
+            onChange={(color) =>
+              editElement(
+                selectedText.id,
+                { color },
+                `color:${selectedText.id}`
+              )
+            }
           />
         )}
       </PortalsSwipeableMenuLayout>
