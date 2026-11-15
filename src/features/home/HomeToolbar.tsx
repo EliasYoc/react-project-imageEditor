@@ -3,10 +3,7 @@ import { useRef, type ChangeEvent } from "react";
 import { IconButton } from "../../components/ui/Button";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { createCanvas, get2dContext } from "../../lib/canvas";
-import {
-  readFile,
-  reduceAspectRatioQualityOfIncomingImage,
-} from "../../lib/helper";
+import { fitToMaxSide, readFileAsDataUrl } from "../../lib/helper";
 import styles from "./HomeToolbar.module.css";
 
 /** Las imágenes más grandes que esto se reducen a MAX_IMAGE_SIDE píxeles. */
@@ -35,17 +32,13 @@ const HomeToolbar = () => {
     setStatus("loading");
 
     try {
-      const { result } = await readFile({ file });
-      const image = await loadImage(result as string);
+      const image = await loadImage(await readFileAsDataUrl(file));
 
       const isHeavy =
         image.width > HEAVY_IMAGE_SIDE || image.height > HEAVY_IMAGE_SIDE;
-      const { newWidth: width, newHeight: height } = isHeavy
-        ? reduceAspectRatioQualityOfIncomingImage({
-            options: image,
-            expectedMaxPixelsSize: MAX_IMAGE_SIDE,
-          })
-        : { newWidth: image.width, newHeight: image.height };
+      const { width, height } = isHeavy
+        ? fitToMaxSide(image, MAX_IMAGE_SIDE)
+        : { width: image.width, height: image.height };
 
       // Copia con el tamaño del documento para mostrar en el lienzo; la
       // original se usa al exportar. Es un canvas, no un dataURL: no hay que

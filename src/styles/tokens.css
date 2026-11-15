@@ -59,9 +59,4 @@
   --z-tooltip: 500;
   --z-toast: 600;
   --z-loader: 1000;
-
-  /* Capas de los componentes antiguos (se quitan con ellos). */
-  --z-backdrop: 10;
-  --z-menu: 100;
-  --z-sheet: 1000;
 }

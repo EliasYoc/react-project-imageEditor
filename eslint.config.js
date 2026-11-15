@@ -6,13 +6,6 @@ import prettier from "eslint-config-prettier";
 import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
-const hookRulesAsWarnings = Object.fromEntries(
-  Object.keys(reactHooks.configs.flat.recommended.rules).map((rule) => [
-    rule,
-    "warn",
-  ])
-);
-
 export default defineConfig([
   globalIgnores(["build", "coverage"]),
   {
@@ -50,14 +43,7 @@ export default defineConfig([
     },
   },
   {
-    // Código que se va a reemplazar (hoy, los styled-components de
-    // components/ui/legacy, que se quitan en la Fase 6): se toca lo mínimo, así
-    // que sus avisos de hooks no bloquean. Desaparece con esas carpetas.
-    files: ["**/legacy/**/*.{js,jsx}"],
-    rules: hookRulesAsWarnings,
-  },
-  {
-    files: ["**/*.test.{js,jsx,ts,tsx}", "src/setupTests.js"],
+    files: ["**/*.test.{js,jsx,ts,tsx}", "src/setupTests.ts"],
     languageOptions: { globals: { ...globals.browser, ...globals.vitest } },
   },
   {
