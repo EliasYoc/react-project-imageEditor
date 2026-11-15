@@ -48,3 +48,10 @@ Si ninguna lo cubre:
 - **Trabaja solo con commits locales** en una rama por tarea. **Nunca hagas push** ni abras, edites o fusiones PR.
 - **Al terminar,** deja el texto de la PR en un archivo para que el dueño la abra.
 - **Cada commit** debe compilar y pasar `npm run check` por sí solo.
+
+## 5. Pendientes
+
+- **Las mejoras pendientes están en `PENDIENTES.md`.** No se empieza ninguna sin permiso del dueño.
+- Cuando salga un tema relacionado (hosting, dependencias…), recuérdale el punto que toca.
+- Si algo es **urgente** (una vulnerabilidad en dependencias de producción, un fallo que rompe la app), avísale enseguida.
+- Al terminar un punto, quítalo de `PENDIENTES.md` en la misma PR.
