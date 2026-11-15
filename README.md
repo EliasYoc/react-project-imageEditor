@@ -30,6 +30,7 @@ Producción: https://editoryoc.netlify.app/
 | `npm run check`         | Lint + tipos + tests (lo que debe pasar antes de abrir una PR)       |
 | `npm run test:e2e`      | Tests de punta a punta con Playwright (ver [Tests e2e](#tests-e2e))  |
 | `npm run test:e2e:ui`   | Igual, en la interfaz de Playwright: paso a paso y con capturas      |
+| `npm run size`          | Presupuesto de tamaño del JS (después de `npm run build`)            |
 | `npm run format`        | Formatea el código con Prettier                                      |
 
 ## Estructura
@@ -166,6 +167,28 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Navegador:** el **Microsoft Edge** del equipo (`channel: "msedge"`), así que no hace falta `npx playwright install`.
 - **Cómo se comprueba el lienzo:** leyendo los **píxeles** de capturas de pantalla y de la imagen exportada. Se decodifican en el propio navegador, sin librerías de imágenes.
 - **Si un test falla:** Playwright guarda una traza (capturas, DOM y red de cada paso) en `test-results/`. Se abre con `npx playwright show-trace <ruta>/trace.zip`. El informe HTML queda en `playwright-report/`.
+
+## CI (GitHub Actions)
+
+En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.yml` en sus servidores (Ubuntu). En la PR aparecen dos comprobaciones con ✅ o ❌.
+
+| Comprobación                             | Pasos                                                                           | Para repetirlo en local                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Formato, lint, tipos, tests y tamaño** | `npm ci` → formato → `npm run check` → build → presupuesto de tamaño            | `npm run format:check`, `npm run check`, `npm run build && npm run size` |
+| **Tests e2e (Playwright)**               | Solo si la anterior pasa. Los e2e en el Edge del runner, con hasta 2 reintentos | `npm run test:e2e`                                                       |
+
+- **Si sale ❌:** en la PR, _Details_ lleva a la ejecución; se abre el paso en rojo para ver su salida. Después se repite el comando en local.
+  - **Formato:** `npm run format` lo arregla.
+  - **e2e:** el informe con capturas y trazas está en _Artifacts → informe-playwright_. Se descomprime y se abre con `npx playwright show-report <carpeta>/playwright-report`.
+  - **Si al repetirlo pasa, era "flaky":** un fallo intermitente que conviene investigar.
+- **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
+- **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
+  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`) y el del **editor** (el resto);
+  - falla si pasan de **125 kB** y **130 kB**: hoy son unos 117 y 123;
+  - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
+- **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
+- **Coste:** gratis en repos públicos. En privados, el plan gratuito incluye unos 2.000 minutos al mes, y cada ejecución tarda unos 5. Un push nuevo a la misma PR cancela la ejecución anterior.
+- **Opcional:** en GitHub, _Settings → Branches → Add branch ruleset_ (o _branch protection rule_) para `dev` y `main`, con _Require status checks to pass_. Así no se puede fusionar una PR en rojo.
 
 ## Estilos
 
