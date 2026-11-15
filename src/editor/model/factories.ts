@@ -6,7 +6,7 @@ import type {
   BrushPresetId,
   BrushSettings,
   BrushState,
-  GradientState,
+  Backdrop,
   ImageElement,
   Point,
   Rgba,
@@ -94,14 +94,11 @@ export const createStroke = ({
   points: [],
 });
 
-export const MAX_GRADIENT_STOPS = 8;
-
-export const createInitialGradient = (): GradientState => ({
-  stops: [
-    { id: "first-stop", color: { r: 52, g: 201, b: 100, a: 1 }, offset: 10 },
-    { id: "second-stop", color: { r: 97, g: 29, b: 173, a: 1 }, offset: 70 },
-  ],
-  angle: 180,
+/** Sin capa de color: el lienzo en blanco o la foto tal cual. */
+export const createInitialBackdrop = (): Backdrop => ({
+  fill: null,
+  opacity: 1,
+  blend: "source-over",
 });
 
 /** Texto nuevo (vacío) con la esquina superior izquierda en `position`. */

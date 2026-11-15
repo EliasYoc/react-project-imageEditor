@@ -190,28 +190,14 @@ export const isTextElement = (
 
 // ---------------------------------------------------------------- fondo
 
-export interface Background {
+/** La foto abierta (null en un lienzo en blanco). */
+export interface Photo {
   /** Imagen a resolución completa: es la que se usa al exportar. */
   source: HTMLImageElement | HTMLCanvasElement | null;
   /** Copia con el tamaño del documento: es la que se muestra en el lienzo. */
   preview: HTMLCanvasElement | null;
   /** Tipo MIME con el que se exporta (el del archivo original). */
   mimeType: string | null;
-}
-
-// ---------------------------------------------------------------- gradiente
-
-export interface GradientStop {
-  id: string;
-  color: Rgba;
-  /** Posición de la parada, de 0 a 100. */
-  offset: number;
-}
-
-export interface GradientState {
-  stops: GradientStop[];
-  /** Ángulo en grados, de 0 a 360. */
-  angle: number;
 }
 
 // ---------------------------------------------------------------- capa de color

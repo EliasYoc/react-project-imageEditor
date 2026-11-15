@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  DEFAULT_TEXT_STYLE,
-  MAX_GRADIENT_STOPS,
-  createStroke,
-} from "../model/factories";
-import type { StrokeEntry, TextElement } from "../model/types";
+import { DEFAULT_TEXT_STYLE, createStroke } from "../model/factories";
+import type { Backdrop, StrokeEntry, TextElement } from "../model/types";
 import { MAX_HISTORY, createEditorStore } from "./editorStore";
 import {
   selectBrushColor,
@@ -26,7 +22,13 @@ const stroke = (size = 10): StrokeEntry => ({
   points: [{ x: 0, y: 0, pressure: 0.5 }],
 });
 
-const emptyBackground = { source: null, preview: null, mimeType: null };
+const emptyPhoto = { source: null, preview: null, mimeType: null };
+
+const red: Backdrop = {
+  fill: { kind: "color", color: { r: 255, g: 0, b: 0, a: 1 } },
+  opacity: 1,
+  blend: "source-over",
+};
 
 const addText = (x = 0) => state().addText({ x, y: 0 }, 50);
 const addImage = () =>
@@ -63,29 +65,56 @@ describe("estado inicial y modo", () => {
   });
 });
 
-describe("fondo", () => {
-  it("loadBackground cambia el tamaño del lienzo y empieza de cero, sin historial", () => {
+describe("foto y capa de color", () => {
+  it("loadPhoto cambia el tamaño del lienzo y empieza de cero, sin historial ni capa", () => {
     state().addStroke(stroke());
     addText();
+    state().setBackdrop(red);
     state().undo();
-    state().loadBackground({
-      ...emptyBackground,
+    state().loadPhoto({
+      ...emptyPhoto,
       mimeType: "image/jpeg",
       size: { width: 800, height: 600 },
     });
     expect(state().canvasSize).toEqual({ width: 800, height: 600 });
-    expect(state().background.mimeType).toBe("image/jpeg");
+    expect(state().photo.mimeType).toBe("image/jpeg");
     expect(state().log).toEqual([]);
+    expect(state().backdrop.fill).toBeNull();
     expect(state().selectedElementId).toBeNull();
     expect(selectCanUndo(state())).toBe(false);
     expect(selectCanRedo(state())).toBe(false);
   });
 
-  it("setBackgroundImage conserva el dibujo", () => {
+  it("setBackdrop conserva el dibujo y se puede deshacer y rehacer", () => {
     state().addStroke(stroke());
-    state().setBackgroundImage({ ...emptyBackground, mimeType: "image/png" });
-    expect(state().background.mimeType).toBe("image/png");
+    state().setBackdrop(red);
+    expect(state().backdrop).toEqual(red);
     expect(state().log).toHaveLength(1);
+
+    state().undo();
+    expect(state().backdrop.fill).toBeNull();
+    expect(state().log).toHaveLength(1);
+    state().redo();
+    expect(state().backdrop).toEqual(red);
+  });
+
+  it("deshacer un trazo no cambia la capa de color que se puso antes", () => {
+    state().setBackdrop(red);
+    state().addStroke(stroke());
+    state().undo();
+    expect(state().backdrop).toEqual(red);
+    expect(state().log).toHaveLength(0);
+  });
+
+  it("cambios seguidos con la misma clave (p. ej. arrastrar una parada) son un solo paso", () => {
+    const pastBefore = state().past.length;
+    for (const opacity of [0.9, 0.7, 0.5]) {
+      state().setBackdrop({ ...red, opacity }, "opacity");
+    }
+    expect(state().past).toHaveLength(pastBefore + 1);
+    expect(state().backdrop.opacity).toBe(0.5);
+    state().undo();
+    expect(state().backdrop.fill).toBeNull();
   });
 });
 
@@ -354,32 +383,6 @@ describe("pinceles", () => {
     });
     expect(created.id).toEqual(expect.any(String));
     expect(created.seed).toEqual(expect.any(Number));
-  });
-});
-
-describe("gradiente", () => {
-  it(`permite hasta ${MAX_GRADIENT_STOPS} paradas`, () => {
-    for (let i = 0; i < 10; i++) state().addGradientStop();
-    expect(state().gradient.stops).toHaveLength(MAX_GRADIENT_STOPS);
-  });
-
-  it("nunca deja el gradiente sin paradas", () => {
-    const [first, second] = state().gradient.stops;
-    state().removeGradientStop(first.id);
-    state().removeGradientStop(second.id);
-    expect(state().gradient.stops).toHaveLength(1);
-  });
-
-  it("cambia posición, color y ángulo", () => {
-    const [first] = state().gradient.stops;
-    state().setGradientStopOffset(first.id, 42);
-    state().setGradientStopColor(first.id, { r: 9, g: 9, b: 9, a: 1 });
-    state().setGradientAngle(90);
-    expect(state().gradient.stops[0]).toMatchObject({
-      offset: 42,
-      color: { r: 9, g: 9, b: 9, a: 1 },
-    });
-    expect(state().gradient.angle).toBe(90);
   });
 });
 

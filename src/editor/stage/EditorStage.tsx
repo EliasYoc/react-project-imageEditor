@@ -23,8 +23,9 @@ import {
   Rect,
   Stage,
 } from "react-konva/lib/ReactKonvaCore";
-import { createCanvas } from "../../lib/canvas";
+import { createCanvas, get2dContext } from "../../lib/canvas";
 import { PaintRaster } from "../engine/PaintRaster";
+import { paintFill } from "../engine/fill/paintFill";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectStrokes } from "../store/selectors";
 import styles from "./EditorStage.module.css";
@@ -51,11 +52,13 @@ const EditorStage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<KonvaStage>(null);
   const paintLayerRef = useRef<KonvaLayer>(null);
+  const backgroundLayerRef = useRef<KonvaLayer>(null);
   const liveNodeRef = useRef<KonvaImageNode>(null);
   const cursorRef = useRef<KonvaGroup>(null);
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
-  const preview = useEditorStore((state) => state.background.preview);
+  const preview = useEditorStore((state) => state.photo.preview);
+  const backdrop = useEditorStore((state) => state.backdrop);
   const isDrawing = useEditorStore((state) => state.mode === "draw");
   const isEditingElements = useEditorStore((state) => state.mode === "text");
   const stageSize = useViewStore((state) => state.stageSize);
@@ -64,6 +67,9 @@ const EditorStage = () => {
   // Un raster y un canvas para el trazo en curso por cada tamaño de documento.
   const raster = useMemo(() => new PaintRaster(canvasSize), [canvasSize]);
   const liveCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
+  // Capa de color o degradado: un canvas por tamaño de documento que se
+  // repinta al cambiar (no se crea uno nuevo en cada movimiento de un control).
+  const fillCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
 
   // batchDraw agrupa las peticiones y pinta una sola vez por frame.
   const requestDraw = useCallback(() => paintLayerRef.current?.batchDraw(), []);
@@ -111,6 +117,16 @@ const EditorStage = () => {
     }
   }, []);
 
+  useEffect(
+    function paintBackdrop() {
+      const ctx = get2dContext(fillCanvas);
+      ctx.clearRect(0, 0, fillCanvas.width, fillCanvas.height);
+      if (backdrop.fill) paintFill(ctx, backdrop.fill, canvasSize);
+      backgroundLayerRef.current?.batchDraw();
+    },
+    [fillCanvas, backdrop.fill, canvasSize]
+  );
+
   useStageInput({
     containerRef,
     canDraw: isDrawing,
@@ -150,7 +166,7 @@ const EditorStage = () => {
         listening={isEditingElements}
         onPointerDown={onStagePointerDown}
       >
-        <Layer {...documentTransform}>
+        <Layer ref={backgroundLayerRef} {...documentTransform}>
           {preview ? (
             <KonvaImage
               image={preview}
@@ -164,6 +180,16 @@ const EditorStage = () => {
               fill="white"
             />
           )}
+          {/* Sin foto es el fondo del lienzo; con foto, un filtro encima
+              (el modo de fusión solo tiene sentido sobre la foto). */}
+          <KonvaImage
+            image={fillCanvas}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            visible={Boolean(backdrop.fill)}
+            opacity={backdrop.opacity}
+            globalCompositeOperation={preview ? backdrop.blend : "source-over"}
+          />
         </Layer>
         <Layer ref={paintLayerRef} {...documentTransform}>
           <KonvaImage

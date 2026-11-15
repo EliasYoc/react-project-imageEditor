@@ -2,18 +2,15 @@ import { useState } from "react";
 import { BiDotsVerticalRounded, BiDownload } from "react-icons/bi";
 import { FiX } from "react-icons/fi";
 import { GrRedo, GrUndo } from "react-icons/gr";
-import { MdOutlineGradient } from "react-icons/md";
 import ConfirmModal from "../../components/layout/ConfirmModal";
 import Option from "../../components/layout/ListOption";
 import ListOptionsLayout from "../../components/layout/ListOptionsLayout";
 import PortalNormalModal from "../../components/layout/PortalNormalModal";
-import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
 import { Button, IconButton } from "../../components/ui/Button";
 import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../editor/store/selectors";
 import { exportImage } from "../export/exportImage";
-import GradientBox from "../gradient/GradientBox";
 import styles from "./EditorHeader.module.css";
 import {
   InputDownloadName,
@@ -33,7 +30,6 @@ const EditorHeader = () => {
   const clearLog = useEditorStore((state) => state.clearLog);
 
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [isGradientBoxOpen, setIsGradientBoxOpen] = useState(false);
   const [isDownloadNameModalOpen, setIsDownloadNameModalOpen] = useState(false);
   const [downloadName, setDownloadName] = useState("");
   const [isDownloadNameEmpty, setIsDownloadNameEmpty] = useState(false);
@@ -132,14 +128,6 @@ const EditorHeader = () => {
             icon={BiDownload}
             text="Descargar"
           />
-          <Option
-            onClick={() => {
-              setIsOptionsOpen(false);
-              setIsGradientBoxOpen(true);
-            }}
-            icon={MdOutlineGradient}
-            text="Fondos"
-          />
         </ListOptionsLayout>
       </PortalNormalModal>
       <ConfirmModal
@@ -172,14 +160,6 @@ const EditorHeader = () => {
           </WarningEmptyNameField>
         )}
       </ConfirmModal>
-      <PortalsSwipeableMenuLayout
-        title="Crea un fondo difuminado"
-        adviseText="Agrega hasta 8 thumbs para aplicar diferentes colores, presiona la línea de los multiples thumbs para agregar uno nuevo"
-        isOpen={isGradientBoxOpen}
-        onClose={() => setIsGradientBoxOpen(false)}
-      >
-        <GradientBox onApplied={() => setIsGradientBoxOpen(false)} />
-      </PortalsSwipeableMenuLayout>
     </>
   );
 };
