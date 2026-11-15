@@ -86,7 +86,7 @@ const DrawingTools = () => {
         isOpen={isLibraryOpen}
         onClose={() => setIsLibraryOpen(false)}
       >
-        <BrushLibrary onSelect={() => setIsLibraryOpen(false)} />
+        <BrushLibrary />
       </PortalsSwipeableMenuLayout>
 
       <PortalsSwipeableMenuLayout

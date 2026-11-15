@@ -42,7 +42,7 @@ src/
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, estabilizador, presets
     stage/      Lienzo con Konva (react-konva) y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
-  components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton…)
+  components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton, Slider…)
   styles/       tokens.css (colores, espacios, capas), CSS global y fuentes
   lib/          Utilidades puras
 ```
@@ -68,6 +68,8 @@ Cada trazo se pinta primero en un **búfer** y luego se compone con su **opacida
 
 Los presets están en `presets.ts`: cambiar uno cambia cómo se ven los trazos ya hechos.
 
+Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del pincel actual (tamaño, opacidad y estabilización; cada preset recuerda los suyos) y todos los presets con una **vista previa real**, pintada con el mismo motor que el lienzo, con el color y los ajustes actuales.
+
 ## Uso
 
 | Acción                | Ratón / teclado                                          | Pantalla táctil           |
@@ -87,6 +89,7 @@ El zoom solo está en modo Dibujar: en modo Texto el lienzo se ve ajustado (los 
 - Los valores de diseño (colores, espaciado, radios, z-index) viven en `src/styles/tokens.css` y se usan con `var(--…)`.
 - Los componentes nuevos usan **CSS Modules** (`*.module.css`). styled-components se va retirando a medida que se reconstruye cada parte.
 - Para botones usa `Button` o `IconButton` de `components/ui/Button`: son `<button>` reales, accesibles con teclado. `IconButton` exige `aria-label`.
+- Para valores numéricos usa `Slider` de `components/ui/Slider`: un `<input type="range">` nativo con etiqueta y valor visible (`valueText` para mostrar unidades).
 
 ## Stack
 
