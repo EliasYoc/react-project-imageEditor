@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TextElement } from "../../editor/model/types";
@@ -43,11 +43,10 @@ describe("FontPicker", () => {
 
   it("cambia el grosor entre normal y negrita", async () => {
     render(<FontPicker text={text()} />);
-    const weights = screen.getByRole("group", { name: "Grosor" });
+    // Grosor es un grupo de radio (hay otro "Normal": la fuente del sistema).
+    const weights = screen.getByRole("radiogroup", { name: "Grosor" });
     await userEvent.click(
-      Array.from(weights.querySelectorAll("button")).find(
-        (button) => button.textContent === "Negrita"
-      )!
+      within(weights).getByRole("radio", { name: "Negrita" })
     );
     expect(text().fontWeight).toBe(900);
   });
@@ -56,7 +55,7 @@ describe("FontPicker", () => {
 describe("TextStylePanel", () => {
   it("alinea el texto", async () => {
     render(<TextStylePanel text={text()} />);
-    await userEvent.click(screen.getByRole("button", { name: "Centrar" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Centrar" }));
     expect(text().align).toBe("center");
   });
 
@@ -100,9 +99,11 @@ describe("TextStylePanel", () => {
     rerender(<TextStylePanel text={text()} />);
 
     // Solo lineal y radial: el texto no admite cónico.
-    const shapes = screen.getByRole("group", { name: "Forma del degradado" });
-    expect(shapes.querySelectorAll("button")).toHaveLength(2);
-    await userEvent.click(screen.getByRole("button", { name: "Radial" }));
+    const shapes = screen.getByRole("radiogroup", {
+      name: "Forma del degradado",
+    });
+    expect(within(shapes).getAllByRole("radio")).toHaveLength(2);
+    await userEvent.click(screen.getByRole("radio", { name: "Radial" }));
     expect(text().gradient?.type).toBe("radial");
     rerender(<TextStylePanel text={text()} />);
     // Radial: no hay ángulo.

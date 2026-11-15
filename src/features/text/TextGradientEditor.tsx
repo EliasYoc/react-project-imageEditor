@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "../../components/ui/Button";
+import { Segmented } from "../../components/ui/Segmented";
 import {
   MIN_STOPS,
   removeStop,
@@ -13,9 +14,9 @@ import ColorField from "./ColorField";
 import styles from "./TextPanels.module.css";
 import { TEXT_GRADIENT_PRESETS } from "./textGradientPresets";
 
-const TYPES: { type: GradientType; label: string }[] = [
-  { type: "linear", label: "Lineal" },
-  { type: "radial", label: "Radial" },
+const TYPES: { value: GradientType; label: string }[] = [
+  { value: "linear", label: "Lineal" },
+  { value: "radial", label: "Radial" },
 ];
 
 interface TextGradientEditorProps {
@@ -45,22 +46,13 @@ const TextGradientEditor = ({
 
   return (
     <>
-      <div
-        className={styles.segmented}
-        role="group"
-        aria-label="Forma del degradado"
-      >
-        {TYPES.map(({ type, label }) => (
-          <Button
-            key={type}
-            size="sm"
-            aria-pressed={gradient.type === type}
-            onClick={() => onChange({ ...gradient, type })}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <Segmented
+        label="Forma del degradado"
+        size="sm"
+        value={gradient.type}
+        onChange={(type) => onChange({ ...gradient, type })}
+        items={TYPES}
+      />
 
       <div className={styles.gradientRow}>
         {/* Muestra con letras: así se verá el texto. */}

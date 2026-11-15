@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Button } from "../../components/ui/Button";
+import { Segmented } from "../../components/ui/Segmented";
 import { ensureFont } from "../../editor/elements/fontLoader";
 import { FONTS } from "../../editor/elements/fonts";
 import type { TextElement } from "../../editor/model/types";
@@ -8,9 +9,9 @@ import { BOLD_WEIGHT, NORMAL_WEIGHT, isBold } from "./fontWeight";
 import styles from "./TextPanels.module.css";
 
 const WEIGHTS = [
-  { weight: NORMAL_WEIGHT, label: "Normal" },
-  { weight: BOLD_WEIGHT, label: "Negrita" },
-];
+  { value: "normal", label: "Normal" },
+  { value: "bold", label: "Negrita" },
+] as const;
 
 /**
  * Fuente y grosor del texto seleccionado. Cada fuente se muestra escrita en
@@ -26,17 +27,16 @@ const FontPicker = ({ text }: { text: TextElement }) => {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.segmented} role="group" aria-label="Grosor">
-        {WEIGHTS.map(({ weight, label }) => (
-          <Button
-            key={weight}
-            aria-pressed={isBold(text) === weight >= 700}
-            onClick={() => editElement(text.id, { fontWeight: weight })}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <Segmented
+        label="Grosor"
+        value={isBold(text) ? "bold" : "normal"}
+        onChange={(weight) =>
+          editElement(text.id, {
+            fontWeight: weight === "bold" ? BOLD_WEIGHT : NORMAL_WEIGHT,
+          })
+        }
+        items={WEIGHTS}
+      />
       <div className={styles.fontList} role="group" aria-label="Fuentes">
         {FONTS.map((font) => (
           <Button

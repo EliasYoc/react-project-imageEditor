@@ -1,10 +1,6 @@
+import { AlignCenter, AlignLeft, AlignRight } from "lucide-react";
 import { useState, type ReactNode } from "react";
-import {
-  MdFormatAlignCenter,
-  MdFormatAlignLeft,
-  MdFormatAlignRight,
-} from "react-icons/md";
-import { IconButton } from "../../components/ui/Button";
+import { Segmented, type SegmentedItem } from "../../components/ui/Segmented";
 import { Slider } from "../../components/ui/Slider";
 import type {
   Gradient,
@@ -18,14 +14,10 @@ import TextGradientEditor from "./TextGradientEditor";
 import styles from "./TextPanels.module.css";
 import { DEFAULT_TEXT_GRADIENT } from "./textGradientPresets";
 
-const ALIGNMENTS: {
-  align: TextAlign;
-  label: string;
-  icon: typeof MdFormatAlignLeft;
-}[] = [
-  { align: "left", label: "Alinear a la izquierda", icon: MdFormatAlignLeft },
-  { align: "center", label: "Centrar", icon: MdFormatAlignCenter },
-  { align: "right", label: "Alinear a la derecha", icon: MdFormatAlignRight },
+const ALIGNMENTS: readonly SegmentedItem<TextAlign>[] = [
+  { value: "left", label: "Alinear a la izquierda", icon: AlignLeft },
+  { value: "center", label: "Centrar", icon: AlignCenter },
+  { value: "right", label: "Alinear a la derecha", icon: AlignRight },
 ];
 
 type ColorTarget = "gradient" | "stroke" | "shadow" | "background";
@@ -85,19 +77,13 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.row}>
-        <div className={styles.segmented} role="group" aria-label="Alineación">
-          {ALIGNMENTS.map(({ align, label, icon }) => (
-            <IconButton
-              key={align}
-              icon={icon}
-              aria-label={label}
-              aria-pressed={text.align === align}
-              onClick={() => edit({ align })}
-            />
-          ))}
-        </div>
-      </div>
+      <Segmented
+        label="Alineación"
+        value={text.align}
+        onChange={(align) => edit({ align })}
+        items={ALIGNMENTS}
+        iconOnly
+      />
       <Slider
         label="Interlineado"
         min={80}

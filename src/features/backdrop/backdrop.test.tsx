@@ -121,21 +121,21 @@ describe("BackdropPanel", () => {
 
   it("las pestañas ponen color, degradado o nada (cada una es un paso del historial)", async () => {
     render(<BackdropPanel />);
-    await userEvent.click(screen.getByRole("button", { name: "Color" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Color" }));
     expect(editorStore.getState().backdrop.fill?.kind).toBe("color");
 
-    await userEvent.click(screen.getByRole("button", { name: "Degradado" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Degradado" }));
     expect(editorStore.getState().backdrop.fill?.kind).toBe("gradient");
     expect(screen.getByRole("slider", { name: "Ángulo" })).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "Ninguno" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Ninguno" }));
     expect(editorStore.getState().backdrop.fill).toBeNull();
     expect(editorStore.getState().past).toHaveLength(3);
   });
 
   it("un preset cambia el degradado; la forma radial no tiene ángulo", async () => {
     render(<BackdropPanel />);
-    await userEvent.click(screen.getByRole("button", { name: "Degradado" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Degradado" }));
     await userEvent.click(screen.getByRole("button", { name: "Fuego" }));
     const { fill } = editorStore.getState().backdrop;
     expect(fill?.kind === "gradient" && fill.gradient.type).toBe("radial");
@@ -144,7 +144,7 @@ describe("BackdropPanel", () => {
 
   it("el modo de fusión solo aparece con una foto", async () => {
     const { unmount } = render(<BackdropPanel />);
-    await userEvent.click(screen.getByRole("button", { name: "Color" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Color" }));
     expect(screen.queryByLabelText("Modo de fusión")).toBeNull();
     unmount();
 
