@@ -1,0 +1,17 @@
+# Dependabot (de GitHub): una vez al mes abre PRs a dev que actualizan las
+# acciones del workflow de CI (checkout, setup-node...). La CI prueba esas
+# PRs como cualquier otra. Los paquetes de npm se actualizan a mano.
+#
+# Empieza a funcionar cuando este archivo llega a la rama principal (main).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+    # Solo versiones publicadas hace al menos 14 días (regla del proyecto).
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: ci

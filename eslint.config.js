@@ -48,7 +48,8 @@ export default defineConfig([
     languageOptions: { globals: { ...globals.browser, ...globals.vitest } },
   },
   {
-    files: ["vite.config.js", "eslint.config.js"],
+    // Se ejecutan en Node, no en el navegador.
+    files: ["vite.config.js", "eslint.config.js", "scripts/**/*.js"],
     languageOptions: { globals: { ...globals.node } },
   },
 ]);
