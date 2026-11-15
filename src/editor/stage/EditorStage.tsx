@@ -44,8 +44,9 @@ import { useViewStore, viewStore } from "./viewStore";
  * - pintura: los trazos terminados (raster en caché) y el trazo en curso.
  *   Al estar separadas, el borrador quita pintura sin tocar la foto.
  *
- * Encima, los textos e imágenes (ElementsLayer) y una capa sin transformar
- * con el círculo del tamaño del pincel.
+ * Encima, los textos e imágenes (ElementsLayer) y su capa sin transformar,
+ * con el marco de selección y el círculo del tamaño del pincel. En total
+ * cinco capas: Konva recomienda no pasar de ahí (cada una es un <canvas>).
  *
  * Todas las capas del documento se dibujan con la transformación de la vista
  * (posición y escala), así que todo se guarda en coordenadas del documento.
@@ -242,18 +243,21 @@ const EditorStage = () => {
             height={canvasSize.height}
           />
         </Layer>
-        <ElementsLayer view={view} interactive={isEditingElements} />
-        <Layer listening={false}>
-          {/* Dos círculos (blanco y negro) para que se vea sobre cualquier color. */}
-          <Group ref={cursorRef} visible={false}>
-            <Circle
-              radius={1}
-              stroke="rgba(255, 255, 255, 0.9)"
-              strokeWidth={3}
-            />
-            <Circle radius={1} stroke="rgba(0, 0, 0, 0.9)" strokeWidth={1} />
-          </Group>
-        </Layer>
+        <ElementsLayer
+          view={view}
+          interactive={isEditingElements}
+          overlay={
+            // Dos círculos (blanco y negro) para que se vea sobre cualquier color.
+            <Group ref={cursorRef} visible={false} listening={false}>
+              <Circle
+                radius={1}
+                stroke="rgba(255, 255, 255, 0.9)"
+                strokeWidth={3}
+              />
+              <Circle radius={1} stroke="rgba(0, 0, 0, 0.9)" strokeWidth={1} />
+            </Group>
+          }
+        />
       </Stage>
       <TextEditorOverlay />
     </div>

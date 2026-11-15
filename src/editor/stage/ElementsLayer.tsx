@@ -8,7 +8,14 @@ import "konva/lib/shapes/Label";
 import "konva/lib/shapes/Line";
 import "konva/lib/shapes/Text";
 import "konva/lib/shapes/Transformer";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Image as KonvaImage,
   Label,
@@ -162,6 +169,11 @@ interface ElementsLayerProps {
   view: View;
   /** Modo Texto: los elementos se pueden seleccionar, mover y transformar. */
   interactive: boolean;
+  /**
+   * Más nodos para la capa sin transformar, encima del marco (el círculo del
+   * pincel): así no hace falta otra capa, que es otro <canvas>.
+   */
+  overlay?: ReactNode;
 }
 
 /**
@@ -171,7 +183,7 @@ interface ElementsLayerProps {
  * El Transformer (marco de selección) va en una capa aparte sin
  * transformar: así sus asas miden lo mismo con cualquier zoom.
  */
-const ElementsLayer = ({ view, interactive }: ElementsLayerProps) => {
+const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
   const elements = useEditorStore(selectElements);
   const selectedId = useEditorStore((state) => state.selectedElementId);
   const editingId = useEditorStore((state) => state.editingTextId);
@@ -322,6 +334,7 @@ const ElementsLayer = ({ view, interactive }: ElementsLayerProps) => {
           onTransform={onTransform}
           onTransformEnd={onTransformEnd}
         />
+        {overlay}
       </Layer>
     </>
   );
