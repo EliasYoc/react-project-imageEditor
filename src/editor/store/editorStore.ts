@@ -13,15 +13,16 @@ import {
 } from "../model/factories";
 import {
   isEditorElement,
+  isTextElement,
   type Background,
   type BrushPresetId,
   type BrushState,
   type BrushSettings,
-  type EditorElement,
   type GradientState,
   type ImageElement,
   type LogEntry,
   type Mode,
+  type Point,
   type Rgba,
   type Size,
   type Status,
@@ -44,6 +45,14 @@ export interface EditorState {
   past: LogEntry[][];
   future: LogEntry[][];
   selectedElementId: string | null;
+  /** Texto que se está editando con el textarea (null = ninguno). */
+  editingTextId: string | null;
+  /**
+   * Clave del último cambio de un elemento. Un cambio con la misma clave
+   * (p. ej. arrastrar el slider de tamaño) se junta con el anterior en un
+   * solo paso del historial.
+   */
+  lastMergeKey: string | null;
   brush: BrushState;
   gradient: GradientState;
 }
@@ -67,11 +76,31 @@ export interface EditorActions {
   /** Borra todo el dibujo. Se puede deshacer. */
   clearLog: () => void;
 
-  addText: () => string;
-  addImage: (imageUrl: string) => string;
-  updateElement: (id: string, patch: ElementPatch) => void;
+  /** Texto nuevo (vacío) con su esquina en `position`; lo selecciona. */
+  addText: (position: Point, fontSize: number) => string;
+  /** Imagen nueva centrada en `center`; la selecciona. */
+  addImage: (image: {
+    src: string;
+    width: number;
+    height: number;
+    center: Point;
+  }) => string;
+  /**
+   * Cambia un elemento creando un paso del historial. Con `mergeKey`, los
+   * cambios seguidos con la misma clave se juntan en un solo paso.
+   */
+  editElement: (id: string, patch: ElementPatch, mergeKey?: string) => void;
+  /** Quita un elemento (se puede deshacer). */
+  removeElement: (id: string) => void;
+  /**
+   * Quita un texto que se acaba de crear y se dejó vacío, sin dejar rastro en
+   * el historial (como si no se hubiera creado).
+   */
+  discardNewText: (id: string) => void;
   /** Selecciona un elemento y lo trae al frente (null deselecciona). */
   selectElement: (id: string | null) => void;
+  startTextEditing: (id: string) => void;
+  stopTextEditing: () => void;
 
   /** Elige un preset (pincel o borrador). */
   setBrushPreset: (id: BrushPresetId) => void;
@@ -117,28 +146,32 @@ const commit = (
   log: nextLog,
   past: [...past, log].slice(-MAX_HISTORY),
   future: [],
+  lastMergeKey: null,
 });
 
-/**
- * Versión del historial que se restaura con los elementos en su estado
- * ACTUAL. Mover un texto o escribir en él no crea un paso del historial: sin
- * esto, deshacer un trazo devolvería también el texto a como estaba antes.
- */
-const withCurrentElements = (snapshot: LogEntry[], current: LogEntry[]) => {
-  const currentElements = new Map<string, EditorElement>();
-  for (const entry of current) {
-    if (isEditorElement(entry)) currentElements.set(entry.id, entry);
-  }
-  return snapshot.map((entry) =>
-    isEditorElement(entry) ? (currentElements.get(entry.id) ?? entry) : entry
-  );
-};
+const hasElement = (log: LogEntry[], id: string | null) =>
+  id !== null && log.some((entry) => isEditorElement(entry) && entry.id === id);
 
-/** Mantiene la selección solo si el elemento sigue existiendo. */
-const keepSelection = (log: LogEntry[], selectedElementId: string | null) =>
-  log.some((entry) => isEditorElement(entry) && entry.id === selectedElementId)
+/** Mantiene la selección y la edición solo si el elemento sigue existiendo. */
+const keepElementUi = (
+  log: LogEntry[],
+  {
+    selectedElementId,
+    editingTextId,
+  }: Pick<EditorState, "selectedElementId" | "editingTextId">
+) => ({
+  selectedElementId: hasElement(log, selectedElementId)
     ? selectedElementId
-    : null;
+    : null,
+  editingTextId: hasElement(log, editingTextId) ? editingTextId : null,
+});
+
+const patchElement = (log: LogEntry[], id: string, patch: ElementPatch) =>
+  log.map((entry) =>
+    isEditorElement(entry) && entry.id === id
+      ? ({ ...entry, ...patch } as LogEntry)
+      : entry
+  );
 
 export const createInitialState = (): EditorState => ({
   mode: "home",
@@ -149,6 +182,8 @@ export const createInitialState = (): EditorState => ({
   past: [],
   future: [],
   selectedElementId: null,
+  editingTextId: null,
+  lastMergeKey: null,
   brush: createInitialBrushState(),
   gradient: createInitialGradient(),
 });
@@ -213,6 +248,8 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
                 past: [],
                 future: [],
                 selectedElementId: null,
+                editingTextId: null,
+                lastMergeKey: null,
               },
               false,
               "loadBackground"
@@ -228,17 +265,20 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
               "addStroke"
             ),
 
+          // Deshacer y rehacer restauran la versión EXACTA del log: todos los
+          // cambios de los elementos (mover, girar, estilo…) son pasos del
+          // historial.
           undo: () =>
             set(
-              ({ log, past, future, selectedElementId }) => {
-                const previous = past.at(-1);
+              (state) => {
+                const previous = state.past.at(-1);
                 if (!previous) return {};
-                const restored = withCurrentElements(previous, log);
                 return {
-                  log: restored,
-                  past: past.slice(0, -1),
-                  future: [...future, log],
-                  selectedElementId: keepSelection(restored, selectedElementId),
+                  log: previous,
+                  past: state.past.slice(0, -1),
+                  future: [...state.future, state.log],
+                  lastMergeKey: null,
+                  ...keepElementUi(previous, state),
                 };
               },
               false,
@@ -247,15 +287,15 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
 
           redo: () =>
             set(
-              ({ log, past, future, selectedElementId }) => {
-                const next = future.at(-1);
+              (state) => {
+                const next = state.future.at(-1);
                 if (!next) return {};
-                const restored = withCurrentElements(next, log);
                 return {
-                  log: restored,
-                  past: [...past, log].slice(-MAX_HISTORY),
-                  future: future.slice(0, -1),
-                  selectedElementId: keepSelection(restored, selectedElementId),
+                  log: next,
+                  past: [...state.past, state.log].slice(-MAX_HISTORY),
+                  future: state.future.slice(0, -1),
+                  lastMergeKey: null,
+                  ...keepElementUi(next, state),
                 };
               },
               false,
@@ -266,19 +306,28 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             set(
               (state) =>
                 state.log.length
-                  ? { ...commit(state, []), selectedElementId: null }
+                  ? {
+                      ...commit(state, []),
+                      selectedElementId: null,
+                      editingTextId: null,
+                    }
                   : {},
               false,
               "clearLog"
             ),
 
-          addText: () => {
+          addText: (position, fontSize) => {
             const id = createId();
             set(
               (state) => ({
                 ...commit(state, [
                   ...state.log,
-                  createTextElement(id, getMaxZIndex(state.log) + 1),
+                  createTextElement({
+                    id,
+                    zIndex: getMaxZIndex(state.log) + 1,
+                    position,
+                    fontSize,
+                  }),
                 ]),
                 selectedElementId: id,
               }),
@@ -288,13 +337,20 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             return id;
           },
 
-          addImage: (imageUrl) => {
+          addImage: ({ src, width, height, center }) => {
             const id = createId();
             set(
               (state) => ({
                 ...commit(state, [
                   ...state.log,
-                  createImageElement(id, getMaxZIndex(state.log) + 1, imageUrl),
+                  createImageElement({
+                    id,
+                    zIndex: getMaxZIndex(state.log) + 1,
+                    src,
+                    width,
+                    height,
+                    center,
+                  }),
                 ]),
                 selectedElementId: id,
               }),
@@ -304,20 +360,73 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             return id;
           },
 
-          // Editar un elemento no crea un paso del historial (como antes); el
-          // cambio se conserva al deshacer/rehacer gracias a withCurrentElements.
-          updateElement: (id, patch) =>
+          editElement: (id, patch, mergeKey) =>
             set(
-              ({ log }) => ({
-                log: log.map((entry) =>
-                  isEditorElement(entry) && entry.id === id
-                    ? ({ ...entry, ...patch } as LogEntry)
-                    : entry
-                ),
+              (state) => {
+                if (!hasElement(state.log, id)) return {};
+                const log = patchElement(state.log, id, patch);
+                // Mismo cambio que el anterior (p. ej. arrastrando un slider):
+                // se actualiza el último paso en lugar de crear uno nuevo.
+                if (mergeKey && mergeKey === state.lastMergeKey) {
+                  return { log };
+                }
+                return {
+                  ...commit(state, log),
+                  lastMergeKey: mergeKey ?? null,
+                };
+              },
+              false,
+              "editElement"
+            ),
+
+          removeElement: (id) =>
+            set(
+              (state) => {
+                if (!hasElement(state.log, id)) return {};
+                const log = state.log.filter(
+                  (entry) => !(isEditorElement(entry) && entry.id === id)
+                );
+                return { ...commit(state, log), ...keepElementUi(log, state) };
+              },
+              false,
+              "removeElement"
+            ),
+
+          discardNewText: (id) => {
+            const { log, past } = get();
+            const previous = past.at(-1);
+            const last = log.at(-1);
+            const wasJustAdded =
+              previous !== undefined &&
+              previous.length === log.length - 1 &&
+              last !== undefined &&
+              isTextElement(last) &&
+              last.id === id;
+            if (!wasJustAdded) {
+              get().removeElement(id);
+              return;
+            }
+            // Se vuelve a la versión anterior sin pasarla a "rehacer".
+            set(
+              (state) => ({
+                log: previous,
+                past: state.past.slice(0, -1),
+                lastMergeKey: null,
+                ...keepElementUi(previous, state),
               }),
               false,
-              "updateElement"
+              "discardNewText"
+            );
+          },
+
+          startTextEditing: (id) =>
+            set(
+              { editingTextId: id, selectedElementId: id },
+              false,
+              "startTextEditing"
             ),
+          stopTextEditing: () =>
+            set({ editingTextId: null }, false, "stopTextEditing"),
 
           selectElement: (id) => {
             if (id === null || id === get().selectedElementId) {

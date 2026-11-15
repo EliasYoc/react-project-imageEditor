@@ -50,8 +50,9 @@ export default defineConfig([
     },
   },
   {
-    // Código que se reemplaza en las Fases 2 y 4 (Konva): se toca lo mínimo,
-    // así que sus avisos de hooks no bloquean. Desaparece con esas carpetas.
+    // Código que se va a reemplazar (hoy, los styled-components de
+    // components/ui/legacy, que se quitan en la Fase 6): se toca lo mínimo, así
+    // que sus avisos de hooks no bloquean. Desaparece con esas carpetas.
     files: ["**/legacy/**/*.{js,jsx}"],
     rules: hookRulesAsWarnings,
   },

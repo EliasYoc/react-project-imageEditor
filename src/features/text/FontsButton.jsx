@@ -3,33 +3,31 @@ import {
   FixedContainer,
   GlobalButton,
 } from "../../components/ui/legacy/styledComponents";
+import { FONTS, getFont } from "../../editor/elements/fonts";
 import { DEFAULT_TEXT_STYLE } from "../../editor/model/factories";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
-import { FONTS } from "./fonts";
 import { FontBox, FontInput, FontLabel } from "./FontsButton.styles";
 
 const FontsButton = () => {
   const selectedText = useEditorStore(selectSelectedText);
-  const updateElement = useEditorStore((state) => state.updateElement);
+  const editElement = useEditorStore((state) => state.editElement);
   const [isOpen, setIsOpen] = useState(false);
 
   // Derivado en el render: no hace falta un estado + useEffect para esto.
   const isDisabled = selectedText === null;
-  const { fontName, fontFamily } = selectedText ?? DEFAULT_TEXT_STYLE;
+  const { fontId } = selectedText ?? DEFAULT_TEXT_STYLE;
+  const { label: fontName, family: fontFamily } = getFont(fontId);
 
   const handleSelectFont = (font) => {
-    updateElement(selectedText.id, {
-      fontFamily: font.font,
-      fontName: font.label,
-    });
+    editElement(selectedText.id, { fontId: font.id });
     setIsOpen(false);
   };
 
   return (
     <GlobalButton
       onClick={() => setIsOpen(!isOpen)}
-      width="120px"
+      width="96px"
       height="auto"
       fontSize="1rem"
       border="1px solid gray"
@@ -59,14 +57,18 @@ const FontsButton = () => {
           }}
         >
           {FONTS.map((font) => (
-            <FontLabel key={font.id} fontFamily={font.font} htmlFor={font.id}>
+            <FontLabel
+              key={font.id}
+              fontFamily={font.family}
+              htmlFor={`font-${font.id}`}
+            >
               <FontInput
-                checked={fontName === font.label}
+                checked={fontId === font.id}
                 onChange={() => handleSelectFont(font)}
                 name="font"
-                id={font.id}
+                id={`font-${font.id}`}
                 type="radio"
-                value={font.font}
+                value={font.id}
               ></FontInput>
               {font.label}
             </FontLabel>

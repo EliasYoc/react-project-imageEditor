@@ -40,14 +40,15 @@ src/
     store/      Store de Zustand: la única fuente de verdad del documento y su historial
     engine/     Motor puro, sin React ni Konva: vista, raster con checkpoints, puntero
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, estabilizador, presets
-    stage/      Lienzo con Konva (react-konva) y entrada del puntero
+    elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
+    stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
   components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton, Slider…)
   styles/       tokens.css (colores, espacios, capas), CSS global y fuentes
   lib/          Utilidades puras
 ```
 
-Las carpetas `legacy/` contienen código que se va a reemplazar (textos e imágenes con react-moveable y html2canvas, que pasan a Konva en la Fase 4): se tocan lo mínimo y sus avisos de hooks no bloquean el lint.
+Las carpetas `legacy/` contienen código que se va a reemplazar (hoy solo los styled-components de `components/ui/legacy`, que se quitan en la Fase 6): se tocan lo mínimo y sus avisos de hooks no bloquean el lint.
 
 ## Cómo funciona el lienzo
 
@@ -55,6 +56,7 @@ Las carpetas `legacy/` contienen código que se va a reemplazar (textos e imáge
 - Un **trazo es un vector** (puntos con presión + pincel). La pantalla muestra un raster en caché (`PaintRaster`) que se pone al día solo cuando cambia el store; al exportar, los trazos se vuelven a pintar a la resolución de la foto original.
 - **Deshacer/rehacer** guarda versiones del log (que es inmutable, así que solo copia referencias). El raster guarda una copia cada 20 trazos para no repintar todo al deshacer.
 - La entrada usa **Pointer Events** (ratón, dedo y lápiz con el mismo código). `editor/stage/useStageInput.ts` decide si un puntero dibuja, desplaza o hace zoom.
+- Los **textos e imágenes** también son nodos de Konva en coordenadas del documento (posición, giro y escala). `editor/elements/nodeConfig.ts` traduce cada elemento a Konva; lo usan el lienzo y la exportación, así que lo que se ve es lo que se exporta (texto vectorial, nítido a la resolución de la foto). Mover, girar, escalar o cambiar el estilo de un elemento es un paso del historial.
 - La **vista** (zoom y desplazamiento) vive en su propio store (`editor/stage/viewStore.ts`): no es parte del dibujo ni del historial.
 
 ## Pinceles
@@ -72,17 +74,19 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 
 ## Uso
 
-| Acción                | Ratón / teclado                                          | Pantalla táctil           |
-| --------------------- | -------------------------------------------------------- | ------------------------- |
-| Dibujar               | Clic izquierdo y arrastrar                               | Un dedo o el lápiz        |
-| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / − | Pellizcar con dos dedos   |
-| Desplazar             | Rueda, espacio + arrastrar o botón central               | Arrastrar con dos dedos   |
-| Ajustar a la pantalla | Ctrl/⌘ + 0                                               | Doble toque con dos dedos |
-| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera    |
-| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)    | Barra inferior            |
-| Tamaño del pincel     | [ / ] (o el slider lateral)                              | Slider lateral            |
+| Acción                | Ratón / teclado                                          | Pantalla táctil                |
+| --------------------- | -------------------------------------------------------- | ------------------------------ |
+| Dibujar               | Clic izquierdo y arrastrar                               | Un dedo o el lápiz             |
+| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / − | Pellizcar con dos dedos        |
+| Desplazar             | Rueda, espacio + arrastrar o botón central               | Arrastrar con dos dedos        |
+| Ajustar a la pantalla | Ctrl/⌘ + 0                                               | Doble toque con dos dedos      |
+| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera         |
+| Editar un texto       | Doble clic, o clic en un texto ya seleccionado           | Tocar un texto ya seleccionado |
+| Eliminar un elemento  | Supr / Retroceso (modo Texto)                            | Botón de la papelera           |
+| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)    | Barra inferior                 |
+| Tamaño del pincel     | [ / ] (o el slider lateral)                              | Slider lateral                 |
 
-El zoom solo está en modo Dibujar: en modo Texto el lienzo se ve ajustado (los textos pasan a Konva en la Fase 4) y al volver a Dibujar se recupera el zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
+El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 
 ## Estilos
 

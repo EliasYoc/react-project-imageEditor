@@ -31,7 +31,7 @@ describe("getShortcutAction", () => {
     });
   });
 
-  it("zoom con Ctrl + 0, = y − solo en modo Dibujar", () => {
+  it("zoom con Ctrl + 0, = y − en modo Dibujar y en modo Texto", () => {
     expect(getShortcutAction(key("0", { ctrlKey: true }), "draw")).toEqual({
       type: "fit",
     });
@@ -41,7 +41,22 @@ describe("getShortcutAction", () => {
     expect(getShortcutAction(key("-", { ctrlKey: true }), "draw")).toEqual({
       type: "zoomOut",
     });
-    expect(getShortcutAction(key("0", { ctrlKey: true }), "text")).toBeNull();
+    expect(getShortcutAction(key("0", { ctrlKey: true }), "text")).toEqual({
+      type: "fit",
+    });
+  });
+
+  it("en modo Texto, Supr y Retroceso eliminan y Escape quita la selección", () => {
+    expect(getShortcutAction(key("Delete"), "text")).toEqual({
+      type: "deleteElement",
+    });
+    expect(getShortcutAction(key("Backspace"), "text")).toEqual({
+      type: "deleteElement",
+    });
+    expect(getShortcutAction(key("Escape"), "text")).toEqual({
+      type: "deselect",
+    });
+    expect(getShortcutAction(key("Delete"), "draw")).toBeNull();
   });
 
   it("B y E alternan pincel y borrador solo en modo Dibujar y sin modificadores", () => {

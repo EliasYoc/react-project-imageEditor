@@ -24,6 +24,12 @@ const run = (action: ShortcutAction) => {
       return editor.selectDrawBrush();
     case "eraser":
       return editor.selectEraser();
+    case "deleteElement": {
+      const { selectedElementId, removeElement } = editor;
+      return selectedElementId ? removeElement(selectedElementId) : undefined;
+    }
+    case "deselect":
+      return editor.selectElement(null);
     case "brushSize": {
       const { size } = selectCurrentBrush(editor);
       const scaled = Math.round(size * action.factor);

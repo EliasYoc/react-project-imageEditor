@@ -37,13 +37,20 @@ type Gesture =
 
 interface StageInputOptions {
   containerRef: RefObject<HTMLDivElement | null>;
-  /** Solo en modo Dibujar. */
-  enabled: boolean;
+  /** Dibujar con un dedo, el ratón o el lápiz (modo Dibujar). */
+  canDraw: boolean;
+  /** Zoom y desplazamiento (modo Dibujar y modo Texto). */
+  canNavigate: boolean;
   liveCanvas: HTMLCanvasElement;
   liveNodeRef: RefObject<KonvaImageNode | null>;
   /** Grupo de Konva con los círculos que marcan el tamaño del pincel. */
   cursorRef: RefObject<KonvaGroup | null>;
   requestDraw: () => void;
+  /**
+   * Empieza un pellizco: en modo Texto hay que soltar el elemento que Konva
+   * estuviera arrastrando con el primer dedo.
+   */
+  onPinchStart?: () => void;
 }
 
 const midpoint = (a: Point, b: Point): Point => ({
@@ -68,15 +75,17 @@ const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
  */
 export function useStageInput({
   containerRef,
-  enabled,
+  canDraw,
+  canNavigate,
   liveCanvas,
   liveNodeRef,
   cursorRef,
   requestDraw,
+  onPinchStart,
 }: StageInputOptions) {
   useEffect(() => {
     const container = containerRef.current;
-    if (!enabled || !container) return;
+    if ((!canDraw && !canNavigate) || !container) return;
 
     const strokes = createStrokeSession({
       liveCanvas,
@@ -104,7 +113,7 @@ export function useStageInput({
 
     const showBrushCursor = (point: Point) => {
       const cursor = cursorRef.current;
-      if (!cursor) return;
+      if (!cursor || !canDraw) return;
       const { brush } = editorStore.getState();
       const { view } = viewStore.getState();
       const radius = Math.max(
@@ -215,7 +224,10 @@ export function useStageInput({
             strokes.cancel();
             gesture = { kind: "idle" };
           }
-          if (gesture.kind === "idle") startPinch();
+          if (gesture.kind === "idle" && canNavigate) {
+            onPinchStart?.();
+            startPinch();
+          }
           return;
         }
         if (touches.size > 2) return;
@@ -224,7 +236,9 @@ export function useStageInput({
       if (gesture.kind !== "idle") return;
 
       // Desplazar: botón central, o espacio + botón principal.
-      if (event.button === 1 || (event.button === 0 && isSpaceDown)) {
+      const wantsPan =
+        event.button === 1 || (event.button === 0 && isSpaceDown);
+      if (wantsPan && canNavigate) {
         event.preventDefault();
         capture(event.pointerId);
         gesture = { kind: "panning", pointerId: event.pointerId, last: point };
@@ -233,8 +247,9 @@ export function useStageInput({
         return;
       }
 
-      // Dibujar: solo el botón principal (clic izquierdo, dedo, punta del lápiz).
-      if (event.button !== 0) return;
+      // Dibujar: solo el botón principal (clic izquierdo, dedo, punta del
+      // lápiz). En modo Texto ese puntero es de Konva (seleccionar, arrastrar).
+      if (event.button !== 0 || !canDraw) return;
       event.preventDefault();
       capture(event.pointerId);
       if (event.pointerType === "pen") isPenDown = true;
@@ -308,6 +323,7 @@ export function useStageInput({
     // ------------------------------------------------ rueda y teclado
 
     const onWheel = (event: WheelEvent) => {
+      if (!canNavigate) return;
       // Sin esto, Ctrl + rueda haría zoom de toda la página.
       event.preventDefault();
       measure();
@@ -329,6 +345,7 @@ export function useStageInput({
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (!canNavigate) return;
       if (event.code !== "Space" || isTypingTarget(event.target)) return;
       // Si un botón tiene el foco y el puntero no está sobre el lienzo, el
       // espacio es para el botón (navegación con teclado).
@@ -385,5 +402,14 @@ export function useStageInput({
       hideBrushCursor();
       setPanCursor(null);
     };
-  }, [containerRef, enabled, liveCanvas, liveNodeRef, cursorRef, requestDraw]);
+  }, [
+    containerRef,
+    canDraw,
+    canNavigate,
+    liveCanvas,
+    liveNodeRef,
+    cursorRef,
+    requestDraw,
+    onPinchStart,
+  ]);
 }

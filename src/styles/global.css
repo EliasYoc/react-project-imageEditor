@@ -26,3 +26,27 @@ code {
   padding: 0;
   box-sizing: border-box;
 }
+
+/* Entrada de la barra de inicio (desde abajo) y de la cabecera (desde arriba). */
+.animationAppearUp {
+  animation: appearUp 0.5s ease;
+}
+@keyframes appearUp {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.animationAppearDown {
+  animation: appearDown 0.5s ease;
+}
+@keyframes appearDown {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}

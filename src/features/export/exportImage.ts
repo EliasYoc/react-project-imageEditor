@@ -1,12 +1,11 @@
 import { paintStroke } from "../../editor/engine/brushes/paint";
-import { viewStore } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
 import { selectElements, selectStrokes } from "../../editor/store/selectors";
 import type { Background, Size } from "../../editor/model/types";
 import { canvasToBlob, createCanvas, get2dContext } from "../../lib/canvas";
 import { getDownloadFileName } from "../../lib/helper";
 import { saveImage } from "../../lib/saveImage";
-import { drawDomElements } from "./legacy/drawDomElements";
+import { renderElements } from "./renderElements";
 
 /** Tamaño real de la imagen de fondo (la original, no la del lienzo). */
 const sourceSize = (source: NonNullable<Background["source"]>): Size =>
@@ -14,37 +13,14 @@ const sourceSize = (source: NonNullable<Background["source"]>): Size =>
     ? { width: source.naturalWidth, height: source.naturalHeight }
     : { width: source.width, height: source.height };
 
-const nextFrame = () =>
-  new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-
-/**
- * Ejecuta `task` con la vista ajustada a pantalla y después devuelve el zoom
- * que había. html2canvas no se lleva bien con elementos dentro de una capa
- * escalada con CSS: así los textos e imágenes se miden y rasterizan sin zoom.
- */
-const withFittedView = async <T>(task: () => Promise<T>) => {
-  const { view, isFitted } = viewStore.getState();
-  // Fuera del modo Dibujar la vista ya se muestra ajustada.
-  if (isFitted || editorStore.getState().mode !== "draw") return task();
-  viewStore.getState().fitToScreen();
-  // Un frame para que React aplique la vista nueva y otro para el layout.
-  await nextFrame();
-  await nextFrame();
-  try {
-    return await task();
-  } finally {
-    viewStore.getState().setView(view);
-  }
-};
-
 /**
  * Compone la imagen final a la resolución de la foto original:
  * 1. el fondo (la foto completa, o blanco);
  * 2. los trazos, pintados de nuevo desde sus vectores a esa resolución (antes
  *    se estiraba el canvas reducido y salían borrosos);
- * 3. los textos e imágenes (legacy: html2canvas hasta la Fase 4).
+ * 3. los textos e imágenes, con Konva y también a esa resolución.
  */
-export const renderDocument = async (documentFrame: HTMLElement | null) => {
+export const renderDocument = async () => {
   const state = editorStore.getState();
   const { background, canvasSize } = state;
   const output = background.source ? sourceSize(background.source) : canvasSize;
@@ -74,8 +50,9 @@ export const renderDocument = async (documentFrame: HTMLElement | null) => {
   ctx.drawImage(paint, 0, 0);
 
   const elements = selectElements(state);
-  if (elements.length && documentFrame) {
-    await withFittedView(() => drawDomElements(ctx, elements, documentFrame));
+  if (elements.length) {
+    const layer = await renderElements(elements, canvasSize, output);
+    ctx.drawImage(layer, 0, 0, canvas.width, canvas.height);
   }
 
   return canvas;
@@ -85,15 +62,9 @@ export const renderDocument = async (documentFrame: HTMLElement | null) => {
  * Compone la imagen con el formato del archivo original y la entrega: hoja de
  * compartir en el móvil o descarga en el escritorio.
  */
-export const exportImage = async ({
-  fileName,
-  documentFrame,
-}: {
-  fileName: string;
-  documentFrame: HTMLElement | null;
-}) => {
+export const exportImage = async ({ fileName }: { fileName: string }) => {
   const { background } = editorStore.getState();
-  const canvas = await renderDocument(documentFrame);
+  const canvas = await renderDocument();
   const mimeType = (background.source && background.mimeType) || "image/png";
   // Si el navegador no soporta el formato original (p. ej. GIF), toBlob
   // devuelve PNG: la extensión se calcula con el tipo real del blob.
