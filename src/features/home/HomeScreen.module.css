@@ -1,0 +1,173 @@
+/* Ocupa el área del lienzo (que se oculta en el inicio) y centra la tarjeta. */
+.home {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-toolbar);
+  display: grid;
+  place-items: center;
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: min(100%, 520px);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-strong);
+  box-shadow: var(--shadow-panel);
+  animation: appear 0.3s ease;
+}
+
+.intro {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.title {
+  color: var(--color-text-strong);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.subtitle {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+/* Botones grandes de ancho completo (cómodos para el dedo). */
+.card .action {
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 52px;
+  margin: 0;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-active);
+  font-size: var(--font-size-md);
+}
+
+.card .primaryAction {
+  color: var(--color-primary-text);
+}
+
+.card .action svg {
+  font-size: 1.25rem;
+}
+
+.open {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.hint {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.blank {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sectionTitle {
+  color: var(--color-text-active);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-2);
+}
+
+.preset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-active);
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.preset:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .preset:hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.preset:active {
+  background: var(--color-surface-active);
+}
+
+/* La forma del lienzo, dentro de un cuadro fijo. */
+.shapeBox {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+}
+
+.shape {
+  border: 2px solid currentColor;
+  border-radius: 3px;
+}
+
+.presetLabel {
+  font-size: 13px;
+}
+
+.presetSize {
+  color: var(--color-text);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Aviso mientras se arrastra un archivo sobre la ventana. */
+.dropOverlay {
+  position: fixed;
+  inset: var(--space-3);
+  z-index: var(--z-dialog);
+  display: grid;
+  place-items: center;
+  border: 3px dashed var(--color-text-active);
+  border-radius: var(--radius-md);
+  background: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-strong);
+  font-size: 1.25rem;
+  pointer-events: none;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+}

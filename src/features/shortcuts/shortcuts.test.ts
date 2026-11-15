@@ -79,6 +79,18 @@ describe("getShortcutAction", () => {
     ).toMatchObject({ type: "brushSize", factor: 0.8 });
   });
 
+  it("Ctrl/⌘ + S exporta y ? abre la lista de atajos, en los dos modos", () => {
+    for (const mode of ["draw", "text"] as const) {
+      expect(getShortcutAction(key("s", { ctrlKey: true }), mode)).toEqual({
+        type: "export",
+      });
+      expect(getShortcutAction(key("?", { shiftKey: true }), mode)).toEqual({
+        type: "showShortcuts",
+      });
+    }
+    expect(getShortcutAction(key("s", { metaKey: true }), "home")).toBeNull();
+  });
+
   it("no hace nada en la pantalla de inicio ni con Alt", () => {
     expect(getShortcutAction(key("z", { ctrlKey: true }), "home")).toBeNull();
     expect(

@@ -69,4 +69,13 @@ export const selectBrushColor = (state: EditorStore) => state.brush.color;
 export const selectIsEditorOpen = (state: EditorStore) => state.mode !== "home";
 
 export const selectCanUndo = (state: EditorStore) => state.past.length > 0;
+
+/**
+ * El documento tiene algo que se perdería al empezar otro: dibujo, textos o
+ * imágenes, una foto o una capa de color.
+ */
+export const selectHasDocumentContent = (state: EditorStore) =>
+  state.log.length > 0 ||
+  state.photo.source !== null ||
+  state.backdrop.fill !== null;
 export const selectCanRedo = (state: EditorStore) => state.future.length > 0;

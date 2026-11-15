@@ -203,6 +203,8 @@ export interface Photo {
   preview: HTMLCanvasElement | null;
   /** Tipo MIME con el que se exporta (el del archivo original). */
   mimeType: string | null;
+  /** Nombre del archivo original, sin extensión (para sugerir al exportar). */
+  fileName: string | null;
 }
 
 // ---------------------------------------------------------------- capa de color
