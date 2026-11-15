@@ -6,7 +6,8 @@ import DrawingTools from "../features/drawing/DrawingTools";
 import ModeSwitcher from "../features/drawing/ModeSwitcher";
 import SizeSlider from "../features/drawing/SizeSlider";
 import EditorHeader from "../features/editor-header/EditorHeader";
-import HomeToolbar from "../features/home/HomeToolbar";
+import HomeScreen from "../features/home/HomeScreen";
+import { usePreventFileDropNavigation } from "../features/home/useImageDrop";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
 import TextToolbar from "../features/text/TextToolbar";
 import ZoomControls from "../features/zoom/ZoomControls";
@@ -25,6 +26,9 @@ const STATUS_LABELS = {
  * fondo, la pintura, los textos y las imágenes. Encima, el slider de tamaño
  * (borde izquierdo) y el zoom (derecha). El selector de modo va abajo en el móvil
  * (al alcance del pulgar) y en la cabecera en escritorio.
+ *
+ * En el inicio el lienzo se oculta (sigue montado: el documento y sus rasters
+ * no se pierden) y se muestra la pantalla de inicio.
  */
 function App() {
   const mode = useEditorStore((state) => state.mode);
@@ -32,6 +36,7 @@ function App() {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const isEditorOpen = mode !== "home";
   useKeyboardShortcuts();
+  usePreventFileDropNavigation();
 
   return (
     <TooltipProvider>
@@ -41,14 +46,16 @@ function App() {
         )}
 
         <main className={styles.stage}>
-          <EditorStage />
+          <div className={styles.canvas} hidden={!isEditorOpen}>
+            <EditorStage />
+          </div>
           {isEditorOpen ? (
             <>
               <SizeSlider />
               <ZoomControls />
             </>
           ) : (
-            <HomeToolbar />
+            <HomeScreen />
           )}
         </main>
 
