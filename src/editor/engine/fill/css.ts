@@ -12,15 +12,20 @@ const cssStops = (stops: readonly ColorStop[]) =>
 /**
  * El mismo degradado en CSS. Como el motor usa la geometría de CSS, una
  * vista previa con este `background` se ve igual que el lienzo.
+ *
+ * `radialShape`: el fondo usa la elipse de CSS; el texto, un círculo.
  */
-export const gradientToCss = (gradient: Gradient) => {
+export const gradientToCss = (
+  gradient: Gradient,
+  radialShape: "ellipse" | "circle" = "ellipse"
+) => {
   const stops = cssStops(gradient.stops);
   const at = `${percent(gradient.center.x)} ${percent(gradient.center.y)}`;
   switch (gradient.type) {
     case "linear":
       return `linear-gradient(${gradient.angle}deg, ${stops})`;
     case "radial":
-      return `radial-gradient(ellipse farthest-corner at ${at}, ${stops})`;
+      return `radial-gradient(${radialShape} farthest-corner at ${at}, ${stops})`;
     case "conic":
       return `conic-gradient(from ${gradient.angle}deg at ${at}, ${stops})`;
   }

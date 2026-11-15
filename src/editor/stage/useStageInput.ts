@@ -42,7 +42,9 @@ interface StageInputOptions {
   /** Zoom y desplazamiento (modo Dibujar y modo Texto). */
   canNavigate: boolean;
   liveCanvas: HTMLCanvasElement;
+  /** Nodos del trazo en curso en la capa de pintura y en la del resaltador. */
   liveNodeRef: RefObject<KonvaImageNode | null>;
+  highlightLiveNodeRef: RefObject<KonvaImageNode | null>;
   /** Grupo de Konva con los círculos que marcan el tamaño del pincel. */
   cursorRef: RefObject<KonvaGroup | null>;
   requestDraw: () => void;
@@ -79,6 +81,7 @@ export function useStageInput({
   canNavigate,
   liveCanvas,
   liveNodeRef,
+  highlightLiveNodeRef,
   cursorRef,
   requestDraw,
   onPinchStart,
@@ -89,7 +92,10 @@ export function useStageInput({
 
     const strokes = createStrokeSession({
       liveCanvas,
-      liveNode: liveNodeRef.current,
+      liveNodes: {
+        paint: liveNodeRef.current,
+        highlight: highlightLiveNodeRef.current,
+      },
       requestDraw,
     });
     /** Dedos apoyados, en coordenadas del área del lienzo. */
@@ -408,6 +414,7 @@ export function useStageInput({
     canNavigate,
     liveCanvas,
     liveNodeRef,
+    highlightLiveNodeRef,
     cursorRef,
     requestDraw,
     onPinchStart,

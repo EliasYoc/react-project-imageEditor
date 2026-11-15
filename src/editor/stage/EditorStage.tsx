@@ -27,7 +27,7 @@ import { createCanvas, get2dContext } from "../../lib/canvas";
 import { PaintRaster } from "../engine/PaintRaster";
 import { paintFill } from "../engine/fill/paintFill";
 import { editorStore, useEditorStore } from "../store/editorStore";
-import { selectStrokes } from "../store/selectors";
+import { selectStrokeLayers } from "../store/selectors";
 import styles from "./EditorStage.module.css";
 import ElementsLayer from "./ElementsLayer";
 import TextEditorOverlay from "./TextEditorOverlay";
@@ -37,13 +37,16 @@ import { useViewStore, viewStore } from "./viewStore";
 /**
  * Lienzo del editor con Konva.
  *
- * Dos capas (cada Layer de Konva es su propio <canvas>):
- * - fondo: la foto o un rectángulo blanco;
+ * Tres capas (cada Layer de Konva es su propio <canvas>):
+ * - fondo: la foto o un rectángulo blanco, y la capa de color o degradado;
+ * - resaltador: sus trazos, en un raster aparte cuyo <canvas> se MULTIPLICA
+ *   con el fondo (`mix-blend-mode`): tiñe la foto como un rotulador real;
  * - pintura: los trazos terminados (raster en caché) y el trazo en curso.
  *   Al estar separadas, el borrador quita pintura sin tocar la foto.
  *
- * Encima, los textos e imágenes (ElementsLayer) y una capa sin transformar
- * con el círculo del tamaño del pincel.
+ * Encima, los textos e imágenes (ElementsLayer) y su capa sin transformar,
+ * con el marco de selección y el círculo del tamaño del pincel. En total
+ * cinco capas: Konva recomienda no pasar de ahí (cada una es un <canvas>).
  *
  * Todas las capas del documento se dibujan con la transformación de la vista
  * (posición y escala), así que todo se guarda en coordenadas del documento.
@@ -52,8 +55,10 @@ const EditorStage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<KonvaStage>(null);
   const paintLayerRef = useRef<KonvaLayer>(null);
+  const highlightLayerRef = useRef<KonvaLayer>(null);
   const backgroundLayerRef = useRef<KonvaLayer>(null);
   const liveNodeRef = useRef<KonvaImageNode>(null);
+  const highlightLiveNodeRef = useRef<KonvaImageNode>(null);
   const cursorRef = useRef<KonvaGroup>(null);
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
@@ -64,15 +69,30 @@ const EditorStage = () => {
   const stageSize = useViewStore((state) => state.stageSize);
   const view = useViewStore((state) => state.view);
 
-  // Un raster y un canvas para el trazo en curso por cada tamaño de documento.
+  // Un raster por capa de trazos y un canvas para el trazo en curso por cada
+  // tamaño de documento.
   const raster = useMemo(() => new PaintRaster(canvasSize), [canvasSize]);
+  const highlightRaster = useMemo(
+    () => new PaintRaster(canvasSize),
+    [canvasSize]
+  );
   const liveCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
   // Capa de color o degradado: un canvas por tamaño de documento que se
   // repinta al cambiar (no se crea uno nuevo en cada movimiento de un control).
   const fillCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
 
   // batchDraw agrupa las peticiones y pinta una sola vez por frame.
-  const requestDraw = useCallback(() => paintLayerRef.current?.batchDraw(), []);
+  const requestDraw = useCallback(() => {
+    paintLayerRef.current?.batchDraw();
+    highlightLayerRef.current?.batchDraw();
+  }, []);
+
+  useLayoutEffect(function multiplyHighlightLayer() {
+    // El <canvas> de la capa se multiplica con lo que tiene debajo (el fondo):
+    // el blanco no cambia nada y el color tiñe la foto sin taparla.
+    const canvas = highlightLayerRef.current?.getNativeCanvasElement();
+    if (canvas) canvas.style.mixBlendMode = "multiply";
+  }, []);
 
   useLayoutEffect(function measureStage() {
     const container = containerRef.current;
@@ -97,7 +117,11 @@ const EditorStage = () => {
       // Fuera de React: los trazos no pasan por el render, el raster se pone
       // al día directamente cuando cambia el documento (dibujar, deshacer...).
       const sync = () => {
-        raster.sync(selectStrokes(editorStore.getState()));
+        const { paint, highlight } = selectStrokeLayers(editorStore.getState());
+        raster.sync(paint);
+        highlightRaster.sync(highlight);
+        // Sin resaltador, su capa no se compone (ni se multiplica) en cada frame.
+        highlightLayerRef.current?.visible(highlight.length > 0);
         requestDraw();
       };
       sync();
@@ -105,7 +129,7 @@ const EditorStage = () => {
         if (state.log !== previous.log) sync();
       });
     },
-    [raster, requestDraw]
+    [raster, highlightRaster, requestDraw]
   );
 
   // Un pellizco suelta el elemento que Konva estuviera arrastrando.
@@ -133,6 +157,7 @@ const EditorStage = () => {
     canNavigate: isDrawing || isEditingElements,
     liveCanvas,
     liveNodeRef,
+    highlightLiveNodeRef,
     cursorRef,
     requestDraw,
     onPinchStart: stopElementDrags,
@@ -191,6 +216,20 @@ const EditorStage = () => {
             globalCompositeOperation={preview ? backdrop.blend : "source-over"}
           />
         </Layer>
+        <Layer ref={highlightLayerRef} {...documentTransform}>
+          <KonvaImage
+            image={highlightRaster.canvas}
+            width={canvasSize.width}
+            height={canvasSize.height}
+          />
+          <KonvaImage
+            ref={highlightLiveNodeRef}
+            image={liveCanvas}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            visible={false}
+          />
+        </Layer>
         <Layer ref={paintLayerRef} {...documentTransform}>
           <KonvaImage
             image={raster.canvas}
@@ -204,18 +243,21 @@ const EditorStage = () => {
             height={canvasSize.height}
           />
         </Layer>
-        <ElementsLayer view={view} interactive={isEditingElements} />
-        <Layer listening={false}>
-          {/* Dos círculos (blanco y negro) para que se vea sobre cualquier color. */}
-          <Group ref={cursorRef} visible={false}>
-            <Circle
-              radius={1}
-              stroke="rgba(255, 255, 255, 0.9)"
-              strokeWidth={3}
-            />
-            <Circle radius={1} stroke="rgba(0, 0, 0, 0.9)" strokeWidth={1} />
-          </Group>
-        </Layer>
+        <ElementsLayer
+          view={view}
+          interactive={isEditingElements}
+          overlay={
+            // Dos círculos (blanco y negro) para que se vea sobre cualquier color.
+            <Group ref={cursorRef} visible={false} listening={false}>
+              <Circle
+                radius={1}
+                stroke="rgba(255, 255, 255, 0.9)"
+                strokeWidth={3}
+              />
+              <Circle radius={1} stroke="rgba(0, 0, 0, 0.9)" strokeWidth={1} />
+            </Group>
+          }
+        />
       </Stage>
       <TextEditorOverlay />
     </div>
