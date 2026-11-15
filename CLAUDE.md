@@ -2,7 +2,7 @@
 
 Estas reglas las decidió el dueño del proyecto y están por encima de cualquier costumbre por defecto. Si una tarea choca con ellas, pregunta antes de seguir.
 
-## 1. La interfaz no se cambia sin permiso
+## 1. La interfaz que ya ha sido creada antes no se cambia sin permiso
 
 - **No cambies el aspecto ni el comportamiento visible de la UI** a menos que tú lo propongas y el dueño lo apruebe de forma explícita. Esto incluye:
   - diseño, colores, tamaños, iconos y animaciones o transiciones;
