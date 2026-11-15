@@ -1,12 +1,18 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
 import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
 import BrushLibrary from "./BrushLibrary";
+import {
+  PREVIEW_SIZE,
+  previewPoints,
+  previewStroke,
+  previewStrokeSize,
+} from "./previewStroke";
 import { SLIDER_STEPS, sizeToSlider, sliderToSize } from "./sizeScale";
 
 describe("escala del slider de tamaño", () => {
@@ -43,14 +49,83 @@ describe("BrushLibrary", () => {
       "aria-pressed",
       "true"
     );
-    expect(screen.getAllByRole("button")).toHaveLength(9);
+    expect(
+      screen.getAllByRole("button", { pressed: false }).length +
+        screen.getAllByRole("button", { pressed: true }).length
+    ).toBe(9);
   });
 
-  it("elegir un pincel lo activa y avisa (para cerrar la hoja)", async () => {
-    const onSelect = vi.fn();
-    render(<BrushLibrary onSelect={onSelect} />);
+  it("elegir un pincel lo activa y muestra sus ajustes", async () => {
+    render(<BrushLibrary />);
     await userEvent.click(screen.getByRole("button", { name: "Tiza" }));
     expect(editorStore.getState().brush.presetId).toBe("chalk");
-    expect(onSelect).toHaveBeenCalled();
+    expect(
+      screen.getByRole("region", { name: "Ajustes de Tiza" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("slider", { name: "Tamaño" })).toHaveAttribute(
+      "aria-valuetext",
+      "40 px"
+    );
+  });
+
+  it("cada pincel tiene su vista previa (oculta a los lectores de pantalla)", () => {
+    const { container } = render(<BrushLibrary />);
+    const previews = container.querySelectorAll('canvas[aria-hidden="true"]');
+    expect(previews).toHaveLength(9);
+  });
+
+  it("los sliders cambian los ajustes solo del pincel actual", () => {
+    render(<BrushLibrary />);
+    fireEvent.change(screen.getByRole("slider", { name: "Opacidad" }), {
+      target: { value: "35" },
+    });
+    fireEvent.change(screen.getByRole("slider", { name: "Estabilización" }), {
+      target: { value: "80" },
+    });
+    const { settings } = editorStore.getState().brush;
+    expect(settings.pen).toMatchObject({ opacity: 0.35, stabilizer: 0.8 });
+    expect(settings.marker.opacity).toBe(1);
+    expect(screen.getByRole("slider", { name: "Opacidad" })).toHaveAttribute(
+      "aria-valuetext",
+      "35 %"
+    );
+  });
+});
+
+describe("vista previa de los pinceles", () => {
+  it("es una curva en S dentro de la tarjeta, con presión que sube y baja", () => {
+    const points = previewPoints();
+    for (const { x, y } of points) {
+      expect(x).toBeGreaterThan(0);
+      expect(x).toBeLessThan(PREVIEW_SIZE.width);
+      expect(y).toBeGreaterThan(0);
+      expect(y).toBeLessThan(PREVIEW_SIZE.height);
+    }
+    const pressures = points.map((p) => p.pressure);
+    const middle = pressures[Math.floor(pressures.length / 2)];
+    expect(middle).toBeGreaterThan(pressures[0]);
+    expect(middle).toBeGreaterThan(pressures.at(-1)!);
+  });
+
+  it("reduce el tamaño para que quepa, conservando el orden", () => {
+    const sizes = [1, 6, 16, 40, 120, 200].map(previewStrokeSize);
+    for (let i = 1; i < sizes.length; i++) {
+      expect(sizes[i]).toBeGreaterThan(sizes[i - 1]);
+    }
+    expect(sizes.at(-1)).toBeLessThan(PREVIEW_SIZE.height / 2);
+  });
+
+  it("usa los ajustes y el color del preset, con presión", () => {
+    const stroke = previewStroke(
+      "marker",
+      { size: 40, opacity: 0.5, stabilizer: 0 },
+      { r: 1, g: 2, b: 3, a: 1 }
+    );
+    expect(stroke).toMatchObject({
+      brush: "marker",
+      opacity: 0.5,
+      hasPressure: true,
+      color: { r: 1, g: 2, b: 3 },
+    });
   });
 });
