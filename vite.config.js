@@ -66,6 +66,8 @@ export default defineConfig({
     outDir: "build",
   },
   test: {
+    // Solo los tests unitarios: los e2e (carpeta e2e/) son de Playwright.
+    include: ["src/**/*.test.{js,jsx,ts,tsx}"],
     environment: "jsdom",
     globals: true,
     setupFiles: "./src/setupTests.ts",

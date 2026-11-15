@@ -7,7 +7,8 @@ import tseslint from "typescript-eslint";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["build", "coverage"]),
+  // Lo que genera Playwright (informes y resultados) no se revisa.
+  globalIgnores(["build", "coverage", "playwright-report", "test-results"]),
   {
     files: ["**/*.{js,jsx}"],
     extends: [
