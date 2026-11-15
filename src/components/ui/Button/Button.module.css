@@ -59,3 +59,44 @@
   height: var(--size-touch);
   font-size: var(--font-size-icon);
 }
+
+/* Los iconos (lucide o SVG propios) se dibujan al tamaño del texto. */
+.button svg {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+}
+
+/* Acción principal: rellena, con buen contraste. */
+.primary {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-primary);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}
+
+.button.primary:active:not(:disabled) {
+  background: var(--color-primary);
+  filter: brightness(0.9);
+}
+
+@media (hover: hover) {
+  .button.primary:hover:not(:disabled) {
+    background: var(--color-primary);
+    filter: brightness(1.1);
+  }
+}
+
+.danger {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-danger);
+  color: var(--color-primary-text);
+  font-weight: 600;
+}
+
+@media (hover: hover) {
+  .button.danger:hover:not(:disabled) {
+    background: var(--color-danger);
+    filter: brightness(1.1);
+  }
+}

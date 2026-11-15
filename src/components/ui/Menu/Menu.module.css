@@ -1,0 +1,58 @@
+.content {
+  z-index: var(--z-popover);
+  min-width: 220px;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-strong);
+  box-shadow: var(--shadow-panel);
+  animation: fadeIn 0.12s ease;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-active);
+  font-size: var(--font-size-sm);
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Radix marca la opción con foco (teclado o ratón) con data-highlighted. */
+.item[data-highlighted] {
+  background: var(--color-surface-active);
+  color: var(--color-text-strong);
+}
+
+.item[data-danger] {
+  color: var(--color-danger);
+}
+
+.item[data-disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    animation: none;
+  }
+}
