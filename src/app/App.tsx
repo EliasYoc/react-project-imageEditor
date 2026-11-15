@@ -9,6 +9,7 @@ import SizeSlider from "../features/drawing/SizeSlider";
 import EditorHeader from "../features/editor-header/EditorHeader";
 import HomeScreen from "../features/home/HomeScreen";
 import { usePreventFileDropNavigation } from "../features/home/useImageDrop";
+import ShortcutsDialog from "../features/shortcuts/ShortcutsDialog";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
 import TextToolbar from "../features/text/TextToolbar";
 import ZoomControls from "../features/zoom/ZoomControls";
@@ -80,6 +81,7 @@ function App() {
 
         {status !== "idle" && <Spinner label={STATUS_LABELS[status]} />}
         <Toaster />
+        {isEditorOpen && <ShortcutsDialog />}
       </div>
     </TooltipProvider>
   );

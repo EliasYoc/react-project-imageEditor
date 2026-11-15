@@ -40,18 +40,20 @@ const ExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
 const ExportForm = ({ onDone }: { onDone: () => void }) => {
   const hasPhoto = useEditorStore((state) => state.photo.source !== null);
   const mimeType = useEditorStore((state) => state.photo.mimeType);
+  const fileName = useEditorStore((state) => state.photo.fileName);
+  const suggested = () => defaultExportName({ hasPhoto, fileName });
   const setStatus = useEditorStore((state) => state.setStatus);
-  const [name, setName] = useState(() => defaultExportName(hasPhoto));
+  const [name, setName] = useState(suggested);
   const inputId = useId();
   const extension = exportExtension(hasPhoto ? mimeType : null);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const fileName = name.trim() || defaultExportName(hasPhoto);
+    const exportName = name.trim() || suggested();
     onDone();
     setStatus("exporting");
     try {
-      const saved = await exportImage({ fileName });
+      const saved = await exportImage({ fileName: exportName });
       // Con la hoja de compartir del móvil, el sistema ya da su respuesta.
       if (saved.result === "downloaded") {
         toast.success(`Imagen descargada: ${saved.fileName}`);

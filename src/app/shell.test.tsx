@@ -8,7 +8,10 @@ import { createInitialState, editorStore } from "../editor/store/editorStore";
 import SizeSlider from "../features/drawing/SizeSlider";
 import EditorHeader from "../features/editor-header/EditorHeader";
 import { defaultExportName } from "../features/export/exportName";
+import ShortcutsDialog from "../features/shortcuts/ShortcutsDialog";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
+import { mockMediaQueries } from "../test/media";
+import { uiStore } from "./uiStore";
 
 const exportImage = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ result: "downloaded", fileName: "dibujo.png" })
@@ -128,7 +131,9 @@ describe("cabecera", () => {
 
     const dialog = screen.getByRole("dialog", { name: "Exportar imagen" });
     const input = within(dialog).getByLabelText("Nombre del archivo");
-    expect(input).toHaveValue(defaultExportName(false));
+    expect(input).toHaveValue(
+      defaultExportName({ hasPhoto: false, fileName: null })
+    );
     expect(dialog).toHaveTextContent(".png");
 
     await user.clear(input);
@@ -138,9 +143,87 @@ describe("cabecera", () => {
   });
 
   it("el nombre sugerido usa la fecha local", () => {
-    expect(defaultExportName(true, new Date(2026, 0, 5, 23, 30))).toBe(
+    const night = new Date(2026, 0, 5, 23, 30);
+    expect(defaultExportName({ hasPhoto: false, fileName: null }, night)).toBe(
+      "dibujo-2026-01-05"
+    );
+    expect(defaultExportName({ hasPhoto: true, fileName: null }, night)).toBe(
       "foto-editada-2026-01-05"
     );
+  });
+
+  it("con una foto abierta desde un archivo, sugiere su nombre + -editada", async () => {
+    const user = userEvent.setup();
+    state().loadPhoto({
+      source: document.createElement("canvas"),
+      preview: null,
+      mimeType: "image/jpeg",
+      fileName: "playa",
+      size: { width: 10, height: 10 },
+    });
+    renderHeader();
+    await user.click(screen.getByRole("button", { name: "Exportar" }));
+    const dialog = screen.getByRole("dialog", { name: "Exportar imagen" });
+    expect(within(dialog).getByLabelText("Nombre del archivo")).toHaveValue(
+      "playa-editada"
+    );
+    expect(dialog).toHaveTextContent(".jpg");
+  });
+});
+
+describe("atajos globales", () => {
+  const Shell = () => {
+    useKeyboardShortcuts();
+    return (
+      <TooltipProvider>
+        <EditorHeader />
+        <ShortcutsDialog />
+      </TooltipProvider>
+    );
+  };
+
+  beforeEach(() => uiStore.setState({ dialog: null }));
+
+  it("Ctrl/⌘ + S abre el diálogo de exportar", () => {
+    render(<Shell />);
+    fireEvent.keyDown(document.body, { key: "s", ctrlKey: true });
+    expect(
+      screen.getByRole("dialog", { name: "Exportar imagen" })
+    ).toBeInTheDocument();
+  });
+
+  it("? abre la lista de atajos (y Escape la cierra)", async () => {
+    const user = userEvent.setup();
+    render(<Shell />);
+    fireEvent.keyDown(document.body, { key: "?", shiftKey: true });
+    const dialog = screen.getByRole("dialog", { name: "Atajos de teclado" });
+    expect(within(dialog).getByText("Exportar")).toBeInTheDocument();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("la opción del menú solo aparece con teclado y ratón", async () => {
+    const user = userEvent.setup();
+    const { unmount } = render(<Shell />);
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      screen.queryByRole("menuitem", { name: "Atajos de teclado" })
+    ).toBeNull();
+    await user.keyboard("{Escape}");
+    unmount();
+
+    mockMediaQueries((query) => query.includes("hover"));
+    render(<Shell />);
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(
+      screen.getByRole("menuitem", { name: "Atajos de teclado" })
+    );
+    expect(
+      screen.getByRole("dialog", { name: "Atajos de teclado" })
+    ).toBeInTheDocument();
+    mockMediaQueries(() => false);
   });
 });
 
