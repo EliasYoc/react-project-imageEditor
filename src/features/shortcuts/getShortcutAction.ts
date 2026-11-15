@@ -10,6 +10,7 @@ export type ShortcutAction =
   | { type: "eraser" }
   | { type: "brushSize"; factor: number }
   | { type: "deleteElement" }
+  | { type: "toggleBold" }
   | { type: "deselect" };
 
 type KeyInfo = Pick<
@@ -30,7 +31,7 @@ export const BRUSH_SIZE_STEP = 1.25;
  * - [ / ]: pincel más pequeño / más grande (modo Dibujar). Se usa la tecla
  *   física (`code`): en un teclado español los corchetes necesitan AltGr.
  * - Supr / Retroceso: eliminar el elemento seleccionado · Escape: quitar la
- *   selección (modo Texto)
+ *   selección · Ctrl/⌘ + B: negrita (modo Texto)
  *
  * Es una función pura (sin DOM ni store) para poder probarla sin más.
  */
@@ -45,6 +46,7 @@ export const getShortcutAction = (
   if (ctrlKey || metaKey) {
     if (lowerKey === "z") return { type: shiftKey ? "redo" : "undo" };
     if (lowerKey === "y") return { type: "redo" };
+    if (lowerKey === "b" && mode === "text") return { type: "toggleBold" };
     if (key === "0") return { type: "fit" };
     if (key === "=" || key === "+") return { type: "zoomIn" };
     if (key === "-" || key === "_") return { type: "zoomOut" };

@@ -43,7 +43,7 @@ export const SYSTEM_FONT_FAMILY = `-apple-system, BlinkMacSystemFont, "Segoe UI"
 export const DEFAULT_FONT_ID: FontId = "normal";
 
 export const FONTS: readonly FontDefinition[] = [
-  { id: "normal", label: "Normal", family: SYSTEM_FONT_FAMILY },
+  { id: "normal", label: "Sistema", family: SYSTEM_FONT_FAMILY },
   {
     id: "caveat",
     label: "Caveat",
