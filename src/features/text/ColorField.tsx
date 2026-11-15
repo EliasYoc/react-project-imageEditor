@@ -1,4 +1,4 @@
-import { RgbaColorPicker } from "react-colorful";
+import { ColorPicker } from "../../components/ui/ColorControl";
 import { rgbaToCss } from "../../editor/model/color";
 import type { Rgba } from "../../editor/model/types";
 import styles from "./TextPanels.module.css";
@@ -11,7 +11,10 @@ interface ColorFieldProps {
   onChange: (color: Rgba) => void;
 }
 
-/** Muestra de color que despliega su selector debajo. */
+/**
+ * Muestra de color que despliega su selector debajo (dentro de un panel, sin
+ * abrir otro encima).
+ */
 const ColorField = ({
   label,
   color,
@@ -33,7 +36,7 @@ const ColorField = ({
       />
       {label}
     </button>
-    {isOpen && <RgbaColorPicker color={color} onChange={onChange} />}
+    {isOpen && <ColorPicker color={color} onChange={onChange} alpha />}
   </div>
 );
 

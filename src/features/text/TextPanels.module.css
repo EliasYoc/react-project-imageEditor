@@ -1,31 +1,9 @@
-/* Contenido de las hojas "Fuente" y "Estilo del texto" (con scroll propio). */
+/* Contenido de los paneles "Fuente" y "Estilo del texto" (el Panel pone el
+   margen y el scroll). */
 .panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-height: min(70dvh, 620px);
-  padding: 0 var(--space-3) var(--space-3);
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-.row {
-  display: flex;
-  justify-content: center;
-}
-
-/* Grupo de botones excluyentes (grosor, alineación). */
-.segmented {
-  display: flex;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.segmented [aria-pressed="true"] {
-  background: var(--color-surface-active);
 }
 
 .fontList {

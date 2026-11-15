@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
-import { RgbaColorPicker } from "react-colorful";
 import { Button } from "../../components/ui/Button";
+import { ColorPicker } from "../../components/ui/ColorControl";
+import { Segmented } from "../../components/ui/Segmented";
 import { Slider } from "../../components/ui/Slider";
 import { gradientToCss } from "../../editor/engine/fill/css";
 import { supportsConicGradient } from "../../editor/engine/fill/paintFill";
@@ -13,7 +14,6 @@ import {
   removeStop,
   setStopColor,
 } from "../../editor/engine/fill/stops";
-import { rgbaToCss } from "../../editor/model/color";
 import type {
   Backdrop,
   BackdropBlend,
@@ -30,16 +30,16 @@ import GradientStopsBar from "./GradientStopsBar";
 
 type Tab = "none" | "color" | "gradient";
 
-const TABS: { tab: Tab; label: string }[] = [
-  { tab: "none", label: "Ninguno" },
-  { tab: "color", label: "Color" },
-  { tab: "gradient", label: "Degradado" },
+const TABS: { value: Tab; label: string }[] = [
+  { value: "none", label: "Ninguno" },
+  { value: "color", label: "Color" },
+  { value: "gradient", label: "Degradado" },
 ];
 
-const TYPES: { type: GradientType; label: string }[] = [
-  { type: "linear", label: "Lineal" },
-  { type: "radial", label: "Radial" },
-  { type: "conic", label: "Cónico" },
+const TYPES: { value: GradientType; label: string }[] = [
+  { value: "linear", label: "Lineal" },
+  { value: "radial", label: "Radial" },
+  { value: "conic", label: "Cónico" },
 ];
 
 const BLENDS: { blend: BackdropBlend; label: string }[] = [
@@ -110,17 +110,12 @@ const BackdropPanel = () => {
 
   return (
     <div className={styles.panel}>
-      <div className={styles.segmented} role="group" aria-label="Tipo de fondo">
-        {TABS.map(({ tab: value, label }) => (
-          <Button
-            key={value}
-            aria-pressed={tab === value}
-            onClick={() => chooseTab(value)}
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
+      <Segmented
+        label="Tipo de fondo"
+        value={tabOf(fill)}
+        onChange={chooseTab}
+        items={TABS}
+      />
 
       {tab === "none" && (
         <p className={styles.hint}>
@@ -132,38 +127,24 @@ const BackdropPanel = () => {
 
       {tab === "color" && fill?.kind === "color" && (
         <>
-          <RgbaColorPicker
+          <ColorPicker
             color={fill.color}
             onChange={(color) => setColor(color, "color")}
+            alpha
+            swatches={COLOR_PRESETS}
           />
-          <div className={styles.swatches} role="group" aria-label="Colores">
-            {COLOR_PRESETS.map((color) => (
-              <button
-                key={rgbaToCss(color)}
-                type="button"
-                className={styles.swatch}
-                style={{ background: rgbaToCss(color) }}
-                aria-label={`Color ${rgbaToCss(color)}`}
-                onClick={() => setColor(color)}
-              />
-            ))}
-          </div>
         </>
       )}
 
       {tab === "gradient" && fill?.kind === "gradient" && (
         <>
-          <div className={styles.segmented} role="group" aria-label="Forma">
-            {TYPES.map(({ type, label }) => (
-              <Button
-                key={type}
-                aria-pressed={gradient.type === type}
-                onClick={() => setGradient({ ...gradient, type })}
-              >
-                {label}
-              </Button>
-            ))}
-          </div>
+          <Segmented
+            label="Forma"
+            size="sm"
+            value={gradient.type}
+            onChange={(type) => setGradient({ ...gradient, type })}
+            items={TYPES}
+          />
           {gradient.type === "conic" && !supportsConicGradient() && (
             <p className={styles.hint}>
               Tu navegador no admite degradados cónicos: se muestra como radial.
@@ -198,8 +179,9 @@ const BackdropPanel = () => {
 
           {selectedStop && (
             <div className={styles.stopEditor}>
-              <RgbaColorPicker
+              <ColorPicker
                 color={selectedStop.color}
+                alpha
                 onChange={(color) =>
                   setGradient(
                     setStopColor(gradient, selectedStop.id, color),

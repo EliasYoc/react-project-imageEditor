@@ -1,0 +1,44 @@
+/* Barra redondeada al estilo de iOS: gris claro, rellena de blanco desde abajo. */
+.root {
+  position: relative;
+  display: flex;
+  width: 30px;
+  height: var(--vertical-slider-height, 200px);
+  overflow: hidden;
+  border-radius: 10px;
+  touch-action: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+
+/* El foco de teclado se marca en la barra (el pulgar no se ve). */
+.root:has(.thumb:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  overflow: visible;
+}
+
+.track {
+  position: relative;
+  flex-grow: 1;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ddd;
+}
+
+.range {
+  position: absolute;
+  right: 0;
+  left: 0;
+  background: #fff;
+  box-shadow: 0 0 5px -1px rgba(0, 0, 0, 0.514);
+}
+
+/* Sin pulgar visible: el relleno ya marca el valor. Sigue ahí para el foco. */
+.thumb {
+  display: block;
+  width: 30px;
+  height: 0;
+  outline: none;
+}

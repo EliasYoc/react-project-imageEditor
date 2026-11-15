@@ -1,8 +1,9 @@
-import { MdFitScreen, MdZoomIn, MdZoomOut } from "react-icons/md";
+import { Scan, ZoomIn, ZoomOut } from "lucide-react";
 import { IconButton } from "../../components/ui/Button";
 import { zoomLimits } from "../../editor/engine/viewport";
 import { ZOOM_STEP, useViewStore } from "../../editor/stage/viewStore";
 import { useEditorStore } from "../../editor/store/editorStore";
+import { SHORTCUT_LABELS } from "../shortcuts/shortcutLabels";
 import styles from "./ZoomControls.module.css";
 
 /**
@@ -26,8 +27,10 @@ const ZoomControls = () => {
   return (
     <div className={styles.controls} role="toolbar" aria-label="Zoom">
       <IconButton
-        icon={MdZoomOut}
+        icon={ZoomOut}
         aria-label="Alejar"
+        shortcut={SHORTCUT_LABELS.zoomOut}
+        tooltipSide="top"
         className={styles.stepButton}
         disabled={!canZoomOut}
         onClick={() => zoomBy(1 / ZOOM_STEP)}
@@ -36,15 +39,19 @@ const ZoomControls = () => {
         {Math.round(scale * 100)} %
       </span>
       <IconButton
-        icon={MdZoomIn}
+        icon={ZoomIn}
         aria-label="Acercar"
+        shortcut={SHORTCUT_LABELS.zoomIn}
+        tooltipSide="top"
         className={styles.stepButton}
         disabled={!canZoomIn}
         onClick={() => zoomBy(ZOOM_STEP)}
       />
       <IconButton
-        icon={MdFitScreen}
+        icon={Scan}
         aria-label="Ajustar a la pantalla"
+        shortcut={SHORTCUT_LABELS.fit}
+        tooltipSide="top"
         aria-pressed={isFitted}
         onClick={fitToScreen}
       />

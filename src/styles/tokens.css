@@ -37,16 +37,26 @@
   --font-size-md: 1rem;
   --font-size-icon: 1.5rem;
 
+  /* Paneles (hoja inferior en el móvil, lateral en escritorio). */
+  --header-height: 56px;
+  --panel-width: 360px;
+  --sheet-max-height: 75dvh;
+  --color-primary: #3d8bff; /* la acción principal (Exportar) */
+  --color-primary-text: #fff;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.45);
+
   /*
-   * Capas (z-index), de abajo arriba. Los valores son los que ya usaba la
-   * app (antes eran números sueltos: 1, 10, 15, 100, 1000); ahora cada uno
-   * tiene un nombre por su función. La Fase 6 puede reequilibrarlos.
+   * Capas (z-index), de abajo arriba: el lienzo, las barras, los paneles,
+   * los diálogos, lo flotante (menús, selectores, tooltips), los avisos y la
+   * carga. Cada capa tapa a las anteriores.
    */
   --z-canvas: 1;
-  --z-backdrop: 10; /* fondo oscuro mientras se escribe un texto */
-  --z-elements: 15; /* textos e imágenes (BASE_Z_INDEX en el store) */
-  --z-toolbar: 100; /* barra inferior y slider de tamaño */
-  --z-menu: 100; /* menú de opciones y diálogo de descarga */
-  --z-sheet: 1000; /* hojas inferiores (selector de color, gradiente) */
+  --z-toolbar: 100; /* cabecera, barra inferior, sliders y zoom */
+  --z-panel: 200; /* hojas y panel lateral */
+  --z-dialog: 300; /* diálogos (exportar, confirmar) */
+  --z-popover: 400; /* menús y selectores de color */
+  --z-tooltip: 500;
+  --z-toast: 600;
   --z-loader: 1000;
 }
