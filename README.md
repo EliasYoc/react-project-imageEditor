@@ -34,7 +34,7 @@ Producción: https://editoryoc.netlify.app/
 
 ```
 src/
-  app/          Shell de la app (cabecera | lienzo | barra inferior)
+  app/          Shell de la app: inicio + editor (EditorShell, que se carga bajo demanda)
   editor/       Núcleo del editor
     model/      Tipos del documento (TypeScript)
     store/      Store de Zustand: la única fuente de verdad del documento y su historial
@@ -117,6 +117,23 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 - **Fuentes propias** con [@fontsource](https://fontsource.org) (WOFF2), registradas en `editor/elements/fonts.ts`. Cada una se carga **bajo demanda** (import dinámico de su CSS) cuando un texto la usa o al abrir el selector, y solo se descarga el subconjunto latino: no hay peticiones a Google Fonts. Konva espera a que la fuente esté lista (`fontLoader.ts`) antes de medir el texto.
 - **Estilos**: alineación, interlineado, degradado, contorno, sombra y caja de fondo. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
 - **Degradado en el texto** (lineal o radial, `editor/elements/textGradient.ts`): se reparte en la caja del texto ya medida, sin el margen interior, y abarca todas las líneas, como `background-clip: text`. El radial es un círculo hasta la esquina más lejana, porque Konva no deforma el degradado en elipse y no tiene cónico para las formas.
+
+## Rendimiento
+
+- **El editor se carga bajo demanda** (`src/app/EditorShell.tsx`).
+  - **Qué lleva:** todo lo que usa Konva (y el reconciliador de react-konva), en su propio archivo.
+  - **El inicio** solo descarga el JS principal (~118 KB gzip) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
+  - **Con una red lenta**, si se entra antes de que llegue, se ve "Cargando el editor" un momento.
+- **Caché:** los archivos de `/assets` llevan hash y Netlify los sirve con caché de un año (`public/_headers`).
+- **Medido en Edge** con el build de producción y la red limitada a 150 ms / 1,6 Mbps:
+
+  |                      | Antes (un solo JS) | Después |
+  | -------------------- | ------------------ | ------- |
+  | JS del inicio (gzip) | 240 KB             | 118 KB  |
+  | Primer pintado (FCP) | 1,95 s             | 1,30 s  |
+  | Inicio usable        | 1,65 s             | 1,0 s   |
+
+- **Dibujar** no tiene tareas largas ni con la CPU 4× más lenta (frames de ~7 ms, p95). El cuello de botella era la descarga, no la ejecución.
 
 ## Estilos
 
