@@ -4,7 +4,7 @@ import EditorStage from "../editor/stage/EditorStage";
 import { useEditorStore } from "../editor/store/editorStore";
 import DrawingTools from "../features/drawing/DrawingTools";
 import ModeSwitcher from "../features/drawing/ModeSwitcher";
-import QuickSliders from "../features/drawing/QuickSliders";
+import SizeSlider from "../features/drawing/SizeSlider";
 import EditorHeader from "../features/editor-header/EditorHeader";
 import HomeToolbar from "../features/home/HomeToolbar";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
@@ -22,8 +22,8 @@ const STATUS_LABELS = {
  * Shell de la aplicación: cabecera | lienzo | barra inferior.
  *
  * El lienzo ocupa el espacio que sobra (flex: 1): el Stage de Konva con el
- * fondo, la pintura, los textos y las imágenes. Encima, los sliders rápidos
- * (izquierda) y el zoom (derecha). El selector de modo va abajo en el móvil
+ * fondo, la pintura, los textos y las imágenes. Encima, el slider de tamaño
+ * (borde izquierdo) y el zoom (derecha). El selector de modo va abajo en el móvil
  * (al alcance del pulgar) y en la cabecera en escritorio.
  */
 function App() {
@@ -44,7 +44,7 @@ function App() {
           <EditorStage />
           {isEditorOpen ? (
             <>
-              <QuickSliders />
+              <SizeSlider />
               <ZoomControls />
             </>
           ) : (

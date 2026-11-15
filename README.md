@@ -74,21 +74,20 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 
 ## Uso
 
-| Acción                | Ratón / teclado                                          | Pantalla táctil                 |
-| --------------------- | -------------------------------------------------------- | ------------------------------- |
-| Dibujar               | Clic izquierdo y arrastrar                               | Un dedo o el lápiz              |
-| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / − | Pellizcar con dos dedos         |
-| Desplazar             | Rueda, espacio + arrastrar o botón central               | Arrastrar con dos dedos         |
-| Ajustar a la pantalla | Ctrl/⌘ + 0                                               | Doble toque con dos dedos       |
-| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera          |
-| Editar un texto       | Doble clic, o clic en un texto ya seleccionado           | Tocar un texto ya seleccionado  |
-| Eliminar un elemento  | Supr / Retroceso (modo Texto)                            | Botón de la papelera            |
-| Negrita               | Ctrl/⌘ + B (modo Texto)                                  | Panel "Fuente"                  |
-| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)    | Barra inferior                  |
-| Tamaño del pincel     | [ / ] (o el slider de la izquierda)                      | Slider de la izquierda          |
-| Opacidad del pincel   | Slider de la izquierda                                   | Slider de la izquierda          |
-| Exportar              | Botón "Exportar" de la cabecera (Enter en el diálogo)    | Botón "Exportar"                |
-| Cerrar un panel       | Escape o ✕                                               | ✕, tocar fuera o deslizar abajo |
+| Acción                | Ratón / teclado                                                         | Pantalla táctil                     |
+| --------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
+| Dibujar               | Clic izquierdo y arrastrar                                              | Un dedo o el lápiz                  |
+| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / −                | Pellizcar con dos dedos             |
+| Desplazar             | Rueda, espacio + arrastrar o botón central                              | Arrastrar con dos dedos             |
+| Ajustar a la pantalla | Ctrl/⌘ + 0                                                              | Doble toque con dos dedos           |
+| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)                            | Botones de la cabecera              |
+| Editar un texto       | Doble clic, o clic en un texto ya seleccionado                          | Tocar un texto ya seleccionado      |
+| Eliminar un elemento  | Supr / Retroceso (modo Texto)                                           | Botón de la papelera                |
+| Negrita               | Ctrl/⌘ + B (modo Texto)                                                 | Panel "Fuente"                      |
+| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                   | Barra inferior                      |
+| Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón) | Tocar el slider del borde izquierdo |
+| Exportar              | Botón "Exportar" de la cabecera (Enter en el diálogo)                   | Botón "Exportar"                    |
+| Cerrar un panel       | Escape o ✕                                                              | ✕, tocar fuera o deslizar abajo     |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 
@@ -110,7 +109,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 - Todo el CSS son **CSS Modules** (`*.module.css`) y tokens; no hay CSS en JS.
 - Iconos de **lucide-react** (cada uno se importa por separado). Si falta uno, se crea con `createLucideIcon` y el mismo trazo (ver `features/drawing/brushIcons.ts`).
 - Para botones usa `Button` o `IconButton` de `components/ui/Button`: son `<button>` reales, accesibles con teclado. `IconButton` exige `aria-label` y acepta `shortcut` para su tooltip.
-- Para valores numéricos usa `Slider` (un `<input type="range">` nativo con etiqueta y valor) y, en los bordes del lienzo, `VerticalSlider`.
+- Para valores numéricos usa `Slider` (un `<input type="range">` nativo con etiqueta y valor) y, en el borde del lienzo, `VerticalSlider` (barra al estilo de iOS, sin pulgar visible).
 
 ## Interfaz (Radix UI)
 

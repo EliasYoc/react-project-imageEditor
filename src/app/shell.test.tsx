@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import { createStroke } from "../editor/model/factories";
 import { createInitialState, editorStore } from "../editor/store/editorStore";
-import QuickSliders from "../features/drawing/QuickSliders";
+import SizeSlider from "../features/drawing/SizeSlider";
 import EditorHeader from "../features/editor-header/EditorHeader";
 import { defaultExportName } from "../features/export/exportName";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
@@ -96,34 +96,31 @@ describe("cabecera", () => {
   });
 });
 
-describe("sliders rápidos", () => {
-  it("tamaño y opacidad del pincel, con el teclado", async () => {
+describe("slider de tamaño", () => {
+  it("es uno solo (el del pincel) y se mueve con el teclado", async () => {
     const user = userEvent.setup();
-    render(<QuickSliders />);
-    const opacity = screen.getByRole("slider", { name: "Opacidad" });
-    expect(opacity).toHaveAttribute("aria-valuetext", "100 %");
-    opacity.focus();
-    await user.keyboard("{ArrowDown}");
-    expect(state().brush.settings.pen.opacity).toBe(0.99);
-
-    const size = screen.getByRole("slider", { name: "Tamaño" });
+    render(<SizeSlider />);
+    expect(screen.getAllByRole("slider")).toHaveLength(1);
+    const size = screen.getByRole("slider", { name: "Tamaño del pincel" });
+    expect(size).toHaveAttribute(
+      "aria-valuetext",
+      `${state().brush.settings.pen.size} px`
+    );
     const before = state().brush.settings.pen.size;
     size.focus();
     await user.keyboard("{PageUp}");
     expect(state().brush.settings.pen.size).toBeGreaterThan(before);
   });
 
-  it("en modo Texto, solo el tamaño de letra del texto seleccionado", () => {
+  it("en modo Texto, el tamaño de letra del texto seleccionado", () => {
     editorStore.setState({ mode: "text" });
-    const { rerender } = render(<QuickSliders />);
+    const { rerender } = render(<SizeSlider />);
     expect(screen.queryByRole("slider")).toBeNull();
     state().addText({ x: 0, y: 0 }, 100);
-    rerender(<QuickSliders />);
-    expect(screen.getByRole("slider", { name: "Tamaño" })).toHaveAttribute(
-      "aria-valuetext",
-      "100 px"
-    );
-    expect(screen.queryByRole("slider", { name: "Opacidad" })).toBeNull();
+    rerender(<SizeSlider />);
+    expect(
+      screen.getByRole("slider", { name: "Tamaño del texto" })
+    ).toHaveAttribute("aria-valuetext", "100 px");
   });
 });
 
