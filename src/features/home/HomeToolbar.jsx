@@ -25,7 +25,7 @@ const loadImage = (src) =>
 const HomeToolbar = () => {
   const setMode = useEditorStore((state) => state.setMode);
   const setStatus = useEditorStore((state) => state.setStatus);
-  const loadBackground = useEditorStore((state) => state.loadBackground);
+  const loadPhoto = useEditorStore((state) => state.loadPhoto);
   const fileInputRef = useRef(null);
 
   const handleLoadImage = async (e) => {
@@ -58,7 +58,7 @@ const HomeToolbar = () => {
         preview.height
       );
 
-      loadBackground({
+      loadPhoto({
         source: image,
         preview,
         mimeType: file.type,

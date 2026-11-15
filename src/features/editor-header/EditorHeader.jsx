@@ -12,8 +12,8 @@ import { Button, IconButton } from "../../components/ui/Button";
 import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../editor/store/selectors";
+import BackdropPanel from "../backdrop/BackdropPanel";
 import { exportImage } from "../export/exportImage";
-import GradientBox from "../gradient/GradientBox";
 import styles from "./EditorHeader.module.css";
 import {
   InputDownloadName,
@@ -33,7 +33,7 @@ const EditorHeader = () => {
   const clearLog = useEditorStore((state) => state.clearLog);
 
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
-  const [isGradientBoxOpen, setIsGradientBoxOpen] = useState(false);
+  const [isBackdropOpen, setIsBackdropOpen] = useState(false);
   const [isDownloadNameModalOpen, setIsDownloadNameModalOpen] = useState(false);
   const [downloadName, setDownloadName] = useState("");
   const [isDownloadNameEmpty, setIsDownloadNameEmpty] = useState(false);
@@ -135,7 +135,7 @@ const EditorHeader = () => {
           <Option
             onClick={() => {
               setIsOptionsOpen(false);
-              setIsGradientBoxOpen(true);
+              setIsBackdropOpen(true);
             }}
             icon={MdOutlineGradient}
             text="Fondos"
@@ -173,12 +173,11 @@ const EditorHeader = () => {
         )}
       </ConfirmModal>
       <PortalsSwipeableMenuLayout
-        title="Crea un fondo difuminado"
-        adviseText="Agrega hasta 8 thumbs para aplicar diferentes colores, presiona la línea de los multiples thumbs para agregar uno nuevo"
-        isOpen={isGradientBoxOpen}
-        onClose={() => setIsGradientBoxOpen(false)}
+        title="Fondo"
+        isOpen={isBackdropOpen}
+        onClose={() => setIsBackdropOpen(false)}
       >
-        <GradientBox onApplied={() => setIsGradientBoxOpen(false)} />
+        <BackdropPanel />
       </PortalsSwipeableMenuLayout>
     </>
   );
