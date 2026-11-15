@@ -1,4 +1,5 @@
 import { Spinner } from "../components/ui/Spinner";
+import { Toaster } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import EditorStage from "../editor/stage/EditorStage";
 import { useEditorStore } from "../editor/store/editorStore";
@@ -78,6 +79,7 @@ function App() {
         )}
 
         {status !== "idle" && <Spinner label={STATUS_LABELS[status]} />}
+        <Toaster />
       </div>
     </TooltipProvider>
   );

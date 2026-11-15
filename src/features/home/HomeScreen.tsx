@@ -2,6 +2,7 @@ import { ArrowRight, ImagePlus } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { Button } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/Dialog";
+import { toast } from "../../components/ui/Toast";
 import type { Size } from "../../editor/model/types";
 import { classNames } from "../../lib/classNames";
 import { useEditorStore } from "../../editor/store/editorStore";
@@ -83,6 +84,7 @@ const HomeScreen = () => {
       setMode("draw");
     } catch (error) {
       console.error(error);
+      toast.error("No se pudo abrir la imagen");
     } finally {
       setStatus("idle");
     }

@@ -1,6 +1,7 @@
 import { useId, useState, type FormEvent } from "react";
 import { Button } from "../../components/ui/Button";
 import { Dialog, DialogActions, DialogClose } from "../../components/ui/Dialog";
+import { toast } from "../../components/ui/Toast";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { exportImage } from "./exportImage";
 import styles from "./ExportDialog.module.css";
@@ -50,9 +51,14 @@ const ExportForm = ({ onDone }: { onDone: () => void }) => {
     onDone();
     setStatus("exporting");
     try {
-      await exportImage({ fileName });
+      const saved = await exportImage({ fileName });
+      // Con la hoja de compartir del móvil, el sistema ya da su respuesta.
+      if (saved.result === "downloaded") {
+        toast.success(`Imagen descargada: ${saved.fileName}`);
+      }
     } catch (error) {
       console.error(error);
+      toast.error("No se pudo exportar la imagen");
     } finally {
       setStatus("idle");
     }

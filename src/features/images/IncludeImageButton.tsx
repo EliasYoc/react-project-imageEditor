@@ -1,6 +1,7 @@
 import { ImagePlus } from "lucide-react";
 import { useRef, type ChangeEvent } from "react";
 import { IconButton } from "../../components/ui/Button";
+import { toast } from "../../components/ui/Toast";
 import { loadImage } from "../../editor/elements/imageCache";
 import { documentPointAtViewCenter } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
@@ -37,6 +38,7 @@ const IncludeImageButton = () => {
     } catch (error) {
       URL.revokeObjectURL(src);
       console.error(error);
+      toast.error("No se pudo abrir la imagen");
     }
   };
 

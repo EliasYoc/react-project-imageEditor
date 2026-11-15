@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { Toaster, toastStore } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import { createStroke } from "../editor/model/factories";
 import { createInitialState, editorStore } from "../editor/store/editorStore";
@@ -9,7 +10,9 @@ import EditorHeader from "../features/editor-header/EditorHeader";
 import { defaultExportName } from "../features/export/exportName";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
 
-const exportImage = vi.hoisted(() => vi.fn().mockResolvedValue("downloaded"));
+const exportImage = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({ result: "downloaded", fileName: "dibujo.png" })
+);
 vi.mock("../features/export/exportImage", () => ({ exportImage }));
 
 const state = () => editorStore.getState();
@@ -28,12 +31,57 @@ const renderHeader = () =>
   render(
     <TooltipProvider>
       <EditorHeader />
+      <Toaster />
     </TooltipProvider>
   );
 
 beforeEach(() => {
   editorStore.setState({ ...createInitialState(), mode: "draw" });
+  toastStore.setState({ toasts: [] });
   exportImage.mockClear();
+});
+
+const exportWithEnter = async () => {
+  const user = userEvent.setup();
+  renderHeader();
+  await user.click(screen.getByRole("button", { name: "Exportar" }));
+  await user.keyboard("{Enter}");
+};
+
+describe("avisos", () => {
+  it("al descargar avisa con el nombre del archivo", async () => {
+    await exportWithEnter();
+    expect(
+      await screen.findByText("Imagen descargada: dibujo.png")
+    ).toBeInTheDocument();
+  });
+
+  it("con la hoja de compartir del móvil no avisa (el sistema ya responde)", async () => {
+    exportImage.mockResolvedValueOnce({
+      result: "shared",
+      fileName: "dibujo.png",
+    });
+    await exportWithEnter();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(toastStore.getState().toasts).toHaveLength(0);
+  });
+
+  it("si falla la exportación, avisa del error", async () => {
+    exportImage.mockRejectedValueOnce(new Error("sin memoria"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await exportWithEnter();
+    expect(
+      await screen.findByText("No se pudo exportar la imagen")
+    ).toBeInTheDocument();
+    expect(toastStore.getState().toasts[0].kind).toBe("error");
+  });
+
+  it("un aviso se quita de la cola al cerrarse", () => {
+    toastStore.getState().show("success", "Hola");
+    const [{ id }] = toastStore.getState().toasts;
+    toastStore.getState().dismiss(id);
+    expect(toastStore.getState().toasts).toHaveLength(0);
+  });
 });
 
 describe("cabecera", () => {
