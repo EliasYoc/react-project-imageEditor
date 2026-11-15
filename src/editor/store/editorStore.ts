@@ -5,23 +5,22 @@ import { createId } from "../../lib/createId";
 import { getBrushPreset } from "../engine/brushes/presets";
 import {
   DEFAULT_CANVAS_SIZE,
-  MAX_GRADIENT_STOPS,
   createImageElement,
   createInitialBrushState,
-  createInitialGradient,
+  createInitialBackdrop,
   createTextElement,
 } from "../model/factories";
 import {
   isEditorElement,
   isTextElement,
-  type Background,
+  type Backdrop,
   type BrushPresetId,
   type BrushState,
   type BrushSettings,
-  type GradientState,
   type ImageElement,
   type LogEntry,
   type Mode,
+  type Photo,
   type Point,
   type Rgba,
   type Size,
@@ -30,11 +29,20 @@ import {
   type TextElement,
 } from "../model/types";
 
+/** Lo que guarda cada paso del historial: el log y la capa de color. */
+export interface DocumentSnapshot {
+  log: LogEntry[];
+  backdrop: Backdrop;
+}
+
 export interface EditorState {
   mode: Mode;
   status: Status;
   canvasSize: Size;
-  background: Background;
+  /** La foto abierta (no está en el historial: abrir otra empieza de cero). */
+  photo: Photo;
+  /** Capa de color o degradado (fondo, o filtro sobre la foto). */
+  backdrop: Backdrop;
   /** Contenido del documento: trazos y elementos (texto, imágenes) en orden. */
   log: LogEntry[];
   /**
@@ -42,8 +50,8 @@ export interface EditorState {
    * El log es inmutable, así que cada versión solo guarda referencias: no
    * copia los trazos.
    */
-  past: LogEntry[][];
-  future: LogEntry[][];
+  past: DocumentSnapshot[];
+  future: DocumentSnapshot[];
   selectedElementId: string | null;
   /** Texto que se está editando con el textarea (null = ninguno). */
   editingTextId: string | null;
@@ -54,7 +62,6 @@ export interface EditorState {
    */
   lastMergeKey: string | null;
   brush: BrushState;
-  gradient: GradientState;
 }
 
 /** Campos editables de un elemento (el id y el tipo no cambian). */
@@ -66,9 +73,13 @@ export interface EditorActions {
   setMode: (mode: Mode) => void;
   setStatus: (status: Status) => void;
   /** Abre una imagen nueva: cambia el tamaño del lienzo y empieza de cero. */
-  loadBackground: (payload: Background & { size: Size }) => void;
-  /** Cambia la imagen de fondo conservando el dibujo (p. ej. un gradiente). */
-  setBackgroundImage: (payload: Background) => void;
+  loadPhoto: (payload: Photo & { size: Size }) => void;
+  /**
+   * Cambia la capa de color o degradado (un paso del historial). Con
+   * `mergeKey`, los cambios seguidos con la misma clave (arrastrar una parada,
+   * el dial…) se juntan en un solo paso.
+   */
+  setBackdrop: (backdrop: Backdrop, mergeKey?: string) => void;
 
   addStroke: (stroke: StrokeEntry) => void;
   undo: () => void;
@@ -114,12 +125,6 @@ export interface EditorActions {
   setBrushStabilizer: (stabilizer: number) => void;
   /** Color compartido por todos los pinceles. */
   setBrushColor: (color: Rgba) => void;
-
-  addGradientStop: () => void;
-  removeGradientStop: (id: string) => void;
-  setGradientStopOffset: (id: string, offset: number) => void;
-  setGradientStopColor: (id: string, color: Rgba) => void;
-  setGradientAngle: (angle: number) => void;
 }
 
 export type EditorStore = EditorState & EditorActions;
@@ -140,11 +145,13 @@ const getMaxZIndex = (log: LogEntry[]) =>
  * vacía `future` (después de un cambio nuevo ya no se puede rehacer).
  */
 const commit = (
-  { log, past }: Pick<EditorState, "log" | "past">,
-  nextLog: LogEntry[]
+  { log, backdrop, past }: Pick<EditorState, "log" | "backdrop" | "past">,
+  nextLog: LogEntry[],
+  nextBackdrop: Backdrop = backdrop
 ) => ({
   log: nextLog,
-  past: [...past, log].slice(-MAX_HISTORY),
+  backdrop: nextBackdrop,
+  past: [...past, { log, backdrop }].slice(-MAX_HISTORY),
   future: [],
   lastMergeKey: null,
 });
@@ -177,7 +184,8 @@ export const createInitialState = (): EditorState => ({
   mode: "home",
   status: "idle",
   canvasSize: { ...DEFAULT_CANVAS_SIZE },
-  background: { source: null, preview: null, mimeType: null },
+  photo: { source: null, preview: null, mimeType: null },
+  backdrop: createInitialBackdrop(),
   log: [],
   past: [],
   future: [],
@@ -185,7 +193,6 @@ export const createInitialState = (): EditorState => ({
   editingTextId: null,
   lastMergeKey: null,
   brush: createInitialBrushState(),
-  gradient: createInitialGradient(),
 });
 
 /**
@@ -214,24 +221,6 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             name
           );
 
-        const updateGradientStop = (
-          name: string,
-          id: string,
-          patch: Partial<GradientState["stops"][number]>
-        ) =>
-          set(
-            ({ gradient }) => ({
-              gradient: {
-                ...gradient,
-                stops: gradient.stops.map((stop) =>
-                  stop.id === id ? { ...stop, ...patch } : stop
-                ),
-              },
-            }),
-            false,
-            name
-          );
-
         return {
           ...createInitialState(),
           ...initialState,
@@ -239,10 +228,11 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
           setMode: (mode) => set({ mode }, false, "setMode"),
           setStatus: (status) => set({ status }, false, "setStatus"),
 
-          loadBackground: ({ size, ...background }) =>
+          loadPhoto: ({ size, ...photo }) =>
             set(
               {
-                background,
+                photo,
+                backdrop: createInitialBackdrop(),
                 canvasSize: size,
                 log: [],
                 past: [],
@@ -252,11 +242,22 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
                 lastMergeKey: null,
               },
               false,
-              "loadBackground"
+              "loadPhoto"
             ),
 
-          setBackgroundImage: (background) =>
-            set({ background }, false, "setBackgroundImage"),
+          setBackdrop: (backdrop, mergeKey) =>
+            set(
+              (state) =>
+                // Mismo ajuste que el anterior: se actualiza el último paso.
+                mergeKey && mergeKey === state.lastMergeKey
+                  ? { backdrop }
+                  : {
+                      ...commit(state, state.log, backdrop),
+                      lastMergeKey: mergeKey ?? null,
+                    },
+              false,
+              "setBackdrop"
+            ),
 
           addStroke: (stroke) =>
             set(
@@ -274,11 +275,14 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
                 const previous = state.past.at(-1);
                 if (!previous) return {};
                 return {
-                  log: previous,
+                  ...previous,
                   past: state.past.slice(0, -1),
-                  future: [...state.future, state.log],
+                  future: [
+                    ...state.future,
+                    { log: state.log, backdrop: state.backdrop },
+                  ],
                   lastMergeKey: null,
-                  ...keepElementUi(previous, state),
+                  ...keepElementUi(previous.log, state),
                 };
               },
               false,
@@ -291,11 +295,14 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
                 const next = state.future.at(-1);
                 if (!next) return {};
                 return {
-                  log: next,
-                  past: [...state.past, state.log].slice(-MAX_HISTORY),
+                  ...next,
+                  past: [
+                    ...state.past,
+                    { log: state.log, backdrop: state.backdrop },
+                  ].slice(-MAX_HISTORY),
                   future: state.future.slice(0, -1),
                   lastMergeKey: null,
-                  ...keepElementUi(next, state),
+                  ...keepElementUi(next.log, state),
                 };
               },
               false,
@@ -398,7 +405,7 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             const last = log.at(-1);
             const wasJustAdded =
               previous !== undefined &&
-              previous.length === log.length - 1 &&
+              previous.log.length === log.length - 1 &&
               last !== undefined &&
               isTextElement(last) &&
               last.id === id;
@@ -409,10 +416,10 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
             // Se vuelve a la versión anterior sin pasarla a "rehacer".
             set(
               (state) => ({
-                log: previous,
+                ...previous,
                 past: state.past.slice(0, -1),
                 lastMergeKey: null,
-                ...keepElementUi(previous, state),
+                ...keepElementUi(previous.log, state),
               }),
               false,
               "discardNewText"
@@ -483,48 +490,6 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
               ({ brush }) => ({ brush: { ...brush, color } }),
               false,
               "setBrushColor"
-            ),
-
-          addGradientStop: () =>
-            set(
-              ({ gradient }) => {
-                if (gradient.stops.length >= MAX_GRADIENT_STOPS) return {};
-                const [template] = createInitialGradient().stops;
-                return {
-                  gradient: {
-                    ...gradient,
-                    stops: [...gradient.stops, { ...template, id: createId() }],
-                  },
-                };
-              },
-              false,
-              "addGradientStop"
-            ),
-
-          removeGradientStop: (id) =>
-            set(
-              ({ gradient }) => {
-                if (gradient.stops.length <= 1) return {};
-                return {
-                  gradient: {
-                    ...gradient,
-                    stops: gradient.stops.filter((stop) => stop.id !== id),
-                  },
-                };
-              },
-              false,
-              "removeGradientStop"
-            ),
-
-          setGradientStopOffset: (id, offset) =>
-            updateGradientStop("setGradientStopOffset", id, { offset }),
-          setGradientStopColor: (id, color) =>
-            updateGradientStop("setGradientStopColor", id, { color }),
-          setGradientAngle: (angle) =>
-            set(
-              ({ gradient }) => ({ gradient: { ...gradient, angle } }),
-              false,
-              "setGradientAngle"
             ),
         };
       },

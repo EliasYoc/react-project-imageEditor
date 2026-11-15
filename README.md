@@ -1,6 +1,6 @@
 # Editor de imágenes
 
-Editor de imágenes en el navegador: dibuja con pinceles, añade texto e imágenes y aplica fondos degradados.
+Editor de imágenes en el navegador: dibuja con pinceles, añade texto e imágenes y aplica colores o degradados de fondo (o encima de una foto, como un filtro).
 
 Producción: https://editoryoc.netlify.app/
 
@@ -42,7 +42,7 @@ src/
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, estabilizador, presets
     elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
-  features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
+  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export
   components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton, Slider…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
@@ -88,6 +88,12 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Tamaño del pincel     | [ / ] (o el slider lateral)                              | Slider lateral                 |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
+
+## Fondo (color y degradado)
+
+- La **capa de color** (`backdrop` en el store) es parte del documento y del historial: se puede deshacer. Sin foto es el fondo del lienzo; con foto va **encima como un filtro**, con opacidad y modo de fusión, sin reemplazarla.
+- Los degradados (lineal, radial y cónico) usan la **geometría de CSS** (`editor/engine/fill/`): el mismo ángulo y centro se ven igual que en `linear-gradient`, `radial-gradient` y `conic-gradient`. `paintFill` los pinta a cualquier resolución (lienzo, exportación, vistas previas).
+- El editor (menú ⋮ → Fondos) aplica los cambios en vivo: paradas que se arrastran o se mueven con el teclado, dial de ángulo, centro arrastrable y presets.
 
 ## Textos
 
