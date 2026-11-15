@@ -213,3 +213,44 @@ export interface GradientState {
   /** Ángulo en grados, de 0 a 360. */
   angle: number;
 }
+
+// ---------------------------------------------------------------- capa de color
+
+export type GradientType = "linear" | "radial" | "conic";
+
+/** Parada de color de un degradado. */
+export interface ColorStop {
+  id: string;
+  color: Rgba;
+  /** Posición a lo largo del degradado, de 0 a 1. */
+  offset: number;
+}
+
+/** Degradado con la misma geometría que en CSS. */
+export interface Gradient {
+  type: GradientType;
+  stops: ColorStop[];
+  /**
+   * Ángulo en grados, como en CSS: 0 = hacia arriba, en sentido horario
+   * (lineal: dirección; cónico: dónde empieza).
+   */
+  angle: number;
+  /** Centro del radial y del cónico, en proporción del documento (0–1). */
+  center: Point;
+}
+
+export type Fill =
+  { kind: "color"; color: Rgba } | { kind: "gradient"; gradient: Gradient };
+
+export type BackdropBlend =
+  "source-over" | "multiply" | "screen" | "overlay" | "soft-light" | "color";
+
+/**
+ * Capa de color o degradado. Sin foto es el fondo del lienzo; con foto va
+ * encima como un filtro (con su opacidad y modo de fusión), sin reemplazarla.
+ */
+export interface Backdrop {
+  fill: Fill | null;
+  opacity: number;
+  blend: BackdropBlend;
+}
