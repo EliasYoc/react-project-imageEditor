@@ -10,6 +10,7 @@ import {
   selectElements,
   selectSelectedElement,
   selectSelectedText,
+  selectStrokeLayers,
   selectStrokes,
 } from "./selectors";
 
@@ -396,6 +397,25 @@ describe("selectores", () => {
     expect(strokes).toHaveLength(1);
     expect(selectElements(state())).toBe(elements);
     expect(selectStrokes(state())).toBe(strokes);
+  });
+
+  it("selectStrokeLayers separa el resaltador de la pintura y se memoriza", () => {
+    const highlighter = {
+      ...createStroke({
+        brush: "highlighter",
+        settings: { size: 30, opacity: 0.5, stabilizer: 0 },
+        color: { r: 255, g: 230, b: 0, a: 1 },
+      }),
+      points: [{ x: 0, y: 0, pressure: 0.5 }],
+    };
+    state().addStroke(stroke());
+    state().addStroke(highlighter);
+    const layers = selectStrokeLayers(state());
+    expect(layers.paint.map((entry) => entry.brush)).toEqual(["marker"]);
+    expect(layers.highlight.map((entry) => entry.brush)).toEqual([
+      "highlighter",
+    ]);
+    expect(selectStrokeLayers(state())).toBe(layers);
   });
 
   it("selectSelectedText devuelve null si lo seleccionado es una imagen", () => {

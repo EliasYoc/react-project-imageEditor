@@ -1,5 +1,4 @@
 import { useState, type ReactNode } from "react";
-import { RgbaColorPicker } from "react-colorful";
 import {
   MdFormatAlignCenter,
   MdFormatAlignLeft,
@@ -7,15 +6,17 @@ import {
 } from "react-icons/md";
 import { IconButton } from "../../components/ui/Button";
 import { Slider } from "../../components/ui/Slider";
-import { rgbaToCss } from "../../editor/model/color";
 import type {
-  Rgba,
+  Gradient,
   TextAlign,
   TextElement,
   TextStyle,
 } from "../../editor/model/types";
 import { useEditorStore } from "../../editor/store/editorStore";
+import ColorField from "./ColorField";
+import TextGradientEditor from "./TextGradientEditor";
 import styles from "./TextPanels.module.css";
+import { DEFAULT_TEXT_GRADIENT } from "./textGradientPresets";
 
 const ALIGNMENTS: {
   align: TextAlign;
@@ -27,7 +28,7 @@ const ALIGNMENTS: {
   { align: "right", label: "Alinear a la derecha", icon: MdFormatAlignRight },
 ];
 
-type ColorTarget = "stroke" | "shadow" | "background";
+type ColorTarget = "gradient" | "stroke" | "shadow" | "background";
 
 const percent = (value: number) => `${Math.round(value)} %`;
 
@@ -56,41 +57,9 @@ const ToggleSection = ({
   </section>
 );
 
-/** Muestra de color que despliega su selector debajo. */
-const ColorField = ({
-  label,
-  color,
-  isOpen,
-  onToggle,
-  onChange,
-}: {
-  label: string;
-  color: Rgba;
-  isOpen: boolean;
-  onToggle: () => void;
-  onChange: (color: Rgba) => void;
-}) => (
-  <div className={styles.colorField}>
-    <button
-      type="button"
-      className={styles.colorButton}
-      aria-expanded={isOpen}
-      onClick={onToggle}
-    >
-      <span
-        className={styles.swatch}
-        style={{ background: rgbaToCss(color) }}
-        aria-hidden="true"
-      />
-      {label}
-    </button>
-    {isOpen && <RgbaColorPicker color={color} onChange={onChange} />}
-  </div>
-);
-
 /**
- * Estilo del texto seleccionado: alineación, interlineado, contorno, sombra y
- * caja de fondo. Las medidas van en % del tamaño de letra.
+ * Estilo del texto seleccionado: alineación, interlineado, degradado,
+ * contorno, sombra y caja de fondo. Las medidas van en % del tamaño de letra.
  *
  * Arrastrar un slider o un selector de color crea un solo paso del historial
  * (mergeKey por ajuste).
@@ -98,11 +67,19 @@ const ColorField = ({
 const TextStylePanel = ({ text }: { text: TextElement }) => {
   const editElement = useEditorStore((state) => state.editElement);
   const [openColor, setOpenColor] = useState<ColorTarget | null>(null);
+  // El último degradado usado: al desactivarlo y volver a activarlo no se pierde.
+  const [lastGradient, setLastGradient] = useState<Gradient>(
+    text.gradient ?? DEFAULT_TEXT_GRADIENT
+  );
 
   const edit = (patch: Partial<TextStyle>, mergeKey?: string) =>
     editElement(text.id, patch, mergeKey && `${mergeKey}:${text.id}`);
   const toggleColor = (target: ColorTarget) =>
     setOpenColor(openColor === target ? null : target);
+  const setGradient = (gradient: Gradient, mergeKey?: string) => {
+    setLastGradient(gradient);
+    edit({ gradient }, mergeKey);
+  };
 
   const { stroke, shadow, background } = text;
 
@@ -130,6 +107,23 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
         valueText={text.lineHeight.toFixed(2)}
         onChange={(value) => edit({ lineHeight: value / 100 }, "lineHeight")}
       />
+
+      <ToggleSection
+        title="Degradado"
+        enabled={text.gradient !== null}
+        onToggle={(enabled) =>
+          edit({ gradient: enabled ? lastGradient : null })
+        }
+      >
+        {text.gradient && (
+          <TextGradientEditor
+            gradient={text.gradient}
+            onChange={setGradient}
+            isColorOpen={openColor === "gradient"}
+            onToggleColor={() => toggleColor("gradient")}
+          />
+        )}
+      </ToggleSection>
 
       <ToggleSection
         title="Contorno"

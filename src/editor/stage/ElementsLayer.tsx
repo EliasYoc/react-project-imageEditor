@@ -2,12 +2,20 @@ import Konva from "konva/lib/Core";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Layer as KonvaLayer } from "konva/lib/Layer";
 import type { Label as KonvaLabel } from "konva/lib/shapes/Label";
+import type { Text as KonvaText } from "konva/lib/shapes/Text";
 import type { Transformer as KonvaTransformer } from "konva/lib/shapes/Transformer";
 import "konva/lib/shapes/Label";
 import "konva/lib/shapes/Line";
 import "konva/lib/shapes/Text";
 import "konva/lib/shapes/Transformer";
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   Image as KonvaImage,
   Label,
@@ -19,6 +27,7 @@ import {
 } from "react-konva/lib/ReactKonvaCore";
 import { imageNodeConfig, textNodeConfig } from "../elements/nodeConfig";
 import { snapToDocument } from "../elements/snapping";
+import { applyTextFill } from "../elements/textGradient";
 import type { View } from "../engine/viewport";
 import type { EditorElement, ImageElement, TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
@@ -59,6 +68,17 @@ const TextNode = ({
 }: NodeProps<TextElement>) => {
   const fontReady = useFontReady(element.fontId, element.fontWeight);
   const config = textNodeConfig(element);
+  const textRef = useRef<KonvaText>(null);
+
+  // El degradado depende del tamaño que Konva acaba de medir: se aplica
+  // después de cada render (barato: unos pocos atributos).
+  useLayoutEffect(() => {
+    const text = textRef.current;
+    if (!text) return;
+    applyTextFill(text, element.gradient);
+    text.getLayer()?.batchDraw();
+  });
+
   return (
     <Label
       // Al cargar la fuente, el nodo se crea de nuevo y Konva mide bien.
@@ -69,7 +89,7 @@ const TextNode = ({
       {...handlers.forElement(element)}
     >
       <Tag {...config.tag} />
-      <Text {...config.text} />
+      <Text ref={textRef} {...config.text} />
     </Label>
   );
 };
@@ -149,6 +169,11 @@ interface ElementsLayerProps {
   view: View;
   /** Modo Texto: los elementos se pueden seleccionar, mover y transformar. */
   interactive: boolean;
+  /**
+   * Más nodos para la capa sin transformar, encima del marco (el círculo del
+   * pincel): así no hace falta otra capa, que es otro <canvas>.
+   */
+  overlay?: ReactNode;
 }
 
 /**
@@ -158,7 +183,7 @@ interface ElementsLayerProps {
  * El Transformer (marco de selección) va en una capa aparte sin
  * transformar: así sus asas miden lo mismo con cualquier zoom.
  */
-const ElementsLayer = ({ view, interactive }: ElementsLayerProps) => {
+const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
   const elements = useEditorStore(selectElements);
   const selectedId = useEditorStore((state) => state.selectedElementId);
   const editingId = useEditorStore((state) => state.editingTextId);
@@ -206,6 +231,8 @@ const ElementsLayer = ({ view, interactive }: ElementsLayerProps) => {
     );
     text.width(width);
     label.scaleX(label.scaleY());
+    // El texto cambia de forma: el degradado se reparte en la nueva caja.
+    applyTextFill(text, selected.gradient);
   };
 
   const onTransformEnd = () => {
@@ -307,6 +334,7 @@ const ElementsLayer = ({ view, interactive }: ElementsLayerProps) => {
           onTransform={onTransform}
           onTransformEnd={onTransformEnd}
         />
+        {overlay}
       </Layer>
     </>
   );

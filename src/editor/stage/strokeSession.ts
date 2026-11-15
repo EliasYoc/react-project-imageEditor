@@ -1,5 +1,6 @@
 import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import { get2dContext } from "../../lib/canvas";
+import { strokeLayers } from "../engine/brushes/layers";
 import {
   createLiveRenderer,
   strokeBlend,
@@ -25,12 +26,17 @@ interface ActiveStroke {
   startedAt: number;
 }
 
+/** Nodos de Konva que muestran `liveCanvas`, uno en cada capa de trazos. */
+export interface LiveNodes {
+  paint: KonvaImageNode | null;
+  highlight: KonvaImageNode | null;
+}
+
 interface StrokeSessionOptions {
   /** Canvas (tamaño del documento) donde se ve el trazo mientras se dibuja. */
   liveCanvas: HTMLCanvasElement;
-  /** Nodo de Konva que muestra `liveCanvas`. */
-  liveNode: KonvaImageNode | null;
-  /** Pide a Konva que vuelva a pintar la capa de pintura en el próximo frame. */
+  liveNodes: LiveNodes;
+  /** Pide a Konva que vuelva a pintar las capas de trazos en el próximo frame. */
   requestDraw: () => void;
 }
 
@@ -43,14 +49,16 @@ type Rect = Pick<DOMRect, "left" | "top">;
  *
  * El canvas del trazo en curso es el "búfer" del trazo: la opacidad y el modo
  * de fusión del pincel se los aplica el nodo de Konva al mostrarlo, igual que
- * `paintStroke` al pintarlo en el raster.
+ * `paintStroke` al pintarlo en el raster. Se muestra en la capa (o capas) en
+ * la que se guardará el trazo: el resaltador en la suya, un borrador en las
+ * dos (borra en ambas mientras se arrastra) y el resto en la de pintura.
  *
  * Vive en variables locales, no en estado de React: dibujar no provoca
  * ningún render.
  */
 export const createStrokeSession = ({
   liveCanvas,
-  liveNode,
+  liveNodes,
   requestDraw,
 }: StrokeSessionOptions) => {
   const ctx = get2dContext(liveCanvas);
@@ -89,8 +97,17 @@ export const createStrokeSession = ({
         // Solo el lápiz mide la presión de verdad (el ratón y el dedo no).
         hasPressure: sample.pointerType === "pen",
       });
-      liveNode?.opacity(stroke.opacity);
-      liveNode?.globalCompositeOperation(strokeBlend(stroke));
+      const layers = strokeLayers(stroke);
+      // La capa del resaltador se oculta mientras está vacía.
+      if (layers.highlight && !layers.paint) {
+        liveNodes.highlight?.getLayer()?.visible(true);
+      }
+      for (const layer of ["paint", "highlight"] as const) {
+        const node = liveNodes[layer];
+        node?.visible(layers[layer]);
+        node?.opacity(stroke.opacity);
+        node?.globalCompositeOperation(strokeBlend(stroke));
+      }
       clearLive();
       active = {
         stroke,

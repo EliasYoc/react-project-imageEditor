@@ -10,6 +10,7 @@ import { selectSelectedText } from "../../editor/store/selectors";
 import { getShortcutAction } from "../shortcuts/getShortcutAction";
 import FontPicker from "./FontPicker";
 import TextStylePanel from "./TextStylePanel";
+import { DEFAULT_TEXT_GRADIENT } from "./textGradientPresets";
 
 // Las fuentes no se descargan en los tests.
 vi.mock("../../editor/elements/fontLoader", () => ({
@@ -87,6 +88,69 @@ describe("TextStylePanel", () => {
       target: { value: "40" },
     });
     expect(text().background).toMatchObject({ enabled: true, padding: 0.4 });
+  });
+
+  it("degradado: activarlo, cambiar la forma y recuperarlo al reactivarlo", async () => {
+    const { rerender } = render(<TextStylePanel text={text()} />);
+    const toggle = screen.getByRole("checkbox", { name: "Degradado" });
+    expect(text().gradient).toBeNull();
+
+    await userEvent.click(toggle);
+    expect(text().gradient).toEqual(DEFAULT_TEXT_GRADIENT);
+    rerender(<TextStylePanel text={text()} />);
+
+    // Solo lineal y radial: el texto no admite cónico.
+    const shapes = screen.getByRole("group", { name: "Forma del degradado" });
+    expect(shapes.querySelectorAll("button")).toHaveLength(2);
+    await userEvent.click(screen.getByRole("button", { name: "Radial" }));
+    expect(text().gradient?.type).toBe("radial");
+    rerender(<TextStylePanel text={text()} />);
+    // Radial: no hay ángulo.
+    expect(screen.queryByRole("slider", { name: "Ángulo" })).toBeNull();
+
+    await userEvent.click(toggle);
+    expect(text().gradient).toBeNull();
+    rerender(<TextStylePanel text={text()} />);
+    await userEvent.click(toggle);
+    expect(text().gradient?.type).toBe("radial");
+  });
+
+  it("degradado: girar el dial con el teclado es un solo paso del historial", async () => {
+    editorStore.getState().editElement(text().id, {
+      gradient: { ...DEFAULT_TEXT_GRADIENT, type: "linear", angle: 90 },
+    });
+    const { rerender } = render(<TextStylePanel text={text()} />);
+    const pastBefore = editorStore.getState().past.length;
+
+    screen.getByRole("slider", { name: "Ángulo" }).focus();
+    for (let step = 0; step < 3; step++) {
+      await userEvent.keyboard("{ArrowRight}");
+      // En la app, el panel se vuelve a renderizar con el texto del store.
+      rerender(<TextStylePanel text={text()} />);
+    }
+    expect(text().gradient?.angle).toBe(93);
+    expect(editorStore.getState().past.length).toBe(pastBefore + 1);
+  });
+
+  it("degradado: un preset reemplaza las paradas", async () => {
+    editorStore.getState().editElement(text().id, {
+      gradient: DEFAULT_TEXT_GRADIENT,
+    });
+    render(<TextStylePanel text={text()} />);
+    const presets = screen.getByRole("group", { name: "Degradados" });
+    // Sin cónicos ni la viñeta.
+    expect(
+      Array.from(presets.querySelectorAll("button")).map(
+        (button) => button.title
+      )
+    ).not.toContain("Arcoíris");
+    await userEvent.click(screen.getByRole("button", { name: "Océano" }));
+    expect(text().gradient?.stops[0].color).toEqual({
+      r: 33,
+      g: 147,
+      b: 176,
+      a: 1,
+    });
   });
 });
 

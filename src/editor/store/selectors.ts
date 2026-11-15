@@ -6,34 +6,43 @@ import {
   type LogEntry,
   type StrokeEntry,
 } from "../model/types";
+import { splitStrokeLayers } from "../engine/brushes/layers";
 import type { EditorStore } from "./editorStore";
 
 /**
- * Selector que filtra el log y se memoriza por su referencia.
+ * Selector que deriva algo del log y se memoriza por su referencia.
  *
  * Un selector que devuelve un array nuevo en cada llamada haría que el
  * componente se volviera a renderizar sin parar.
  */
-const memoizeByLog = <T>(filter: (log: LogEntry[]) => T[]) => {
+const memoizeByLog = <T>(compute: (log: LogEntry[]) => T) => {
   let cachedLog: LogEntry[] | null = null;
-  let cached: T[] = [];
-  return (state: EditorStore): T[] => {
+  let cached: T | undefined;
+  return (state: EditorStore): T => {
     if (state.log !== cachedLog) {
       cachedLog = state.log;
-      cached = filter(state.log);
+      cached = compute(state.log);
     }
-    return cached;
+    return cached as T;
   };
 };
 
 /** Elementos (texto e imágenes) del documento. */
-export const selectElements = memoizeByLog<EditorElement>((log) =>
+export const selectElements = memoizeByLog<EditorElement[]>((log) =>
   log.filter(isEditorElement)
 );
 
 /** Trazos del documento, en el orden en que se pintan. */
-export const selectStrokes = memoizeByLog<StrokeEntry>((log) =>
+export const selectStrokes = memoizeByLog<StrokeEntry[]>((log) =>
   log.filter(isStroke)
+);
+
+/**
+ * Los trazos repartidos en sus capas: la pintura y la del resaltador, que se
+ * multiplica con la foto (ver `splitStrokeLayers`).
+ */
+export const selectStrokeLayers = memoizeByLog((log) =>
+  splitStrokeLayers(log.filter(isStroke))
 );
 
 export const selectSelectedElement = (
