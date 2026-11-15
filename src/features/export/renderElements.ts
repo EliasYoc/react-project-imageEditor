@@ -9,6 +9,7 @@ import {
   imageNodeConfig,
   textNodeConfig,
 } from "../../editor/elements/nodeConfig";
+import { applyTextFill } from "../../editor/elements/textGradient";
 import type { EditorElement, Size } from "../../editor/model/types";
 
 /**
@@ -51,8 +52,11 @@ export const renderElements = async (
     if (element.whatTask === "text") {
       const config = textNodeConfig(element);
       const label = new Label(config.label);
+      const text = new Text(config.text);
+      // Igual que en el lienzo: el degradado se reparte en la caja ya medida.
+      applyTextFill(text, element.gradient);
       label.add(new Tag(config.tag));
-      label.add(new Text(config.text));
+      label.add(text);
       layer.add(label);
     } else {
       const image = images.get(element.id);

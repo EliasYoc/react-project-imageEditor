@@ -42,6 +42,7 @@ export const createDefaultTextStyle = (): Omit<TextStyle, "fontSize"> => ({
     padding: 0.25,
     radius: 0.2,
   },
+  gradient: null,
 });
 
 export const DEFAULT_TEXT_STYLE = createDefaultTextStyle();

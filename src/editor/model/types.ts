@@ -155,6 +155,11 @@ export interface TextStyle {
   stroke: TextStroke;
   shadow: TextShadow;
   background: TextBackground;
+  /**
+   * Relleno con degradado (lineal o radial) en lugar del color; null = color
+   * sólido. La geometría es la de CSS dentro de la caja del texto.
+   */
+  gradient: Gradient | null;
 }
 
 export interface TextElement extends BaseElement, TextStyle {
