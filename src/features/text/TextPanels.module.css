@@ -1,0 +1,121 @@
+/* Contenido de las hojas "Fuente" y "Estilo del texto" (con scroll propio). */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: min(70dvh, 620px);
+  padding: 0 var(--space-3) var(--space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+}
+
+/* Grupo de botones excluyentes (grosor, alineación). */
+.segmented {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.segmented [aria-pressed="true"] {
+  background: var(--color-surface-active);
+}
+
+.fontList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-2);
+}
+
+.panel .font {
+  justify-content: flex-start;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 1.15rem;
+  text-align: left;
+}
+
+.panel .font[aria-pressed="true"] {
+  border-color: var(--color-text-active);
+  background: var(--color-surface-active);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 32px;
+  color: var(--color-text-active);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.sectionHeader input {
+  width: 18px;
+  height: 18px;
+  accent-color: rgb(68, 171, 255);
+}
+
+.sectionBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
+.colorField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.colorButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.colorButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--color-text);
+  border-radius: 50%;
+}
+
+/* Fuente actual en la barra inferior, escrita en su tipo. */
+.fontButton {
+  width: 96px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
