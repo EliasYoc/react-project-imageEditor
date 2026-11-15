@@ -1,5 +1,5 @@
-import { useRef } from "react";
-import { BiImages } from "react-icons/bi";
+import { ImagePlus } from "lucide-react";
+import { useRef, type ChangeEvent } from "react";
 import { IconButton } from "../../components/ui/Button";
 import { loadImage } from "../../editor/elements/imageCache";
 import { documentPointAtViewCenter } from "../../editor/stage/viewStore";
@@ -10,10 +10,10 @@ const MAX_DOCUMENT_FRACTION = 0.5;
 
 /** Inserta una imagen como elemento (encima del dibujo) en el centro de la vista. */
 const IncludeImageButton = () => {
-  const inputRef = useRef(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = async (event) => {
-    const file = event.target.files[0];
+  const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     // Permite volver a elegir el mismo archivo.
     event.target.value = "";
     if (!file) return;
@@ -50,9 +50,9 @@ const IncludeImageButton = () => {
         onChange={handleChange}
       />
       <IconButton
-        icon={BiImages}
+        icon={ImagePlus}
         aria-label="Insertar una imagen"
-        onClick={() => inputRef.current.click()}
+        onClick={() => inputRef.current?.click()}
       />
     </>
   );

@@ -13,6 +13,23 @@ export const TooltipProvider = ({ children }: { children: ReactNode }) => (
   </RadixTooltip.Provider>
 );
 
+const isFocusVisible = (element: Element) => {
+  try {
+    return element.matches(":focus-visible");
+  } catch {
+    return true; // navegador sin :focus-visible: como antes
+  }
+};
+
+/**
+ * El foco viene de un panel, menú o diálogo que se acaba de cerrar (o de un
+ * elemento que ya no está: `relatedTarget` nulo).
+ */
+const comesFromOverlay = (previous: EventTarget | null) =>
+  !(previous instanceof Element) ||
+  previous.closest('[role="dialog"], [role="alertdialog"], [role="menu"]') !==
+    null;
+
 export interface TooltipProps {
   label: string;
   /** Atajo de teclado, p. ej. "Ctrl+Z". */
@@ -37,7 +54,23 @@ export function Tooltip({
   if (!canHover) return children;
   return (
     <RadixTooltip.Root>
-      <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
+      <RadixTooltip.Trigger
+        asChild
+        // Solo con foco de teclado (Tab), y no cuando un panel, menú o
+        // diálogo devuelve el foco a su botón al cerrarse: el tooltip saltaría
+        // solo y el siguiente Escape lo cerraría a él en vez del panel que
+        // sigue abierto debajo.
+        onFocus={(event) => {
+          if (
+            !isFocusVisible(event.currentTarget) ||
+            comesFromOverlay(event.relatedTarget)
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        {children}
+      </RadixTooltip.Trigger>
       <RadixTooltip.Portal>
         <RadixTooltip.Content
           className={styles.content}

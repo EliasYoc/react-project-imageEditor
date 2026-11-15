@@ -1,20 +1,20 @@
-import { useRef } from "react";
-import { BiImageAlt, BiPalette } from "react-icons/bi";
+import { ImagePlus, Palette } from "lucide-react";
+import { useRef, type ChangeEvent } from "react";
 import { IconButton } from "../../components/ui/Button";
-import { LayoutToolBox } from "../../components/ui/legacy/styledComponents";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { createCanvas, get2dContext } from "../../lib/canvas";
 import {
   readFile,
   reduceAspectRatioQualityOfIncomingImage,
 } from "../../lib/helper";
+import styles from "./HomeToolbar.module.css";
 
 /** Las imágenes más grandes que esto se reducen a MAX_IMAGE_SIDE píxeles. */
 const HEAVY_IMAGE_SIDE = 2800;
 const MAX_IMAGE_SIDE = 2048;
 
-const loadImage = (src) =>
-  new Promise((resolve, reject) => {
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("No se pudo leer la imagen"));
@@ -26,16 +26,17 @@ const HomeToolbar = () => {
   const setMode = useEditorStore((state) => state.setMode);
   const setStatus = useEditorStore((state) => state.setStatus);
   const loadPhoto = useEditorStore((state) => state.loadPhoto);
-  const fileInputRef = useRef(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleLoadImage = async (e) => {
-    const file = e.target.files[0];
+  const handleLoadImage = async (event: ChangeEvent<HTMLInputElement>) => {
+    const input = event.target;
+    const file = input.files?.[0];
     if (!file) return;
     setStatus("loading");
 
     try {
       const { result } = await readFile({ file });
-      const image = await loadImage(result);
+      const image = await loadImage(result as string);
 
       const isHeavy =
         image.width > HEAVY_IMAGE_SIDE || image.height > HEAVY_IMAGE_SIDE;
@@ -69,27 +70,18 @@ const HomeToolbar = () => {
     } finally {
       setStatus("idle");
       // Permite volver a elegir el mismo archivo.
-      e.target.value = "";
+      input.value = "";
     }
   };
 
   return (
-    <LayoutToolBox
-      className="animationAppearUp"
-      gap="1rem"
-      display="flex"
-      justifyContent="center"
-      borderRadius="50px"
-      margin="10px auto"
-      bottom="0"
-      padding="0 .5rem"
-      width="clamp(300px, 90% ,500px)"
-    >
+    <div className={styles.toolbar}>
       {/* Cambia de modo al instante. Antes esperaba al final de la animación
           (onTransitionEnd) y, si el navegador no animaba, la app se atascaba. */}
       <IconButton
-        icon={BiPalette}
+        icon={Palette}
         aria-label="Abrir el editor"
+        tooltipSide="top"
         onClick={() => setMode("draw")}
       />
       {/* El <input type="file"> está oculto; el botón visible lo abre. Así el
@@ -98,16 +90,16 @@ const HomeToolbar = () => {
         ref={fileInputRef}
         hidden
         type="file"
-        id="open-image"
         accept="image/*"
         onChange={handleLoadImage}
       />
       <IconButton
-        icon={BiImageAlt}
+        icon={ImagePlus}
         aria-label="Abrir una imagen"
-        onClick={() => fileInputRef.current.click()}
+        tooltipSide="top"
+        onClick={() => fileInputRef.current?.click()}
       />
-    </LayoutToolBox>
+    </div>
   );
 };
 

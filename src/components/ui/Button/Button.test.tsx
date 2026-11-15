@@ -42,18 +42,36 @@ describe("IconButton", () => {
     expect(button).not.toHaveAttribute("title");
   });
 
-  it("con ratón, el tooltip muestra el nombre y el atajo", async () => {
+  it("con ratón, el tooltip muestra el nombre y el atajo (al llegar con Tab)", async () => {
     mockMediaQueries((query) => query.includes("hover"));
     const user = userEvent.setup();
     render(
       <TooltipProvider>
+        <button type="button">Antes</button>
         <IconButton icon={Palette} aria-label="Deshacer" shortcut="Ctrl+Z" />
       </TooltipProvider>
     );
     await user.tab();
+    await user.tab();
     const tooltip = await screen.findByRole("tooltip");
     expect(tooltip).toHaveTextContent("Deshacer");
     expect(tooltip).toHaveTextContent("Ctrl+Z");
+  });
+
+  it("no salta el tooltip cuando un panel devuelve el foco al botón", async () => {
+    mockMediaQueries((query) => query.includes("hover"));
+    render(
+      <TooltipProvider>
+        <div role="dialog" aria-label="Panel">
+          <button type="button">Dentro</button>
+        </div>
+        <IconButton icon={Palette} aria-label="Fondo" />
+      </TooltipProvider>
+    );
+    screen.getByRole("button", { name: "Dentro" }).focus();
+    screen.getByRole("button", { name: "Fondo" }).focus();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
   it("acepta ref (para usarlo como disparador de Radix)", () => {

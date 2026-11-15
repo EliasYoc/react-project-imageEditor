@@ -81,6 +81,13 @@ export function Panel({
           // Sin descripción no se enlaza ninguna (Radix avisaría).
           {...(!description && { "aria-describedby": undefined })}
           {...returnFocus}
+          onOpenAutoFocus={(event) => {
+            returnFocus.onOpenAutoFocus();
+            // El foco va al panel, no al primer botón (✕): el lector anuncia
+            // el título y no salta el tooltip de "Cerrar". Tab sigue dentro.
+            event.preventDefault();
+            contentRef.current?.focus({ preventScroll: true });
+          }}
           onInteractOutside={
             isDesktop ? (event) => event.preventDefault() : undefined
           }

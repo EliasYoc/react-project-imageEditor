@@ -34,7 +34,9 @@
   height: 1.25em;
 }
 
-.item[data-state="on"] {
+/* aria-checked y no data-state: el tooltip que envuelve un icono pisa
+   data-state con el suyo ("closed"). */
+.item[aria-checked="true"] {
   background: var(--color-surface-active);
   color: var(--color-text-strong);
 }
@@ -50,7 +52,7 @@
 }
 
 @media (hover: hover) {
-  .item:hover:not(:disabled, [data-state="on"]) {
+  .item:hover:not(:disabled, [aria-checked="true"]) {
     background: var(--color-surface-hover);
     color: var(--color-text-active);
   }
