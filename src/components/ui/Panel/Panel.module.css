@@ -1,0 +1,170 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-panel);
+  /* Apenas oscurece: los cambios se ven en vivo en el lienzo. */
+  background: rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.2s ease;
+}
+
+.overlay[data-state="closed"] {
+  animation: fadeOut 0.2s ease forwards;
+}
+
+.sheet,
+.side {
+  position: fixed;
+  z-index: var(--z-panel);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface-strong);
+  box-shadow: var(--shadow-panel);
+  color: var(--color-text-active);
+  outline: none;
+}
+
+/* Hoja inferior (móvil). */
+.sheet {
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: min(100%, 560px);
+  max-height: var(--sheet-max-height);
+  margin-inline: auto;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-radius: 16px 16px 0 0;
+  animation: slideUp 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sheet[data-state="closed"] {
+  animation: slideDown 0.2s ease-in forwards;
+}
+
+/* Panel lateral (escritorio): debajo de la cabecera, sin tapar las barras. */
+.side {
+  top: calc(var(--header-height) + var(--space-2));
+  right: var(--space-2);
+  bottom: var(--space-2);
+  width: var(--panel-width);
+  max-width: calc(100vw - 2 * var(--space-2));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  animation: slideIn 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.side[data-state="closed"] {
+  animation: slideOut 0.15s ease-in forwards;
+}
+
+.header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2) var(--space-1) var(--space-3);
+}
+
+/* En la hoja, la cabecera se arrastra hacia abajo para cerrar. */
+.sheet .header {
+  padding-top: 14px;
+  touch-action: none;
+  cursor: grab;
+}
+
+.handle {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.title {
+  flex: 1;
+  color: var(--color-text-strong);
+  font-size: 15px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.description {
+  padding: 0 var(--space-3) var(--space-2);
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-1) var(--space-3) var(--space-3);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Los selectores de color ocupan el ancho del panel. */
+.body :global(.react-colorful) {
+  width: 100%;
+  height: auto;
+  gap: var(--space-3);
+}
+
+.body :global(.react-colorful__saturation) {
+  aspect-ratio: 4 / 3;
+  border-bottom: none;
+  border-radius: var(--radius-sm);
+}
+
+.body :global(.react-colorful__hue),
+.body :global(.react-colorful__alpha) {
+  height: 24px;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slideDown {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes slideOut {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .sheet,
+  .side {
+    animation: none !important;
+  }
+}

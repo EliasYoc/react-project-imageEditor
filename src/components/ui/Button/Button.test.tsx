@@ -1,8 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { BiPalette } from "react-icons/bi";
-import { describe, expect, it, vi } from "vitest";
+import { Palette } from "lucide-react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Button, IconButton } from ".";
+import { mockMediaQueries } from "../../../test/media";
+import { TooltipProvider } from "../Tooltip";
+
+afterEach(() => mockMediaQueries(() => false));
 
 describe("Button", () => {
   it("es un <button type='button'> accesible por su texto", () => {
@@ -32,14 +36,60 @@ describe("Button", () => {
 });
 
 describe("IconButton", () => {
-  it("usa aria-label como nombre accesible y como tooltip", () => {
-    render(<IconButton icon={BiPalette} aria-label="Abrir el editor" />);
+  it("usa aria-label como nombre accesible (sin tooltip en pantallas táctiles)", () => {
+    render(<IconButton icon={Palette} aria-label="Abrir el editor" />);
     const button = screen.getByRole("button", { name: "Abrir el editor" });
-    expect(button).toHaveAttribute("title", "Abrir el editor");
+    expect(button).not.toHaveAttribute("title");
+  });
+
+  it("con ratón, el tooltip muestra el nombre y el atajo (al llegar con Tab)", async () => {
+    mockMediaQueries((query) => query.includes("hover"));
+    const user = userEvent.setup();
+    render(
+      <TooltipProvider>
+        <button type="button">Antes</button>
+        <IconButton icon={Palette} aria-label="Deshacer" shortcut="Ctrl+Z" />
+      </TooltipProvider>
+    );
+    await user.tab();
+    await user.tab();
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Deshacer");
+    expect(tooltip).toHaveTextContent("Ctrl+Z");
+  });
+
+  it("no salta el tooltip cuando un panel devuelve el foco al botón", async () => {
+    mockMediaQueries((query) => query.includes("hover"));
+    render(
+      <TooltipProvider>
+        <div role="dialog" aria-label="Panel">
+          <button type="button">Dentro</button>
+        </div>
+        <IconButton icon={Palette} aria-label="Fondo" />
+      </TooltipProvider>
+    );
+    screen.getByRole("button", { name: "Dentro" }).focus();
+    screen.getByRole("button", { name: "Fondo" }).focus();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+
+  it("acepta ref (para usarlo como disparador de Radix)", () => {
+    let node: HTMLButtonElement | null = null;
+    render(
+      <IconButton
+        icon={Palette}
+        aria-label="Más"
+        ref={(element) => {
+          node = element;
+        }}
+      />
+    );
+    expect(node).toBe(screen.getByRole("button", { name: "Más" }));
   });
 
   it("oculta el icono a los lectores de pantalla", () => {
-    render(<IconButton icon={BiPalette} aria-label="Abrir el editor" />);
+    render(<IconButton icon={Palette} aria-label="Abrir el editor" />);
     const svg = screen.getByRole("button").querySelector("svg");
     expect(svg).toHaveAttribute("aria-hidden", "true");
   });
@@ -49,7 +99,7 @@ describe("IconButton", () => {
     const onClick = vi.fn();
     render(
       <IconButton
-        icon={BiPalette}
+        icon={Palette}
         aria-label="Deshacer"
         disabled
         onClick={onClick}

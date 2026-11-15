@@ -1,0 +1,26 @@
+/*
+ * Pegado al borde izquierdo y medio escondido (translate -50%): asoma lo
+ * justo para encontrarlo. Al pasar el ratón (o al tocarlo, o con el foco del
+ * teclado) se desliza entero hacia dentro.
+ */
+.wrapper {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  z-index: var(--z-toolbar);
+  padding: 0 0.5rem;
+  transform: translate(-50%, -50%);
+  transition: transform 0.3s ease;
+}
+
+.wrapper:hover,
+.wrapper:active,
+.wrapper:focus-within {
+  transform: translate(0, -50%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wrapper {
+    transition: none;
+  }
+}

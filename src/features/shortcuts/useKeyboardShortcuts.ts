@@ -55,16 +55,36 @@ const run = (action: ShortcutAction) => {
   }
 };
 
+/** El foco está en un panel, un diálogo o un menú. */
+const isInsideOverlay = (target: EventTarget | null) =>
+  target instanceof Element &&
+  target.closest('[role="dialog"], [role="alertdialog"], [role="menu"]') !==
+    null;
+
 /**
- * Atajos de teclado del editor (ver `getShortcutAction`). No actúan mientras
- * se escribe en un texto o en un campo: ahí Ctrl + Z deshace lo escrito.
+ * Atajos de teclado del editor (ver `getShortcutAction`). No actúan:
+ * - mientras se escribe en un texto o en un campo (ahí Ctrl + Z deshace lo
+ *   escrito);
+ * - si un componente ya usó la tecla (p. ej. Supr en una parada del
+ *   degradado la quita);
+ * - Supr y Escape dentro de un panel o un menú son de ese panel (Escape lo
+ *   cierra): no borran ni deseleccionan el texto que se está editando.
  */
 export function useKeyboardShortcuts() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.isComposing || isTypingTarget(event.target)) return;
+      if (
+        event.defaultPrevented ||
+        event.isComposing ||
+        isTypingTarget(event.target)
+      ) {
+        return;
+      }
       const action = getShortcutAction(event, editorStore.getState().mode);
       if (!action) return;
+      const actsOnSelection =
+        action.type === "deleteElement" || action.type === "deselect";
+      if (actsOnSelection && isInsideOverlay(event.target)) return;
       // Evita la acción del navegador (p. ej. Ctrl + = haría zoom de la página).
       event.preventDefault();
       run(action);

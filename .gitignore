@@ -22,3 +22,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Configuración personal de Claude Code (no se comparte)
+.claude/settings.local.json
