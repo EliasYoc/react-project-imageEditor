@@ -86,10 +86,25 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Negrita               | Ctrl/⌘ + B (modo Texto)                                                 | Panel "Fuente"                      |
 | Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                   | Barra inferior                      |
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón) | Tocar el slider del borde izquierdo |
-| Exportar              | Botón "Exportar" de la cabecera (Enter en el diálogo)                   | Botón "Exportar"                    |
+| Exportar              | Ctrl/⌘ + S o el botón "Exportar" (Enter en el diálogo)                  | Botón "Exportar"                    |
 | Cerrar un panel       | Escape o ✕                                                              | ✕, tocar fuera o deslizar abajo     |
+| Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                      | —                                   |
+| Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V              | Botón "Abrir una foto"              |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
+
+## Inicio y avisos
+
+- **Pantalla de inicio** (`features/home/HomeScreen.tsx`):
+  - **Seguir editando**, si ya hay un documento;
+  - **Abrir una foto**, con el botón, arrastrándola a la ventana o pegándola;
+  - **Lienzo en blanco** en cuatro tamaños: Pantalla, Cuadrado 2048², Historia 1080×1920 y Horizontal 1920×1080.
+- **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo, se pide confirmación antes.
+- **Soltar un archivo** sobre la app nunca hace que el navegador lo abra (y se salga del editor).
+- **Avisos** (`components/ui/Toast`, Radix Toast):
+  - `toast.success(…)` y `toast.error(…)` desde cualquier parte;
+  - se usan al descargar la imagen y cuando falla exportar o abrir una imagen.
+- **Diálogos globales:** los que se abren desde un botón y un atajo (exportar y la lista de atajos) viven en `app/uiStore.ts`.
 
 ## Fondo (color y degradado)
 
