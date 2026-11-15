@@ -28,6 +28,8 @@ Producción: https://editoryoc.netlify.app/
 | `npm run lint`          | ESLint                                                               |
 | `npm run typecheck`     | Revisa los tipos de TypeScript                                       |
 | `npm run check`         | Lint + tipos + tests (lo que debe pasar antes de abrir una PR)       |
+| `npm run test:e2e`      | Tests de punta a punta con Playwright (ver [Tests e2e](#tests-e2e))  |
+| `npm run test:e2e:ui`   | Igual, en la interfaz de Playwright: paso a paso y con capturas      |
 | `npm run format`        | Formatea el código con Prettier                                      |
 
 ## Estructura
@@ -46,6 +48,7 @@ src/
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
+e2e/            Tests de punta a punta (Playwright) y sus imágenes de prueba (fixtures/)
 ```
 
 ## Cómo funciona el lienzo
@@ -147,6 +150,23 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
   - `sw.js` e `index.html` **no** deben tener caché larga, porque si no las versiones nuevas tardan en llegar;
   - `public/_headers` solo lo entiende Netlify (y Cloudflare Pages); en otro hosting la app funciona igual, sin esa caché de `/assets`.
 
+## Tests e2e
+
+Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Playwright](https://playwright.dev/) (configuración en `playwright.config.ts`).
+
+- **Qué prueban:**
+  - el inicio: los lienzos en blanco, abrir, soltar o pegar una foto y la confirmación antes de descartar;
+  - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
+  - los textos: escribir, editar, el degradado y moverlos;
+  - el fondo de color y de degradado;
+  - exportar: el nombre y el tamaño del PNG, y su contenido;
+  - el teclado y la PWA sin conexión.
+- **Contra el build de producción:** `npm run test:e2e` hace `npm run build` y lo sirve en el puerto 4180. Así se prueba lo mismo que se publica, con el service worker.
+- **Dos pantallas:** escritorio (1280 × 800, ratón y teclado) y móvil (390 × 844, táctil). En el móvil los trazos y el pellizco son toques reales, y la hoja de compartir se cambia por una falsa que guarda el archivo.
+- **Navegador:** el **Microsoft Edge** del equipo (`channel: "msedge"`), así que no hace falta `npx playwright install`.
+- **Cómo se comprueba el lienzo:** leyendo los **píxeles** de capturas de pantalla y de la imagen exportada. Se decodifican en el propio navegador, sin librerías de imágenes.
+- **Si un test falla:** Playwright guarda una traza (capturas, DOM y red de cada paso) en `test-results/`. Se abre con `npx playwright show-trace <ruta>/trace.zip`. El informe HTML queda en `playwright-report/`.
+
 ## Estilos
 
 - Los valores de diseño (colores, espaciado, radios, z-index) viven en `src/styles/tokens.css` y se usan con `var(--…)`.
@@ -166,4 +186,4 @@ Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.r
 
 ## Stack
 
-React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · CSS Modules · Vitest + Testing Library · ESLint + Prettier
+React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier
