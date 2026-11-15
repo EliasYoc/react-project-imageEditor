@@ -40,6 +40,7 @@ Si ninguna lo cubre:
   - para qué sirve;
   - su peso aproximado;
   - si hay una alternativa sin instalar nada.
+- **Si el dueño ya autorizó la instalación**, ejecuta el comando de npm sin volver a preguntar. El permiso vale solo para ese paquete y esa versión: otro paquete, otra versión o desinstalar algo se pregunta de nuevo.
 - **Elige versiones publicadas hace al menos 2 semanas** y fíjalas con `--save-exact`.
 - Estos comandos además piden confirmación por configuración (`.claude/settings.local.json`).
 
