@@ -17,6 +17,17 @@
   min-height: 0;
 }
 
+/* Oculto en el inicio, pero con su tamaño: Konva no pierde las medidas. */
+.canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas[hidden] {
+  display: block;
+  visibility: hidden;
+}
+
 .footer {
   position: relative;
   z-index: var(--z-toolbar);

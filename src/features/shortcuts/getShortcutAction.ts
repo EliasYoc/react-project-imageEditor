@@ -11,7 +11,9 @@ export type ShortcutAction =
   | { type: "brushSize"; factor: number }
   | { type: "deleteElement" }
   | { type: "toggleBold" }
-  | { type: "deselect" };
+  | { type: "deselect" }
+  | { type: "export" }
+  | { type: "showShortcuts" };
 
 type KeyInfo = Pick<
   KeyboardEvent,
@@ -26,6 +28,7 @@ export const BRUSH_SIZE_STEP = 1.25;
  * Qué hace una combinación de teclas en el editor (null = nada).
  *
  * - Ctrl/⌘ + Z: deshacer · Ctrl/⌘ + Shift + Z o Ctrl/⌘ + Y: rehacer
+ * - Ctrl/⌘ + S: exportar · ?: lista de atajos
  * - Ctrl/⌘ + 0: ajustar · Ctrl/⌘ + = / −: acercar / alejar
  * - B / E: último pincel / último borrador (modo Dibujar)
  * - [ / ]: pincel más pequeño / más grande (modo Dibujar). Se usa la tecla
@@ -46,12 +49,15 @@ export const getShortcutAction = (
   if (ctrlKey || metaKey) {
     if (lowerKey === "z") return { type: shiftKey ? "redo" : "undo" };
     if (lowerKey === "y") return { type: "redo" };
+    if (lowerKey === "s") return { type: "export" };
     if (lowerKey === "b" && mode === "text") return { type: "toggleBold" };
     if (key === "0") return { type: "fit" };
     if (key === "=" || key === "+") return { type: "zoomIn" };
     if (key === "-" || key === "_") return { type: "zoomOut" };
     return null;
   }
+
+  if (key === "?") return { type: "showShortcuts" };
 
   if (mode === "text") {
     if (key === "Delete" || key === "Backspace")

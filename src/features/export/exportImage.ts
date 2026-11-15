@@ -111,5 +111,6 @@ export const exportImage = async ({ fileName }: { fileName: string }) => {
   // Si el navegador no soporta el formato original (p. ej. GIF), toBlob
   // devuelve PNG: la extensión se calcula con el tipo real del blob.
   const blob = await canvasToBlob(canvas, mimeType);
-  return saveImage(blob, getDownloadFileName(fileName, blob.type));
+  const savedName = getDownloadFileName(fileName, blob.type);
+  return { result: await saveImage(blob, savedName), fileName: savedName };
 };

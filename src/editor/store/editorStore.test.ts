@@ -7,6 +7,7 @@ import {
   selectCanRedo,
   selectCanUndo,
   selectCurrentBrush,
+  selectHasDocumentContent,
   selectElements,
   selectSelectedElement,
   selectSelectedText,
@@ -23,7 +24,12 @@ const stroke = (size = 10): StrokeEntry => ({
   points: [{ x: 0, y: 0, pressure: 0.5 }],
 });
 
-const emptyPhoto = { source: null, preview: null, mimeType: null };
+const emptyPhoto = {
+  source: null,
+  preview: null,
+  mimeType: null,
+  fileName: null,
+};
 
 const red: Backdrop = {
   fill: { kind: "color", color: { r: 255, g: 0, b: 0, a: 1 } },
@@ -84,6 +90,44 @@ describe("foto y capa de color", () => {
     expect(state().selectedElementId).toBeNull();
     expect(selectCanUndo(state())).toBe(false);
     expect(selectCanRedo(state())).toBe(false);
+  });
+
+  it("newDocument empieza un lienzo en blanco del tamaño pedido, sin foto ni historial", () => {
+    state().loadPhoto({
+      source: document.createElement("canvas"),
+      preview: null,
+      mimeType: "image/jpeg",
+      fileName: "playa",
+      size: { width: 800, height: 600 },
+    });
+    state().addStroke(stroke());
+    state().setBackdrop(red);
+    state().newDocument({ width: 1920, height: 1080 });
+
+    expect(state().canvasSize).toEqual({ width: 1920, height: 1080 });
+    expect(state().photo).toEqual(emptyPhoto);
+    expect(state().log).toEqual([]);
+    expect(state().backdrop.fill).toBeNull();
+    expect(state().mode).toBe("draw");
+    expect(selectCanUndo(state())).toBe(false);
+  });
+
+  it("hay contenido que perder con dibujo, foto o capa de color", () => {
+    expect(selectHasDocumentContent(state())).toBe(false);
+    state().setBackdrop(red);
+    expect(selectHasDocumentContent(state())).toBe(true);
+    state().newDocument({ width: 100, height: 100 });
+    expect(selectHasDocumentContent(state())).toBe(false);
+    state().addStroke(stroke());
+    expect(selectHasDocumentContent(state())).toBe(true);
+    state().loadPhoto({
+      source: document.createElement("canvas"),
+      preview: null,
+      mimeType: "image/png",
+      fileName: null,
+      size: { width: 10, height: 10 },
+    });
+    expect(selectHasDocumentContent(state())).toBe(true);
   });
 
   it("setBackdrop conserva el dibujo y se puede deshacer y rehacer", () => {

@@ -1,0 +1,43 @@
+.groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: min(70dvh, 600px);
+  overflow-y: auto;
+  /* Barra de desplazamiento oscura, a juego con el diálogo. */
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-width: thin;
+}
+
+.groupTitle {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-strong);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 4px 0;
+  font-size: var(--font-size-sm);
+}
+
+.kbd {
+  padding: 2px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-active);
+  font-family: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+}

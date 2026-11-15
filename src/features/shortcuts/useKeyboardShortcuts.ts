@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
 import { ZOOM_STEP, viewStore } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
+import { uiStore } from "../../app/uiStore";
 import {
   selectCurrentBrush,
   selectSelectedText,
@@ -41,6 +42,13 @@ const run = (action: ShortcutAction) => {
     }
     case "deselect":
       return editor.selectElement(null);
+    case "export":
+      // No mientras ya se exporta o hay otro diálogo abierto.
+      if (editor.status !== "idle" || uiStore.getState().dialog) return;
+      return uiStore.getState().openDialog("export");
+    case "showShortcuts":
+      if (uiStore.getState().dialog) return;
+      return uiStore.getState().openDialog("shortcuts");
     case "brushSize": {
       const { size } = selectCurrentBrush(editor);
       const scaled = Math.round(size * action.factor);

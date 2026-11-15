@@ -75,6 +75,11 @@ export interface EditorActions {
   /** Abre una imagen nueva: cambia el tamaño del lienzo y empieza de cero. */
   loadPhoto: (payload: Photo & { size: Size }) => void;
   /**
+   * Documento en blanco de `size`: sin foto, sin capa de color, sin dibujo
+   * y sin historial. Abre el editor en modo Dibujar.
+   */
+  newDocument: (size: Size) => void;
+  /**
    * Cambia la capa de color o degradado (un paso del historial). Con
    * `mergeKey`, los cambios seguidos con la misma clave (arrastrar una parada,
    * el dial…) se juntan en un solo paso.
@@ -180,11 +185,33 @@ const patchElement = (log: LogEntry[], id: string, patch: ElementPatch) =>
       : entry
   );
 
+const EMPTY_PHOTO: Photo = {
+  source: null,
+  preview: null,
+  mimeType: null,
+  fileName: null,
+};
+
+/**
+ * Lo que se vacía al empezar un documento (foto nueva o lienzo en blanco):
+ * dibujo, capa de color, selección e historial. No se puede deshacer, por eso
+ * la UI pide confirmación si había algo.
+ */
+const createDocumentReset = () => ({
+  backdrop: createInitialBackdrop(),
+  log: [],
+  past: [],
+  future: [],
+  selectedElementId: null,
+  editingTextId: null,
+  lastMergeKey: null,
+});
+
 export const createInitialState = (): EditorState => ({
   mode: "home",
   status: "idle",
   canvasSize: { ...DEFAULT_CANVAS_SIZE },
-  photo: { source: null, preview: null, mimeType: null },
+  photo: { ...EMPTY_PHOTO },
   backdrop: createInitialBackdrop(),
   log: [],
   past: [],
@@ -228,19 +255,21 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
           setMode: (mode) => set({ mode }, false, "setMode"),
           setStatus: (status) => set({ status }, false, "setStatus"),
 
-          loadPhoto: ({ size, ...photo }) =>
+          newDocument: (size) =>
             set(
               {
-                photo,
-                backdrop: createInitialBackdrop(),
-                canvasSize: size,
-                log: [],
-                past: [],
-                future: [],
-                selectedElementId: null,
-                editingTextId: null,
-                lastMergeKey: null,
+                ...createDocumentReset(),
+                photo: { ...EMPTY_PHOTO },
+                canvasSize: { ...size },
+                mode: "draw",
               },
+              false,
+              "newDocument"
+            ),
+
+          loadPhoto: ({ size, ...photo }) =>
+            set(
+              { ...createDocumentReset(), photo, canvasSize: size },
               false,
               "loadPhoto"
             ),

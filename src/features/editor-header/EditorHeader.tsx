@@ -1,6 +1,7 @@
 import {
   Download,
   EllipsisVertical,
+  Keyboard,
   Layers,
   Redo2,
   Trash2,
@@ -8,12 +9,14 @@ import {
   X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useUiStore } from "../../app/uiStore";
 import { Button, IconButton } from "../../components/ui/Button";
 import { ConfirmDialog } from "../../components/ui/Dialog";
-import { Menu } from "../../components/ui/Menu";
+import { Menu, type MenuItem } from "../../components/ui/Menu";
 import { Panel } from "../../components/ui/Panel";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../editor/store/selectors";
+import { HOVER_QUERY, useMediaQuery } from "../../lib/useMediaQuery";
 import BackdropPanel from "../backdrop/BackdropPanel";
 import ExportDialog from "../export/ExportDialog";
 import { SHORTCUT_LABELS } from "../shortcuts/shortcutLabels";
@@ -37,9 +40,33 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const redo = useEditorStore((state) => state.redo);
   const clearLog = useEditorStore((state) => state.clearLog);
 
+  const isExportOpen = useUiStore((state) => state.dialog === "export");
+  const openDialog = useUiStore((state) => state.openDialog);
+  const closeDialog = useUiStore((state) => state.closeDialog);
+  // Los atajos solo tienen sentido con teclado y ratón (no en el móvil).
+  const hasKeyboard = useMediaQuery(HOVER_QUERY);
+
   const [isBackdropOpen, setIsBackdropOpen] = useState(false);
-  const [isExportOpen, setIsExportOpen] = useState(false);
   const [isClearOpen, setIsClearOpen] = useState(false);
+
+  const menuItems: MenuItem[] = [
+    ...(hasKeyboard
+      ? [
+          {
+            label: "Atajos de teclado",
+            icon: Keyboard,
+            onSelect: () => openDialog("shortcuts"),
+          },
+        ]
+      : []),
+    {
+      label: "Borrar el dibujo",
+      icon: Trash2,
+      danger: true,
+      disabled: !hasContent,
+      onSelect: () => setIsClearOpen(true),
+    },
+  ];
 
   return (
     <header className={styles.header}>
@@ -82,15 +109,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
           trigger={
             <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
           }
-          items={[
-            {
-              label: "Borrar el dibujo",
-              icon: Trash2,
-              danger: true,
-              disabled: !hasContent,
-              onSelect: () => setIsClearOpen(true),
-            },
-          ]}
+          items={menuItems}
         />
         <Button
           variant="primary"
@@ -98,8 +117,9 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
           className={styles.export}
           aria-label="Exportar"
           aria-haspopup="dialog"
+          aria-keyshortcuts="Control+S Meta+S"
           disabled={isExporting}
-          onClick={() => setIsExportOpen(true)}
+          onClick={() => openDialog("export")}
         >
           <Download aria-hidden="true" />
           <span className={styles.exportLabel}>
@@ -115,7 +135,10 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
       >
         <BackdropPanel />
       </Panel>
-      <ExportDialog open={isExportOpen} onOpenChange={setIsExportOpen} />
+      <ExportDialog
+        open={isExportOpen}
+        onOpenChange={(open) => (open ? openDialog("export") : closeDialog())}
+      />
       <ConfirmDialog
         open={isClearOpen}
         onOpenChange={setIsClearOpen}

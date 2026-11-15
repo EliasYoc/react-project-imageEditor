@@ -153,6 +153,7 @@ describe("BackdropPanel", () => {
         source: document.createElement("canvas"),
         preview: null,
         mimeType: "image/png",
+        fileName: "foto",
       },
     });
     render(<BackdropPanel />);
