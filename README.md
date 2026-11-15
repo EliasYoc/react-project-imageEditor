@@ -135,6 +135,18 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 
 - **Dibujar** no tiene tareas largas ni con la CPU 4× más lenta (frames de ~7 ms, p95). El cuello de botella era la descarga, no la ejecución.
 
+## PWA (instalable y sin conexión)
+
+- **Plugin:** `vite-plugin-pwa` (configuración en `vite.config.js`) genera el `manifest.webmanifest` y el service worker (`sw.js`, con Workbox). El navegador ofrece instalar la app con su icono (`public/pwa-*.png`, `maskable-512x512.png`, `favicon.svg`).
+- **Sin conexión:**
+  - toda la app (también el editor, que se carga aparte) queda en caché al instalarse el service worker, unos 840 KB;
+  - las **fuentes** se guardan la primera vez que se usan, o al abrir la lista de fuentes, y desde ahí también funcionan sin conexión.
+- **Actualizaciones:** una versión nueva se descarga en segundo plano y **se usa la próxima vez que se abre la app**. Nunca recarga una pestaña abierta, porque el dibujo vive en memoria y se perdería.
+- **Al publicar en otro hosting:**
+  - hace falta **HTTPS** (en `localhost` funciona sin él);
+  - `sw.js` e `index.html` **no** deben tener caché larga, porque si no las versiones nuevas tardan en llegar;
+  - `public/_headers` solo lo entiende Netlify (y Cloudflare Pages); en otro hosting la app funciona igual, sin esa caché de `/assets`.
+
 ## Estilos
 
 - Los valores de diseño (colores, espaciado, radios, z-index) viven en `src/styles/tokens.css` y se usan con `var(--…)`.
