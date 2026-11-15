@@ -11,15 +11,15 @@ import {
 import { SLIDER_STEPS, sizeToSlider, sliderToSize } from "./sizeScale";
 
 /**
- * Slider lateral de tamaño: el del pincel en modo Dibujar (con escala
- * cuadrática, ver sizeScale) y el del texto seleccionado en modo Texto.
+ * Slider lateral de tamaño: el del pincel en modo Dibujar y el del texto
+ * seleccionado en modo Texto, los dos con escala cuadrática (ver sizeScale).
  */
 const SizeSlider = () => {
   const mode = useEditorStore((state) => state.mode);
   const brushSize = useEditorStore((state) => selectCurrentBrush(state).size);
   const selectedText = useEditorStore(selectSelectedText);
   const setBrushSize = useEditorStore((state) => state.setBrushSize);
-  const updateElement = useEditorStore((state) => state.updateElement);
+  const editElement = useEditorStore((state) => state.editElement);
 
   if (mode === "draw") {
     return (
@@ -37,10 +37,17 @@ const SizeSlider = () => {
   if (mode === "text" && selectedText) {
     return (
       <PixelRange
-        value={selectedText.fontSize}
-        min={TEXT_SIZE_RANGE.min}
-        max={TEXT_SIZE_RANGE.max}
-        onChange={(fontSize) => updateElement(selectedText.id, { fontSize })}
+        value={sizeToSlider(selectedText.fontSize, TEXT_SIZE_RANGE)}
+        min={0}
+        max={SLIDER_STEPS}
+        // Mover el slider crea un solo paso del historial.
+        onChange={(position) =>
+          editElement(
+            selectedText.id,
+            { fontSize: sliderToSize(position, TEXT_SIZE_RANGE) },
+            `fontSize:${selectedText.id}`
+          )
+        }
       />
     );
   }

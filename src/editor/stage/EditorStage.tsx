@@ -1,4 +1,6 @@
 import type { Group as KonvaGroup } from "konva/lib/Group";
+import type { KonvaEventObject } from "konva/lib/Node";
+import type { Stage as KonvaStage } from "konva/lib/Stage";
 import type { Layer as KonvaLayer } from "konva/lib/Layer";
 import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import "konva/lib/shapes/Circle";
@@ -26,7 +28,8 @@ import { PaintRaster } from "../engine/PaintRaster";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectStrokes } from "../store/selectors";
 import styles from "./EditorStage.module.css";
-import { useDisplayView } from "./useDisplayView";
+import ElementsLayer from "./ElementsLayer";
+import TextEditorOverlay from "./TextEditorOverlay";
 import { useStageInput } from "./useStageInput";
 import { useViewStore, viewStore } from "./viewStore";
 
@@ -38,12 +41,15 @@ import { useViewStore, viewStore } from "./viewStore";
  * - pintura: los trazos terminados (raster en caché) y el trazo en curso.
  *   Al estar separadas, el borrador quita pintura sin tocar la foto.
  *
- * Ambas se dibujan con la transformación de la vista (posición y escala), así
- * que todo se guarda en coordenadas del documento. Una tercera capa, sin
- * transformar, muestra el círculo del tamaño del pincel.
+ * Encima, los textos e imágenes (ElementsLayer) y una capa sin transformar
+ * con el círculo del tamaño del pincel.
+ *
+ * Todas las capas del documento se dibujan con la transformación de la vista
+ * (posición y escala), así que todo se guarda en coordenadas del documento.
  */
 const EditorStage = () => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<KonvaStage>(null);
   const paintLayerRef = useRef<KonvaLayer>(null);
   const liveNodeRef = useRef<KonvaImageNode>(null);
   const cursorRef = useRef<KonvaGroup>(null);
@@ -51,8 +57,9 @@ const EditorStage = () => {
   const canvasSize = useEditorStore((state) => state.canvasSize);
   const preview = useEditorStore((state) => state.background.preview);
   const isDrawing = useEditorStore((state) => state.mode === "draw");
+  const isEditingElements = useEditorStore((state) => state.mode === "text");
   const stageSize = useViewStore((state) => state.stageSize);
-  const { view } = useDisplayView();
+  const view = useViewStore((state) => state.view);
 
   // Un raster y un canvas para el trazo en curso por cada tamaño de documento.
   const raster = useMemo(() => new PaintRaster(canvasSize), [canvasSize]);
@@ -95,14 +102,32 @@ const EditorStage = () => {
     [raster, requestDraw]
   );
 
+  // Un pellizco suelta el elemento que Konva estuviera arrastrando.
+  const stopElementDrags = useCallback(() => {
+    for (const node of stageRef.current?.find(
+      (candidate: { isDragging: () => boolean }) => candidate.isDragging()
+    ) ?? []) {
+      node.stopDrag();
+    }
+  }, []);
+
   useStageInput({
     containerRef,
-    enabled: isDrawing,
+    canDraw: isDrawing,
+    canNavigate: isDrawing || isEditingElements,
     liveCanvas,
     liveNodeRef,
     cursorRef,
     requestDraw,
+    onPinchStart: stopElementDrags,
   });
+
+  // Tocar el fondo (fuera de cualquier elemento) quita la selección.
+  const onStagePointerDown = (event: KonvaEventObject<PointerEvent>) => {
+    if (event.target === event.target.getStage()) {
+      editorStore.getState().selectElement(null);
+    }
+  };
 
   const documentTransform = {
     x: view.x,
@@ -119,9 +144,11 @@ const EditorStage = () => {
       data-drawing={isDrawing || undefined}
     >
       <Stage
+        ref={stageRef}
         width={stageSize.width}
         height={stageSize.height}
-        listening={false}
+        listening={isEditingElements}
+        onPointerDown={onStagePointerDown}
       >
         <Layer {...documentTransform}>
           {preview ? (
@@ -151,6 +178,7 @@ const EditorStage = () => {
             height={canvasSize.height}
           />
         </Layer>
+        <ElementsLayer view={view} interactive={isEditingElements} />
         <Layer listening={false}>
           {/* Dos círculos (blanco y negro) para que se vea sobre cualquier color. */}
           <Group ref={cursorRef} visible={false}>
@@ -163,6 +191,7 @@ const EditorStage = () => {
           </Group>
         </Layer>
       </Stage>
+      <TextEditorOverlay />
     </div>
   );
 };

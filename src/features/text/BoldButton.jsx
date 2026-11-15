@@ -8,14 +8,14 @@ const NORMAL_WEIGHT = 500;
 
 const BoldButton = () => {
   const selectedText = useEditorStore(selectSelectedText);
-  const updateElement = useEditorStore((state) => state.updateElement);
+  const editElement = useEditorStore((state) => state.editElement);
 
   const isDisabled = selectedText === null;
   // Checkbox controlado: refleja siempre el texto seleccionado.
   const isBold = !isDisabled && selectedText.fontWeight >= 700;
 
   const handleChange = (e) => {
-    updateElement(selectedText.id, {
+    editElement(selectedText.id, {
       fontWeight: e.target.checked ? BOLD_WEIGHT : NORMAL_WEIGHT,
     });
   };

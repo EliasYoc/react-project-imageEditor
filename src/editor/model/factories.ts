@@ -1,14 +1,15 @@
 import { createId } from "../../lib/createId";
+import { DEFAULT_FONT_ID } from "../elements/fonts";
 import { BRUSH_PRESETS, BRUSH_PRESET_IDS } from "../engine/brushes/presets";
 import { createSeed } from "../engine/brushes/random";
 import type {
   BrushPresetId,
   BrushSettings,
   BrushState,
-  Rgba,
-  ElementGeometry,
   GradientState,
   ImageElement,
+  Point,
+  Rgba,
   Size,
   StrokeEntry,
   TextElement,
@@ -17,18 +18,25 @@ import type {
 
 export const DEFAULT_CANVAS_SIZE: Size = { width: 1440, height: 2560 };
 
-export const DEFAULT_FONT_FAMILY = `-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif`;
-
-export const DEFAULT_TEXT_STYLE: TextStyle = {
-  fontFamily: DEFAULT_FONT_FAMILY,
-  fontName: "Normal",
-  fontSize: 22,
+/** Estilo de un texto nuevo (el tamaño depende del documento). */
+export const DEFAULT_TEXT_STYLE: Omit<TextStyle, "fontSize"> = {
+  fontId: DEFAULT_FONT_ID,
   fontWeight: 500,
   color: { r: 0, g: 0, b: 0, a: 1 },
 };
 
-/** Límites del tamaño de texto que ofrece el slider. */
-export const TEXT_SIZE_RANGE = { min: 12, max: 50 } as const;
+/** Límites del tamaño de texto que ofrece el slider (píxeles del documento). */
+export const TEXT_SIZE_RANGE = { min: 8, max: 600 } as const;
+
+/**
+ * Tamaño de letra de un texto nuevo: un 8 % del lado menor del documento, así
+ * se lee igual en un lienzo pequeño que en una foto de 4000 px.
+ */
+export const defaultFontSize = ({ width, height }: Size) =>
+  Math.min(
+    TEXT_SIZE_RANGE.max,
+    Math.max(TEXT_SIZE_RANGE.min, Math.round(Math.min(width, height) * 0.08))
+  );
 /** Límites del tamaño de pincel que ofrece el slider. */
 export const BRUSH_SIZE_RANGE = { min: 1, max: 200 } as const;
 
@@ -75,39 +83,56 @@ export const createInitialGradient = (): GradientState => ({
   angle: 180,
 });
 
-const createEmptyGeometry = (): ElementGeometry => ({
-  translate: [0, 0],
-  scale: [1, 1],
-  left: null,
-  top: null,
-  realLeft: null,
-  realTop: null,
-  offsetLeft: null,
-  offsetTop: null,
-  realWidth: null,
-  realHeight: null,
-  initialWidth: null,
-  initialHeight: null,
-  cssTransform: null,
-});
-
-export const createTextElement = (id: string, zIndex: number): TextElement => ({
-  ...createEmptyGeometry(),
+/** Texto nuevo (vacío) con la esquina superior izquierda en `position`. */
+export const createTextElement = ({
+  id,
+  zIndex,
+  position,
+  fontSize,
+}: {
+  id: string;
+  zIndex: number;
+  position: Point;
+  fontSize: number;
+}): TextElement => ({
   ...DEFAULT_TEXT_STYLE,
+  color: { ...DEFAULT_TEXT_STYLE.color },
+  whatTask: "text",
   id,
   zIndex,
-  whatTask: "draggableText",
+  x: position.x,
+  y: position.y,
+  rotation: 0,
+  scale: 1,
+  fontSize,
   text: "",
+  width: null,
 });
 
-export const createImageElement = (
-  id: string,
-  zIndex: number,
-  imageUrl: string
-): ImageElement => ({
-  ...createEmptyGeometry(),
+/** Imagen nueva centrada en `center`. */
+export const createImageElement = ({
   id,
   zIndex,
-  whatTask: "draggableImage",
-  imageUrl,
+  src,
+  width,
+  height,
+  center,
+}: {
+  id: string;
+  zIndex: number;
+  src: string;
+  width: number;
+  height: number;
+  center: Point;
+}): ImageElement => ({
+  whatTask: "image",
+  id,
+  zIndex,
+  src,
+  width,
+  height,
+  x: center.x - width / 2,
+  y: center.y - height / 2,
+  rotation: 0,
+  scale: 1,
 });

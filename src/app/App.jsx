@@ -1,4 +1,3 @@
-import "../styles/moveable.css";
 import styles from "./App.module.css";
 import { useEditorStore } from "../editor/store/editorStore";
 import Header from "../components/layout/Header";
@@ -13,14 +12,13 @@ import ModeSwitcher from "../features/drawing/ModeSwitcher";
 import SizeSlider from "../features/drawing/SizeSlider";
 import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
 import TextToolbar from "../features/text/TextToolbar";
-import ElementsOverlay from "../features/text/legacy/ElementsOverlay";
 import ZoomControls from "../features/zoom/ZoomControls";
 
 /**
  * Shell de la aplicación: cabecera | lienzo | barra inferior.
  *
- * El lienzo ocupa el espacio que sobra (flex: 1): el Stage de Konva y, encima,
- * la capa HTML con los textos e imágenes. Antes se calculaba su altura
+ * El lienzo ocupa el espacio que sobra (flex: 1): el Stage de Konva con el
+ * fondo, la pintura, los textos y las imágenes. Antes se calculaba su altura
  * sumando en JS las alturas del header y del footer.
  */
 function App() {
@@ -41,10 +39,8 @@ function App() {
         <EditorStage />
         {isEditorOpen ? (
           <>
-            <ElementsOverlay />
             <SizeSlider />
-            {/* El zoom solo existe en modo Dibujar (ver useDisplayView). */}
-            {mode === "draw" && <ZoomControls />}
+            <ZoomControls />
           </>
         ) : (
           <HomeToolbar />
@@ -58,8 +54,11 @@ function App() {
             borderRadius="50px"
             position="relative"
             margin="10px auto 0"
-            padding="0 1rem"
-            gap=".5rem"
+            padding="0 .5rem"
+            gap=".25rem"
+            // En pantallas estrechas, si no cabe, pasa a dos filas en lugar de
+            // salirse de la pantalla (se rediseña en la Fase 6).
+            style={{ maxWidth: "calc(100% - 1rem)", flexWrap: "wrap" }}
           >
             {mode === "draw" && <DrawingTools />}
             {mode === "text" && <TextToolbar />}
