@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { RgbaColorPicker } from "react-colorful";
 import { BiTrash } from "react-icons/bi";
-import { MdTextFields } from "react-icons/md";
+import { MdFormatPaint, MdTextFields } from "react-icons/md";
 import PortalsSwipeableMenuLayout from "../../components/layout/PortalsSwipeableMenuLayout";
-import { IconButton } from "../../components/ui/Button";
+import { Button, IconButton } from "../../components/ui/Button";
+import { getFont } from "../../editor/elements/fonts";
 import {
   GlobalButton,
   PencilBackgroundColor,
@@ -17,8 +18,9 @@ import {
   selectSelectedText,
 } from "../../editor/store/selectors";
 import IncludeImageButton from "../images/IncludeImageButton";
-import BoldButton from "./BoldButton";
-import FontsButton from "./FontsButton";
+import FontPicker from "./FontPicker";
+import TextStylePanel from "./TextStylePanel";
+import panelStyles from "./TextPanels.module.css";
 
 /** Crea un texto en el centro de lo que se ve y abre el editor para escribirlo. */
 const addTextAtViewCenter = () => {
@@ -40,8 +42,11 @@ const TextToolbar = () => {
   const editElement = useEditorStore((state) => state.editElement);
   const removeElement = useEditorStore((state) => state.removeElement);
   const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  // Hoja abierta: la de fuentes o la de estilo (una a la vez).
+  const [openSheet, setOpenSheet] = useState(null);
 
   const canPickColor = selectedText !== null;
+  const font = getFont(selectedText?.fontId ?? "normal");
 
   return (
     <>
@@ -51,8 +56,25 @@ const TextToolbar = () => {
         onClick={addTextAtViewCenter}
       />
       <IncludeImageButton />
-      <BoldButton />
-      <FontsButton />
+      <Button
+        size="sm"
+        className={panelStyles.fontButton}
+        style={{ fontFamily: font.family }}
+        disabled={!selectedText}
+        aria-haspopup="dialog"
+        aria-label={`Fuente: ${font.label}`}
+        title="Fuente y grosor"
+        onClick={() => setOpenSheet("font")}
+      >
+        {font.label}
+      </Button>
+      <IconButton
+        icon={MdFormatPaint}
+        aria-label="Estilo del texto"
+        aria-haspopup="dialog"
+        disabled={!selectedText}
+        onClick={() => setOpenSheet("style")}
+      />
       <GlobalButton
         border="3px solid var(--color-text)"
         backgroundColor="#eee"
@@ -82,6 +104,20 @@ const TextToolbar = () => {
         disabled={!selectedElement}
         onClick={() => selectedElement && removeElement(selectedElement.id)}
       />
+      <PortalsSwipeableMenuLayout
+        title="Fuente"
+        isOpen={openSheet === "font" && canPickColor}
+        onClose={() => setOpenSheet(null)}
+      >
+        {selectedText && <FontPicker text={selectedText} />}
+      </PortalsSwipeableMenuLayout>
+      <PortalsSwipeableMenuLayout
+        title="Estilo del texto"
+        isOpen={openSheet === "style" && canPickColor}
+        onClose={() => setOpenSheet(null)}
+      >
+        {selectedText && <TextStylePanel text={selectedText} />}
+      </PortalsSwipeableMenuLayout>
       <PortalsSwipeableMenuLayout
         title="Color del texto"
         isOpen={isColorPickerOpen && canPickColor}

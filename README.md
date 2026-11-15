@@ -44,7 +44,7 @@ src/
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, gradient, export
   components/   Piezas reutilizables: layout/ y ui/ (Button, IconButton, Slider…)
-  styles/       tokens.css (colores, espacios, capas), CSS global y fuentes
+  styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
 ```
 
@@ -83,10 +83,16 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)             | Botones de la cabecera         |
 | Editar un texto       | Doble clic, o clic en un texto ya seleccionado           | Tocar un texto ya seleccionado |
 | Eliminar un elemento  | Supr / Retroceso (modo Texto)                            | Botón de la papelera           |
+| Negrita               | Ctrl/⌘ + B (modo Texto)                                  | Hoja "Fuente"                  |
 | Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)    | Barra inferior                 |
 | Tamaño del pincel     | [ / ] (o el slider lateral)                              | Slider lateral                 |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
+
+## Textos
+
+- **Fuentes propias** con [@fontsource](https://fontsource.org) (WOFF2), registradas en `editor/elements/fonts.ts`. Cada una se carga **bajo demanda** (import dinámico de su CSS) cuando un texto la usa o al abrir el selector, y solo se descarga el subconjunto latino: no hay peticiones a Google Fonts. Konva espera a que la fuente esté lista (`fontLoader.ts`) antes de medir el texto.
+- **Estilos**: alineación, interlineado, contorno, sombra y caja de fondo. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
 
 ## Estilos
 

@@ -2,7 +2,11 @@ import { useEffect } from "react";
 import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
 import { ZOOM_STEP, viewStore } from "../../editor/stage/viewStore";
 import { editorStore } from "../../editor/store/editorStore";
-import { selectCurrentBrush } from "../../editor/store/selectors";
+import {
+  selectCurrentBrush,
+  selectSelectedText,
+} from "../../editor/store/selectors";
+import { BOLD_WEIGHT, NORMAL_WEIGHT, isBold } from "../text/fontWeight";
 import { isTypingTarget } from "../../lib/isTypingTarget";
 import { getShortcutAction, type ShortcutAction } from "./getShortcutAction";
 
@@ -27,6 +31,13 @@ const run = (action: ShortcutAction) => {
     case "deleteElement": {
       const { selectedElementId, removeElement } = editor;
       return selectedElementId ? removeElement(selectedElementId) : undefined;
+    }
+    case "toggleBold": {
+      const text = selectSelectedText(editor);
+      if (!text) return;
+      return editor.editElement(text.id, {
+        fontWeight: isBold(text) ? NORMAL_WEIGHT : BOLD_WEIGHT,
+      });
     }
     case "deselect":
       return editor.selectElement(null);

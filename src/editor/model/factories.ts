@@ -19,11 +19,32 @@ import type {
 export const DEFAULT_CANVAS_SIZE: Size = { width: 1440, height: 2560 };
 
 /** Estilo de un texto nuevo (el tamaño depende del documento). */
-export const DEFAULT_TEXT_STYLE: Omit<TextStyle, "fontSize"> = {
+export const createDefaultTextStyle = (): Omit<TextStyle, "fontSize"> => ({
   fontId: DEFAULT_FONT_ID,
   fontWeight: 500,
   color: { r: 0, g: 0, b: 0, a: 1 },
-};
+  align: "left",
+  lineHeight: 1.15,
+  stroke: {
+    enabled: false,
+    color: { r: 255, g: 255, b: 255, a: 1 },
+    width: 0.08,
+  },
+  shadow: {
+    enabled: false,
+    color: { r: 0, g: 0, b: 0, a: 0.5 },
+    blur: 0.1,
+    offset: 0.05,
+  },
+  background: {
+    enabled: false,
+    color: { r: 0, g: 0, b: 0, a: 0.6 },
+    padding: 0.25,
+    radius: 0.2,
+  },
+});
+
+export const DEFAULT_TEXT_STYLE = createDefaultTextStyle();
 
 /** Límites del tamaño de texto que ofrece el slider (píxeles del documento). */
 export const TEXT_SIZE_RANGE = { min: 8, max: 600 } as const;
@@ -95,8 +116,7 @@ export const createTextElement = ({
   position: Point;
   fontSize: number;
 }): TextElement => ({
-  ...DEFAULT_TEXT_STYLE,
-  color: { ...DEFAULT_TEXT_STYLE.color },
+  ...createDefaultTextStyle(),
   whatTask: "text",
   id,
   zIndex,

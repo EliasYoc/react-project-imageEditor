@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getFont } from "../elements/fonts";
-import { TEXT_LINE_HEIGHT, textNodeConfig } from "../elements/nodeConfig";
+import { textPadding } from "../elements/nodeConfig";
 import { textEditorBox } from "../elements/textEditorBox";
 import { rgbaToCss } from "../model/color";
 import { isTextElement, type TextElement } from "../model/types";
@@ -22,7 +22,6 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   const [draft, setDraft] = useState(element.text);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isFinishedRef = useRef(false);
-  const { text: textConfig } = textNodeConfig(element);
 
   useLayoutEffect(function focusOnOpen() {
     const textarea = textareaRef.current;
@@ -88,10 +87,16 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       style={{
         ...textEditorBox(element, view),
         width: element.width ?? undefined,
-        padding: textConfig.padding,
+        padding: textPadding(element),
         font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
-        lineHeight: TEXT_LINE_HEIGHT,
+        lineHeight: element.lineHeight,
+        textAlign: element.align,
         color: rgbaToCss(element.color),
+        // La caja de fondo también se ve mientras se escribe.
+        ...(element.background.enabled && {
+          background: rgbaToCss(element.background.color),
+          borderRadius: element.fontSize * element.background.radius,
+        }),
         // Se quita el escalado del borde: siempre 1 px en pantalla.
         outlineWidth: `${1 / (view.scale * element.scale)}px`,
       }}

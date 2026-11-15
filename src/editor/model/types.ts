@@ -110,6 +110,38 @@ interface BaseElement {
   scale: number;
 }
 
+export type TextAlign = "left" | "center" | "right";
+
+/*
+ * Las medidas de contorno, sombra y caja van en PROPORCIÓN al tamaño de
+ * letra: al cambiar el tamaño o escalar el texto, el estilo se mantiene.
+ */
+
+export interface TextStroke {
+  enabled: boolean;
+  color: Rgba;
+  /** Grosor del contorno respecto al tamaño de letra. */
+  width: number;
+}
+
+export interface TextShadow {
+  enabled: boolean;
+  color: Rgba;
+  /** Desenfoque respecto al tamaño de letra. */
+  blur: number;
+  /** Desplazamiento (abajo a la derecha) respecto al tamaño de letra. */
+  offset: number;
+}
+
+export interface TextBackground {
+  enabled: boolean;
+  color: Rgba;
+  /** Margen interior respecto al tamaño de letra. */
+  padding: number;
+  /** Radio de las esquinas respecto al tamaño de letra. */
+  radius: number;
+}
+
 export interface TextStyle {
   /** Fuente (ver editor/elements/fonts.ts). */
   fontId: FontId;
@@ -117,6 +149,12 @@ export interface TextStyle {
   fontSize: number;
   fontWeight: number;
   color: Rgba;
+  align: TextAlign;
+  /** Interlineado (1 = líneas pegadas). */
+  lineHeight: number;
+  stroke: TextStroke;
+  shadow: TextShadow;
+  background: TextBackground;
 }
 
 export interface TextElement extends BaseElement, TextStyle {
