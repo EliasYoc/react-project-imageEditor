@@ -3,6 +3,9 @@
   inset: 0;
   /* Sin z-index: lo que viene después en el DOM (barra de inicio, textos e
      imágenes) se pinta encima. */
+  /* La capa del resaltador (mix-blend-mode: multiply) solo se mezcla con las
+     capas del lienzo, no con lo que haya detrás en la página. */
+  isolation: isolate;
   /* El navegador no debe desplazar ni hacer zoom de la página al dibujar:
      los gestos los maneja el lienzo. */
   touch-action: none;

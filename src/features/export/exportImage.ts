@@ -1,8 +1,11 @@
 import { paintStroke } from "../../editor/engine/brushes/paint";
 import { paintFill } from "../../editor/engine/fill/paintFill";
 import { editorStore } from "../../editor/store/editorStore";
-import { selectElements, selectStrokes } from "../../editor/store/selectors";
-import type { Photo, Size } from "../../editor/model/types";
+import {
+  selectElements,
+  selectStrokeLayers,
+} from "../../editor/store/selectors";
+import type { Photo, Size, StrokeEntry } from "../../editor/model/types";
 import { canvasToBlob, createCanvas, get2dContext } from "../../lib/canvas";
 import { getDownloadFileName } from "../../lib/helper";
 import { saveImage } from "../../lib/saveImage";
@@ -15,12 +18,31 @@ const sourceSize = (source: NonNullable<Photo["source"]>): Size =>
     : { width: source.width, height: source.height };
 
 /**
- * Compone la imagen final a la resolución de la foto original:
+ * Pinta unos trazos en una capa aparte (el borrador solo debe quitar pintura,
+ * no la foto del fondo), de nuevo desde sus vectores y a la resolución de
+ * salida: antes se estiraba el canvas reducido y salían borrosos.
+ */
+const paintStrokeLayer = (
+  strokes: readonly StrokeEntry[],
+  output: Size,
+  docSize: Size,
+  scratch: HTMLCanvasElement
+) => {
+  const layer = createCanvas(output);
+  const ctx = get2dContext(layer);
+  ctx.scale(output.width / docSize.width, output.height / docSize.height);
+  for (const stroke of strokes) paintStroke(ctx, stroke, scratch);
+  return layer;
+};
+
+/**
+ * Compone la imagen final a la resolución de la foto original, en el mismo
+ * orden que las capas del lienzo:
  * 1. el fondo (la foto completa, o blanco) y encima la capa de color o
  *    degradado, pintada también a esa resolución;
- * 2. los trazos, pintados de nuevo desde sus vectores a esa resolución (antes
- *    se estiraba el canvas reducido y salían borrosos);
- * 3. los textos e imágenes, con Konva y también a esa resolución.
+ * 2. el resaltador, MULTIPLICADO con el fondo;
+ * 3. la pintura (el resto de trazos);
+ * 4. los textos e imágenes, con Konva y también a esa resolución.
  */
 export const renderDocument = async () => {
   const state = editorStore.getState();
@@ -48,20 +70,26 @@ export const renderDocument = async () => {
     ctx.restore();
   }
 
-  // Capa aparte para los trazos: el borrador solo debe quitar pintura, no la
-  // foto del fondo.
-  const paint = createCanvas(output);
-  const paintCtx = get2dContext(paint);
-  paintCtx.scale(
-    paint.width / canvasSize.width,
-    paint.height / canvasSize.height
-  );
+  const strokes = selectStrokeLayers(state);
   // Búfer de cada trazo, a la resolución de salida (opacidad y modo de fusión).
   const scratch = createCanvas(output);
-  for (const stroke of selectStrokes(state)) {
-    paintStroke(paintCtx, stroke, scratch);
+  if (strokes.highlight.length) {
+    const highlight = paintStrokeLayer(
+      strokes.highlight,
+      output,
+      canvasSize,
+      scratch
+    );
+    ctx.save();
+    ctx.globalCompositeOperation = "multiply";
+    ctx.drawImage(highlight, 0, 0);
+    ctx.restore();
   }
-  ctx.drawImage(paint, 0, 0);
+  ctx.drawImage(
+    paintStrokeLayer(strokes.paint, output, canvasSize, scratch),
+    0,
+    0
+  );
 
   const elements = selectElements(state);
   if (elements.length) {
