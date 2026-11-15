@@ -25,9 +25,11 @@ export const ensureFont = (id: FontId, weight: number): Promise<boolean> => {
   const inFlight = pending.get(key);
   if (inFlight) return inFlight;
 
-  const { family } = getFont(id);
-  const request = document.fonts
-    .load(`${weight} 64px ${family}`)
+  const { family, load } = getFont(id);
+  // 1) Se declaran los @font-face (import del CSS de @fontsource).
+  // 2) Se descarga el WOFF2 del peso pedido.
+  const request = Promise.resolve(load?.())
+    .then(() => document.fonts.load(`${weight} 64px ${family}`))
     .then((faces) => {
       // Sin caras: la fuente no está declarada (todavía). No se marca como
       // lista para volver a intentarlo la próxima vez.

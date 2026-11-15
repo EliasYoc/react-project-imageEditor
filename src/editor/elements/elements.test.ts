@@ -1,16 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ensureFont, isFontReady, resetFontLoader } from "./fontLoader";
 import { FONTS, SYSTEM_FONT_FAMILY, getFont } from "./fonts";
+import { createDefaultTextStyle } from "../model/factories";
 import {
-  TEXT_LINE_HEIGHT,
   imageNodeConfig,
   textNodeConfig,
+  textPadding,
   type TextNodeInput,
 } from "./nodeConfig";
 import { snapToDocument } from "./snapping";
 import { textEditorBox } from "./textEditorBox";
 
 const text = (extra: Partial<TextNodeInput> = {}): TextNodeInput => ({
+  ...createDefaultTextStyle(),
   id: "t1",
   x: 10,
   y: 20,
@@ -48,15 +50,77 @@ describe("textNodeConfig", () => {
   it("traduce el estilo a Konva: familia, peso, color y ancho automático", () => {
     expect(textNodeConfig(text()).text).toMatchObject({
       text: "Hola",
-      fontFamily: "Pacifico",
+      fontFamily: "Pacifico, cursive",
       fontSize: 100,
       fontStyle: "900",
       fill: "rgba(255, 0, 0, 1)",
       width: undefined,
-      lineHeight: TEXT_LINE_HEIGHT,
+      align: "left",
+      lineHeight: 1.15,
       padding: 15,
+      strokeEnabled: false,
+      shadowEnabled: false,
     });
+    expect(textNodeConfig(text()).tag.fill).toBeUndefined();
     expect(textNodeConfig(text({ width: 400 })).text.width).toBe(400);
+  });
+
+  it("contorno por fuera, proporcional al tamaño de letra", () => {
+    const config = textNodeConfig(
+      text({
+        stroke: {
+          enabled: true,
+          color: { r: 0, g: 0, b: 0, a: 1 },
+          width: 0.1,
+        },
+      })
+    ).text;
+    expect(config).toMatchObject({
+      strokeEnabled: true,
+      stroke: "rgba(0, 0, 0, 1)",
+      // 10 px visibles: la mitad interior del trazo la tapa el relleno.
+      strokeWidth: 20,
+      fillAfterStrokeEnabled: true,
+    });
+  });
+
+  it("sombra con desenfoque y desplazamiento proporcionales", () => {
+    const config = textNodeConfig(
+      text({
+        shadow: {
+          enabled: true,
+          color: { r: 0, g: 0, b: 0, a: 0.5 },
+          blur: 0.2,
+          offset: 0.05,
+        },
+      })
+    ).text;
+    expect(config).toMatchObject({
+      shadowEnabled: true,
+      shadowColor: "rgba(0, 0, 0, 0.5)",
+      shadowBlur: 20,
+      shadowOffsetX: 5,
+      shadowOffsetY: 5,
+    });
+  });
+
+  it("caja de fondo: color y radio en el Tag, margen en el texto", () => {
+    const element = text({
+      align: "center",
+      background: {
+        enabled: true,
+        color: { r: 255, g: 255, b: 0, a: 0.8 },
+        padding: 0.3,
+        radius: 0.25,
+      },
+    });
+    const config = textNodeConfig(element);
+    expect(config.tag).toMatchObject({
+      fill: "rgba(255, 255, 0, 0.8)",
+      cornerRadius: 25,
+    });
+    expect(config.text).toMatchObject({ padding: 30, align: "center" });
+    expect(textPadding(element)).toBe(30);
   });
 
   it("las imágenes llevan su tamaño en píxeles del documento", () => {
@@ -149,7 +213,7 @@ describe("ensureFont", () => {
     ]);
     expect(a && b).toBe(true);
     expect(load).toHaveBeenCalledTimes(1);
-    expect(load).toHaveBeenCalledWith("400 64px Pacifico");
+    expect(load).toHaveBeenCalledWith("400 64px Pacifico, cursive");
     expect(isFontReady("pacifico", 400)).toBe(true);
   });
 
