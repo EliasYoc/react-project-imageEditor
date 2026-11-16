@@ -18,10 +18,8 @@ test.describe("Teclado", () => {
   });
 
   test("Tab recorre la cabecera y Escape cierra el panel", async ({ page }) => {
-    await page.getByRole("button", { name: "Cerrar el editor" }).focus();
-    // Deshacer y Rehacer están deshabilitados: Tab los salta.
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("radio", { name: "Dibujar" })).toBeFocused();
+    // Deshacer y Rehacer están deshabilitados: el recorrido empieza en el modo.
+    await page.getByRole("radio", { name: "Dibujar" }).focus();
     await page.keyboard.press("Tab");
     const backdrop = page.getByRole("button", { name: "Fondo" });
     await expect(backdrop).toBeFocused();
@@ -35,11 +33,19 @@ test.describe("Teclado", () => {
     await expect(backdrop).toBeFocused();
 
     await page.keyboard.press("Tab");
+    const more = page.getByRole("button", { name: "Más opciones" });
+    await expect(more).toBeFocused();
+
+    // Enter abre el menú con el foco en la primera opción: Exportar.
+    await page.keyboard.press("Enter");
     await expect(
-      page.getByRole("button", { name: "Más opciones" })
+      page.getByRole("menuitem", { name: "Exportar" })
     ).toBeFocused();
-    await page.keyboard.press("Tab");
-    await expect(page.getByRole("button", { name: "Exportar" })).toBeFocused();
+    await page.keyboard.press("Enter");
+    const exportDialog = page.getByRole("dialog", { name: "Exportar imagen" });
+    await expect(exportDialog).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(exportDialog).toBeHidden();
   });
 
   test("Ctrl+S abre Exportar y ? la lista de atajos", async ({ page }) => {

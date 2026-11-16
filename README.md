@@ -103,7 +103,8 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                   | Barra inferior                      |
 | Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                     | Igual                               |
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón) | Tocar el slider del borde izquierdo |
-| Exportar              | Ctrl/⌘ + S o el botón "Exportar" (Enter en el diálogo)                  | Botón "Exportar"                    |
+| Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                  | Menú ⋮ → "Exportar"                 |
+| Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                     | Igual                               |
 | Cerrar un panel       | Escape o ✕                                                              | ✕, tocar fuera o deslizar abajo     |
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                      | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V              | Botón "Abrir una foto"              |

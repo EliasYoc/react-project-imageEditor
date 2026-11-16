@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useUiStore } from "../../../app/uiStore";
-import { Button, IconButton } from "../../../components/ui/Button";
+import { IconButton } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
 import { Menu, type MenuItem } from "../../../components/ui/Menu";
 import { Panel } from "../../../components/ui/Panel";
@@ -24,11 +24,11 @@ import styles from "./EditorHeader.module.css";
 
 /**
  * Cabecera del editor:
- * - a la izquierda, volver al inicio (el documento se conserva), deshacer y
- *   rehacer;
+ * - a la izquierda, deshacer y rehacer;
  * - en el centro, lo que pase el shell (en escritorio, el selector de modo);
- * - a la derecha, el fondo (siempre a la vista, antes escondido en ⋮), el
- *   menú ⋮ y la acción principal: Exportar.
+ * - a la derecha, el fondo (siempre a la vista) y el menú ⋮, con Exportar
+ *   (también Ctrl/⌘ + S), volver al inicio (el documento se conserva), los
+ *   atajos y borrar el dibujo.
  */
 const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const hasContent = useEditorStore((state) => state.log.length > 0);
@@ -50,6 +50,17 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const [isClearOpen, setIsClearOpen] = useState(false);
 
   const menuItems: MenuItem[] = [
+    {
+      label: isExporting ? "Exportando…" : "Exportar",
+      icon: Download,
+      disabled: isExporting,
+      onSelect: () => openDialog("export"),
+    },
+    {
+      label: "Volver al inicio",
+      icon: X,
+      onSelect: () => setMode("home"),
+    },
     ...(hasKeyboard
       ? [
           {
@@ -71,12 +82,6 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   return (
     <header className={styles.header}>
       <div className={styles.start}>
-        <IconButton
-          icon={X}
-          aria-label="Cerrar el editor"
-          title="Volver al inicio"
-          onClick={() => setMode("home")}
-        />
         {/* Siempre visibles (deshabilitados si no hay nada): así los botones
             no cambian de sitio mientras se dibuja. */}
         <IconButton
@@ -111,21 +116,6 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
           }
           items={menuItems}
         />
-        <Button
-          variant="primary"
-          size="sm"
-          className={styles.export}
-          aria-label="Exportar"
-          aria-haspopup="dialog"
-          aria-keyshortcuts="Control+S Meta+S"
-          disabled={isExporting}
-          onClick={() => openDialog("export")}
-        >
-          <Download aria-hidden="true" />
-          <span className={styles.exportLabel}>
-            {isExporting ? "Exportando…" : "Exportar"}
-          </span>
-        </Button>
       </div>
 
       <Panel

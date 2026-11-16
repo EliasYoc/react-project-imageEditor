@@ -37,17 +37,6 @@
   gap: var(--space-1);
 }
 
-.export {
-  margin-left: var(--space-1);
-}
-
-/* En pantallas muy estrechas, Exportar se queda solo con el icono. */
-@media (max-width: 359px) {
-  .exportLabel {
-    display: none;
-  }
-}
-
 @keyframes appearDown {
   from {
     transform: translateY(-100%);

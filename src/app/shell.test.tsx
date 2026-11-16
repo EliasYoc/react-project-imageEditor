@@ -43,10 +43,20 @@ beforeEach(() => {
   exportImage.mockClear();
 });
 
+// Exportar y Volver al inicio están en el menú ⋮ (Más opciones).
+const openMenuItem = async (
+  user: ReturnType<typeof userEvent.setup>,
+  name: string
+) => {
+  screen.getByRole("button", { name: "Más opciones" }).focus();
+  await user.keyboard("{Enter}");
+  await user.click(screen.getByRole("menuitem", { name }));
+};
+
 const exportWithEnter = async () => {
   const user = userEvent.setup();
   renderHeader();
-  await user.click(screen.getByRole("button", { name: "Exportar" }));
+  await openMenuItem(user, "Exportar");
   await user.keyboard("{Enter}");
 };
 
@@ -113,6 +123,26 @@ describe("cabecera", () => {
     expect(state().log).toHaveLength(1);
   });
 
+  it("volver al inicio desde el menú conserva el dibujo", async () => {
+    const user = userEvent.setup();
+    addStroke();
+    renderHeader();
+    await openMenuItem(user, "Volver al inicio");
+    expect(state().mode).toBe("home");
+    expect(state().log).toHaveLength(1);
+  });
+
+  it("mientras exporta, la opción Exportar está deshabilitada", async () => {
+    const user = userEvent.setup();
+    editorStore.setState({ status: "exporting" });
+    renderHeader();
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      screen.getByRole("menuitem", { name: "Exportando…" })
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
   it("sin dibujo, la opción de borrar está deshabilitada", async () => {
     const user = userEvent.setup();
     renderHeader();
@@ -126,7 +156,7 @@ describe("cabecera", () => {
   it("exportar propone un nombre y exporta con Enter", async () => {
     const user = userEvent.setup();
     renderHeader();
-    await user.click(screen.getByRole("button", { name: "Exportar" }));
+    await openMenuItem(user, "Exportar");
 
     const dialog = screen.getByRole("dialog", { name: "Exportar imagen" });
     const input = within(dialog).getByLabelText("Nombre del archivo");
@@ -161,7 +191,7 @@ describe("cabecera", () => {
       size: { width: 10, height: 10 },
     });
     renderHeader();
-    await user.click(screen.getByRole("button", { name: "Exportar" }));
+    await openMenuItem(user, "Exportar");
     const dialog = screen.getByRole("dialog", { name: "Exportar imagen" });
     expect(within(dialog).getByLabelText("Nombre del archivo")).toHaveValue(
       "playa-editada"
