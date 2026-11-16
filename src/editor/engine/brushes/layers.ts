@@ -1,5 +1,13 @@
 import type { BrushStroke } from "./brushStroke";
-import { strokeBlend, strokeEffect } from "./paint";
+import { brushEffect, getBrushPreset } from "./presets";
+
+// Solo los datos del preset, sin importar el motor de pintado (`paint.ts`):
+// este reparto lo usa el store, que se carga con la pantalla de inicio, y el
+// motor (con el desenfoque de Konva) solo hace falta al abrir el editor.
+const strokeBlend = (stroke: Pick<BrushStroke, "brush">) =>
+  getBrushPreset(stroke.brush).blend;
+const strokeEffect = (stroke: Pick<BrushStroke, "brush">) =>
+  brushEffect(stroke.brush);
 
 /** En qué capa(s) se pinta un trazo. */
 export interface StrokeLayers {
