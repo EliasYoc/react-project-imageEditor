@@ -133,8 +133,8 @@ test.describe("Dibujo", () => {
       .getByRole("button", { name: "Resaltador", exact: true })
       .click();
     await library.getByRole("button", { name: "Cerrar" }).click();
-    await expect(library).toBeHidden();
-
+    // Sin esperar a que el panel termine de cerrarse, como haría una persona
+    // rápida: el selector de color no debe cerrarse solo.
     await page.getByRole("button", { name: "Color del pincel" }).click();
     await page.getByRole("button", { name: "Color #ffcc00" }).click();
     if (isMobile) {
