@@ -17,9 +17,9 @@ import { Panel } from "../../../components/ui/Panel";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../../editor/store/selectors";
 import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
-import BackdropPanel from "../../backdrop/components/BackdropPanel";
-import ExportDialog from "../../export/components/ExportDialog";
-import { SHORTCUT_LABELS } from "../../shortcuts/constants/shortcutLabels";
+import { BackdropPanel } from "../../backdrop";
+import { ExportDialog } from "../../export";
+import { SHORTCUT_LABELS } from "../../shortcuts";
 import styles from "./EditorHeader.module.css";
 
 /**

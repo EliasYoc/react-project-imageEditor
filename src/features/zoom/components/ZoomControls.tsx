@@ -3,7 +3,7 @@ import { IconButton } from "../../../components/ui/Button";
 import { zoomLimits } from "../../../editor/engine/viewport";
 import { ZOOM_STEP, useViewStore } from "../../../editor/stage/viewStore";
 import { useEditorStore } from "../../../editor/store/editorStore";
-import { SHORTCUT_LABELS } from "../../shortcuts/constants/shortcutLabels";
+import { SHORTCUT_LABELS } from "../../shortcuts";
 import styles from "./ZoomControls.module.css";
 
 /**

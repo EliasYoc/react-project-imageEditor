@@ -3,9 +3,8 @@ import { Spinner } from "../components/ui/Spinner";
 import { Toaster, toast } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import { editorStore, useEditorStore } from "../editor/store/editorStore";
-import HomeScreen from "../features/home/components/HomeScreen";
-import { usePreventFileDropNavigation } from "../features/home/hooks/useImageDrop";
-import { useKeyboardShortcuts } from "../features/shortcuts/hooks/useKeyboardShortcuts";
+import { HomeScreen, usePreventFileDropNavigation } from "../features/home";
+import { useKeyboardShortcuts } from "../features/shortcuts";
 import styles from "./App.module.css";
 
 const STATUS_LABELS = {

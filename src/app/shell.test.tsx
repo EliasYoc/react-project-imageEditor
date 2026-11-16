@@ -5,11 +5,10 @@ import { Toaster, toastStore } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import { createStroke } from "../editor/model/factories";
 import { createInitialState, editorStore } from "../editor/store/editorStore";
-import SizeSlider from "../features/drawing/components/SizeSlider";
-import EditorHeader from "../features/editor-header/components/EditorHeader";
-import { defaultExportName } from "../features/export/utils/exportName";
-import ShortcutsDialog from "../features/shortcuts/components/ShortcutsDialog";
-import { useKeyboardShortcuts } from "../features/shortcuts/hooks/useKeyboardShortcuts";
+import { SizeSlider } from "../features/drawing";
+import { EditorHeader } from "../features/editor-header";
+import { defaultExportName } from "../features/export";
+import { ShortcutsDialog, useKeyboardShortcuts } from "../features/shortcuts";
 import { mockMediaQueries } from "../test/media";
 import { uiStore } from "./uiStore";
 

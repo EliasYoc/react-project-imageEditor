@@ -7,7 +7,7 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
-import { getShortcutAction } from "../shortcuts/utils/getShortcutAction";
+import { getShortcutAction } from "../shortcuts";
 import FontPicker from "./components/FontPicker";
 import TextStylePanel from "./components/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";

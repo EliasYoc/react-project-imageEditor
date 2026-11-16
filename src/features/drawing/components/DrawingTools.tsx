@@ -9,7 +9,7 @@ import {
   selectBrushColor,
   selectBrushPresetId,
 } from "../../../editor/store/selectors";
-import { SHORTCUT_LABELS } from "../../shortcuts/constants/shortcutLabels";
+import { SHORTCUT_LABELS } from "../../shortcuts";
 import BrushLibrary from "./BrushLibrary";
 import { BRUSH_ICONS } from "../constants/brushIcons";
 import styles from "./DrawingTools.module.css";

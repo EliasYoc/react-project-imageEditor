@@ -8,7 +8,7 @@ import { classNames } from "../../../lib/classNames";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectHasDocumentContent } from "../../../editor/store/selectors";
 import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
-import { MOD_KEY } from "../../shortcuts/constants/shortcutLabels";
+import { MOD_KEY } from "../../shortcuts";
 import styles from "./HomeScreen.module.css";
 import { openImageFile } from "../utils/openImageFile";
 import { useImageDropAndPaste } from "../hooks/useImageDrop";

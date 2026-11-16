@@ -8,8 +8,7 @@ import {
 } from "../../../editor/engine/fill/stops";
 import { textGradientCss } from "../../../editor/elements/textGradient";
 import type { Gradient, GradientType } from "../../../editor/model/types";
-import AngleDial from "../../backdrop/components/AngleDial";
-import GradientStopsBar from "../../backdrop/components/GradientStopsBar";
+import { AngleDial, GradientStopsBar } from "../../backdrop";
 import ColorField from "./ColorField";
 import styles from "./TextPanels.module.css";
 import { TEXT_GRADIENT_PRESETS } from "../constants/textGradientPresets";

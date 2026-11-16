@@ -14,8 +14,8 @@ import {
   selectSelectedElement,
   selectSelectedText,
 } from "../../../editor/store/selectors";
-import IncludeImageButton from "../../images/components/IncludeImageButton";
-import { SHORTCUT_LABELS } from "../../shortcuts/constants/shortcutLabels";
+import { IncludeImageButton } from "../../images";
+import { SHORTCUT_LABELS } from "../../shortcuts";
 import FontPicker from "./FontPicker";
 import TextStylePanel from "./TextStylePanel";
 import panelStyles from "./TextPanels.module.css";

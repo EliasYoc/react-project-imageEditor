@@ -7,11 +7,7 @@ import {
   selectCurrentBrush,
   selectSelectedText,
 } from "../../../editor/store/selectors";
-import {
-  BOLD_WEIGHT,
-  NORMAL_WEIGHT,
-  isBold,
-} from "../../text/utils/fontWeight";
+import { BOLD_WEIGHT, NORMAL_WEIGHT, isBold } from "../../text";
 import { isTypingTarget } from "../../../lib/isTypingTarget";
 import {
   getShortcutAction,
