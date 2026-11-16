@@ -8,6 +8,7 @@ import {
   BRUSH_PRESETS,
   BRUSH_PRESET_IDS,
   STAMP_FIGURES,
+  brushEffect,
   usesStampShape,
   type DabPreset,
 } from "./presets";
@@ -332,6 +333,13 @@ describe("presets", () => {
       const { kind, blend } = BRUSH_PRESETS[id];
       expect(blend === "destination-out").toBe(kind === "eraser");
     }
+  });
+
+  it("solo el Desenfoque aplica un efecto en vez de pintar con color", () => {
+    expect(BRUSH_PRESET_IDS.filter((id) => brushEffect(id) !== null)).toEqual([
+      "blur",
+    ]);
+    expect(brushEffect("blur")).toBe("blur");
   });
 });
 

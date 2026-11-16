@@ -4,6 +4,7 @@ import { strokeLayers } from "../engine/brushes/layers";
 import {
   createLiveRenderer,
   strokeBlend,
+  strokeEffect,
   type LiveRenderer,
 } from "../engine/brushes/paint";
 import { ropeLength, stabilizePoints } from "../engine/brushes/stabilizer";
@@ -11,6 +12,7 @@ import { toStrokePoint, type PointerSample } from "../engine/pointer";
 import { createStroke } from "../model/factories";
 import type { StrokeEntry, StrokePoint } from "../model/types";
 import { editorStore } from "../store/editorStore";
+import type { LiveEraser } from "./backgroundBlur";
 import { viewStore } from "./viewStore";
 
 interface ActiveStroke {
@@ -32,12 +34,21 @@ export interface LiveNodes {
   highlight: KonvaImageNode | null;
 }
 
+/** Lo que el trazo en curso necesita del lienzo para el desenfoque. */
+export interface LiveBlur {
+  /** Copia desenfocada de lo que se ve ahora (`blurLayers`). */
+  snapshot: () => HTMLCanvasElement | null;
+  /** Borrador en curso sobre el desenfoque del fondo (null al terminar). */
+  setLiveEraser: (eraser: LiveEraser | null) => void;
+}
+
 interface StrokeSessionOptions {
   /** Canvas (tamaño del documento) donde se ve el trazo mientras se dibuja. */
   liveCanvas: HTMLCanvasElement;
   liveNodes: LiveNodes;
   /** Pide a Konva que vuelva a pintar las capas de trazos en el próximo frame. */
   requestDraw: () => void;
+  liveBlur?: LiveBlur;
 }
 
 type Rect = Pick<DOMRect, "left" | "top">;
@@ -53,6 +64,11 @@ type Rect = Pick<DOMRect, "left" | "top">;
  * la que se guardará el trazo: el resaltador en la suya, un borrador en las
  * dos (borra en ambas mientras se arrastra) y el resto en la de pintura.
  *
+ * El desenfoque es distinto: mientras se arrastra se muestra, en la capa de
+ * pintura, una copia ya desenfocada de todo lo que se ve (barato); al soltar,
+ * cada capa se desenfoca de verdad (`paintStroke`). Las dos cosas se ven
+ * prácticamente igual.
+ *
  * Vive en variables locales, no en estado de React: dibujar no provoca
  * ningún render.
  */
@@ -60,6 +76,7 @@ export const createStrokeSession = ({
   liveCanvas,
   liveNodes,
   requestDraw,
+  liveBlur,
 }: StrokeSessionOptions) => {
   const ctx = get2dContext(liveCanvas);
   let active: ActiveStroke | null = null;
@@ -99,24 +116,36 @@ export const createStrokeSession = ({
         shape: brush.shape,
       });
       const layers = strokeLayers(stroke);
+      const isBlur = strokeEffect(stroke) === "blur";
       // La capa del resaltador se oculta mientras está vacía.
       if (layers.highlight && !layers.paint) {
         liveNodes.highlight?.getLayer()?.visible(true);
       }
       for (const layer of ["paint", "highlight"] as const) {
         const node = liveNodes[layer];
-        node?.visible(layers[layer]);
+        // El desenfoque en curso es una imagen de todo lo que se ve: va una
+        // sola vez, encima (en la capa de pintura).
+        node?.visible(isBlur ? layer === "paint" : layers[layer]);
         node?.opacity(stroke.opacity);
         node?.globalCompositeOperation(strokeBlend(stroke));
       }
       clearLive();
+      // Un borrador también quita el desenfoque del fondo mientras se arrastra.
+      if (layers.blur && !isBlur) {
+        liveBlur?.setLiveEraser({
+          canvas: liveCanvas,
+          opacity: stroke.opacity,
+        });
+      }
       active = {
         stroke,
         points: [],
         anchor: null,
         lastRaw: null,
         rope: ropeLength(settings.stabilizer, viewStore.getState().view.scale),
-        renderer: createLiveRenderer(ctx, stroke),
+        renderer: createLiveRenderer(ctx, stroke, {
+          blurred: isBlur ? liveBlur?.snapshot() : null,
+        }),
         startedAt: performance.now(),
       };
       extend([sample], rect);
@@ -128,6 +157,8 @@ export const createStrokeSession = ({
       if (!active) return;
       const { stroke, points, anchor, lastRaw } = active;
       active = null;
+      // Antes de guardar el trazo: al guardarlo, la máscara ya lo incluye.
+      liveBlur?.setLiveEraser(null);
       // El estabilizador va por detrás del puntero: el trazo termina donde se
       // soltó, no donde se quedó la cuerda.
       const isBehind =
@@ -145,6 +176,7 @@ export const createStrokeSession = ({
       if (!active) return;
       active = null;
       clearLive();
+      liveBlur?.setLiveEraser(null);
       requestDraw();
     },
   };

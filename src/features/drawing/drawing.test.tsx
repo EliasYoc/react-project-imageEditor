@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
@@ -52,7 +52,7 @@ describe("BrushLibrary", () => {
     expect(
       screen.getAllByRole("button", { pressed: false }).length +
         screen.getAllByRole("button", { pressed: true }).length
-    ).toBe(10);
+    ).toBe(11);
   });
 
   it("elegir un pincel lo activa y muestra sus ajustes", async () => {
@@ -71,7 +71,21 @@ describe("BrushLibrary", () => {
   it("cada pincel tiene su vista previa (oculta a los lectores de pantalla)", () => {
     const { container } = render(<BrushLibrary />);
     const previews = container.querySelectorAll('canvas[aria-hidden="true"]');
-    expect(previews).toHaveLength(10);
+    expect(previews).toHaveLength(11);
+  });
+
+  it("el Desenfoque está entre los pinceles de dibujo, con los mismos ajustes", async () => {
+    render(<BrushLibrary />);
+    const drawing = screen.getByRole("region", { name: "Dibujo" });
+    await userEvent.click(
+      within(drawing).getByRole("button", { name: "Desenfoque" })
+    );
+    expect(editorStore.getState().brush.presetId).toBe("blur");
+    expect(
+      within(
+        screen.getByRole("region", { name: "Ajustes de Desenfoque" })
+      ).getAllByRole("slider")
+    ).toHaveLength(3);
   });
 
   it("solo el pincel de formas tiene botón de más opciones", () => {

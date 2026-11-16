@@ -1,5 +1,6 @@
 import {
   Brush,
+  Droplet,
   Eraser,
   Highlighter,
   PenLine,
@@ -51,6 +52,7 @@ export const BRUSH_ICONS: Record<BrushPresetId, LucideIcon> = {
   spray: SprayCan,
   highlighter: Highlighter,
   shapes: Shapes,
+  blur: Droplet,
   eraserHard: Eraser,
   eraserSoft: SoftEraser,
 };

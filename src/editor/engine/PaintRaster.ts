@@ -20,6 +20,11 @@ export interface PaintRasterOptions {
     stroke: StrokeEntry,
     scratch: HTMLCanvasElement | null
   ) => void;
+  /**
+   * Búfer del trazo compartido con otros rasters del mismo tamaño (se usa de
+   * uno en uno): sin esto, cada raster crea el suyo.
+   */
+  getScratch?: () => HTMLCanvasElement;
   /** Cada cuántos trazos se guarda una copia del raster. */
   checkpointInterval?: number;
   /** Copias como máximo (cada una ocupa ancho × alto × 4 bytes). */
@@ -42,6 +47,7 @@ export class PaintRaster {
   readonly canvas: HTMLCanvasElement;
   private readonly createCanvas: CanvasFactory;
   private readonly paint: NonNullable<PaintRasterOptions["paint"]>;
+  private readonly sharedScratch: PaintRasterOptions["getScratch"];
   private readonly checkpointInterval: number;
   private readonly maxCheckpoints: number;
   /** Trazos que hay pintados ahora mismo en `canvas`, en orden. */
@@ -54,6 +60,7 @@ export class PaintRaster {
   constructor(size: Size, options: PaintRasterOptions = {}) {
     this.createCanvas = options.createCanvas ?? createCanvas;
     this.paint = options.paint ?? paintStroke;
+    this.sharedScratch = options.getScratch;
     this.checkpointInterval = options.checkpointInterval ?? 20;
     this.maxCheckpoints = options.maxCheckpoints ?? 4;
     this.canvas = this.createCanvas(size);
@@ -112,6 +119,7 @@ export class PaintRaster {
   }
 
   private getScratch() {
+    if (this.sharedScratch) return this.sharedScratch();
     this.scratch ??= this.createCanvas(this.size);
     return this.scratch;
   }

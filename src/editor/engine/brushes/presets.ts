@@ -87,7 +87,14 @@ export interface DabPreset extends BasePreset {
     /** Opacidad: hasta esta proporción menos. */
     opacity: number;
   };
+  /**
+   * El trazo no pinta con color: su forma es la máscara de un efecto que se
+   * aplica a lo que tiene debajo ("blur" = desenfocarlo).
+   */
+  effect?: BrushEffect;
 }
+
+export type BrushEffect = "blur";
 
 export type BrushPreset = InkPreset | DabPreset;
 
@@ -219,6 +226,24 @@ export const BRUSH_PRESETS: Record<BrushPresetId, BrushPreset> = {
     jitter: { size: 0.15, angle: 0.1, scatter: 0.05, opacity: 0 },
     defaults: { size: 40, opacity: 1, stabilizer: 0.1 },
   },
+  blur: {
+    id: "blur",
+    name: "Desenfoque",
+    kind: "draw",
+    blend: "source-over",
+    engine: "dab",
+    effect: "blur",
+    // Borde suave: la zona desenfocada se funde con la nítida.
+    tip: { shape: "round", hardness: 0.35 },
+    spacing: 0.1,
+    flow: 1,
+    sizePressure: { min: 0.6, max: 1 },
+    opacityPressure: FULL,
+    angle: 0,
+    jitter: NO_JITTER,
+    // La opacidad es la intensidad: cuánto se mezcla lo desenfocado.
+    defaults: { size: 90, opacity: 1, stabilizer: 0 },
+  },
   eraserHard: {
     id: "eraserHard",
     name: "Borrador duro",
@@ -255,6 +280,12 @@ export const BRUSH_PRESET_IDS = Object.keys(BRUSH_PRESETS) as BrushPresetId[];
 
 export const getBrushPreset = (id: BrushPresetId): BrushPreset =>
   BRUSH_PRESETS[id];
+
+/** Efecto que aplica el preset en lugar de pintar (null = pinta con color). */
+export const brushEffect = (id: BrushPresetId): BrushEffect | null => {
+  const preset = BRUSH_PRESETS[id];
+  return (preset.engine === "dab" && preset.effect) || null;
+};
 
 /** El preset estampa la figura elegida por el usuario (pincel de formas). */
 export const usesStampShape = (id: BrushPresetId) => {

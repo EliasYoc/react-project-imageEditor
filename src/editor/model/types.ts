@@ -40,6 +40,7 @@ export type BrushPresetId =
   | "spray"
   | "highlighter"
   | "shapes"
+  | "blur"
   | "eraserHard"
   | "eraserSoft";
 

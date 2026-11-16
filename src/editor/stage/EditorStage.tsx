@@ -25,11 +25,14 @@ import {
 } from "react-konva/lib/ReactKonvaCore";
 import { createCanvas, get2dContext } from "../../lib/canvas";
 import { PaintRaster } from "../engine/PaintRaster";
+import { blurLayers, type BlurSource } from "../engine/brushes/blur";
 import { paintFill } from "../engine/fill/paintFill";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectStrokeLayers } from "../store/selectors";
+import { createBackgroundBlur } from "./backgroundBlur";
 import styles from "./EditorStage.module.css";
 import ElementsLayer from "./ElementsLayer";
+import type { LiveBlur } from "./strokeSession";
 import TextEditorOverlay from "./TextEditorOverlay";
 import { useStageInput } from "./useStageInput";
 import { useViewStore, viewStore } from "./viewStore";
@@ -38,7 +41,8 @@ import { useViewStore, viewStore } from "./viewStore";
  * Lienzo del editor con Konva.
  *
  * Tres capas (cada Layer de Konva es su propio <canvas>):
- * - fondo: la foto o un rectángulo blanco, y la capa de color o degradado;
+ * - fondo: la foto o un rectángulo blanco, la capa de color o degradado y,
+ *   donde pasó el pincel de desenfoque, ese mismo fondo desenfocado;
  * - resaltador: sus trazos, en un raster aparte cuyo <canvas> se MULTIPLICA
  *   con el fondo (`mix-blend-mode`): tiñe la foto como un rotulador real;
  * - pintura: los trazos terminados (raster en caché) y el trazo en curso.
@@ -59,6 +63,8 @@ const EditorStage = () => {
   const backgroundLayerRef = useRef<KonvaLayer>(null);
   const liveNodeRef = useRef<KonvaImageNode>(null);
   const highlightLiveNodeRef = useRef<KonvaImageNode>(null);
+  const blurNodeRef = useRef<KonvaImageNode>(null);
+  const blurSnapshotRef = useRef<HTMLCanvasElement | null>(null);
   const cursorRef = useRef<KonvaGroup>(null);
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
@@ -69,23 +75,100 @@ const EditorStage = () => {
   const stageSize = useViewStore((state) => state.stageSize);
   const view = useViewStore((state) => state.view);
 
+  // Búfer de trazo (opacidad, fusión, máscaras) compartido por los rasters:
+  // se pintan de uno en uno. Se crea al usarse por primera vez.
+  const getScratch = useMemo(() => {
+    let scratch: HTMLCanvasElement | null = null;
+    return () => (scratch ??= createCanvas(canvasSize));
+  }, [canvasSize]);
   // Un raster por capa de trazos y un canvas para el trazo en curso por cada
   // tamaño de documento.
-  const raster = useMemo(() => new PaintRaster(canvasSize), [canvasSize]);
+  const raster = useMemo(
+    () => new PaintRaster(canvasSize, { getScratch }),
+    [canvasSize, getScratch]
+  );
   const highlightRaster = useMemo(
-    () => new PaintRaster(canvasSize),
-    [canvasSize]
+    () => new PaintRaster(canvasSize, { getScratch }),
+    [canvasSize, getScratch]
   );
   const liveCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
   // Capa de color o degradado: un canvas por tamaño de documento que se
   // repinta al cambiar (no se crea uno nuevo en cada movimiento de un control).
   const fillCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
 
+  // El fondo tal como se ve (lo mismo que pinta la capa de fondo, abajo): es
+  // lo que desenfoca el pincel de desenfoque.
+  const getBackground = useCallback((): BlurSource[] => {
+    const { photo, backdrop } = editorStore.getState();
+    const sources: BlurSource[] = [
+      photo.preview ? { image: photo.preview } : { color: "white" },
+    ];
+    if (backdrop.fill) {
+      sources.push({
+        image: fillCanvas,
+        opacity: backdrop.opacity,
+        blend: photo.preview ? backdrop.blend : "source-over",
+      });
+    }
+    return sources;
+  }, [fillCanvas]);
+  const backgroundBlur = useMemo(
+    () => createBackgroundBlur(canvasSize, { getBackground, getScratch }),
+    [canvasSize, getBackground, getScratch]
+  );
+
   // batchDraw agrupa las peticiones y pinta una sola vez por frame.
   const requestDraw = useCallback(() => {
+    // Un borrador en curso quita también el desenfoque del fondo.
+    if (backgroundBlur.needsLiveRefresh) {
+      backgroundBlur.refresh();
+      backgroundLayerRef.current?.batchDraw();
+    }
     paintLayerRef.current?.batchDraw();
     highlightLayerRef.current?.batchDraw();
-  }, []);
+  }, [backgroundBlur]);
+
+  // El fondo desenfocado se muestra con un nodo que se rellena desde aquí,
+  // fuera de React, igual que los rasters.
+  const showBackgroundBlur = useCallback(() => {
+    const node = blurNodeRef.current;
+    if (!node) return;
+    const { view } = backgroundBlur;
+    const wasVisible = node.visible();
+    // Sin desenfoque no se queda con ningún canvas (p. ej. el del documento
+    // anterior) ni hay nada que repintar.
+    node.image(view ?? undefined);
+    node.visible(view !== null);
+    if (view || wasVisible) backgroundLayerRef.current?.batchDraw();
+  }, [backgroundBlur]);
+
+  const liveBlur = useMemo<LiveBlur>(
+    () => ({
+      // Todo lo que se ve bajo los textos, desenfocado: fondo, resaltador
+      // (multiplicado, como en pantalla) y pintura.
+      snapshot() {
+        const { highlight } = selectStrokeLayers(editorStore.getState());
+        const sources = getBackground();
+        if (backgroundBlur.view) sources.push({ image: backgroundBlur.view });
+        if (highlight.length > 0) {
+          sources.push({ image: highlightRaster.canvas, blend: "multiply" });
+        }
+        sources.push({ image: raster.canvas });
+        blurSnapshotRef.current = blurLayers(sources, canvasSize, {
+          into: blurSnapshotRef.current,
+        });
+        return blurSnapshotRef.current;
+      },
+      setLiveEraser(eraser) {
+        backgroundBlur.setLiveEraser(eraser);
+        // Al soltar el borrador, lo borrado ya no depende del trazo en curso.
+        if (!eraser && backgroundBlur.view) {
+          backgroundLayerRef.current?.batchDraw();
+        }
+      },
+    }),
+    [backgroundBlur, canvasSize, getBackground, highlightRaster, raster]
+  );
 
   useLayoutEffect(function multiplyHighlightLayer() {
     // El <canvas> de la capa se multiplica con lo que tiene debajo (el fondo):
@@ -117,11 +200,15 @@ const EditorStage = () => {
       // Fuera de React: los trazos no pasan por el render, el raster se pone
       // al día directamente cuando cambia el documento (dibujar, deshacer...).
       const sync = () => {
-        const { paint, highlight } = selectStrokeLayers(editorStore.getState());
+        const { paint, highlight, blur } = selectStrokeLayers(
+          editorStore.getState()
+        );
         raster.sync(paint);
         highlightRaster.sync(highlight);
         // Sin resaltador, su capa no se compone (ni se multiplica) en cada frame.
         highlightLayerRef.current?.visible(highlight.length > 0);
+        backgroundBlur.sync(blur);
+        showBackgroundBlur();
         requestDraw();
       };
       sync();
@@ -129,7 +216,7 @@ const EditorStage = () => {
         if (state.log !== previous.log) sync();
       });
     },
-    [raster, highlightRaster, requestDraw]
+    [raster, highlightRaster, backgroundBlur, showBackgroundBlur, requestDraw]
   );
 
   // Un pellizco suelta el elemento que Konva estuviera arrastrando.
@@ -151,6 +238,16 @@ const EditorStage = () => {
     [fillCanvas, backdrop.fill, canvasSize]
   );
 
+  // Después de `paintBackdrop` (los efectos van en orden): la capa de color
+  // ya está repintada cuando se vuelve a desenfocar el fondo.
+  useEffect(
+    function blurNewBackground() {
+      backgroundBlur.invalidateBackground();
+      showBackgroundBlur();
+    },
+    [backgroundBlur, showBackgroundBlur, backdrop, preview]
+  );
+
   useStageInput({
     containerRef,
     canDraw: isDrawing,
@@ -160,6 +257,7 @@ const EditorStage = () => {
     highlightLiveNodeRef,
     cursorRef,
     requestDraw,
+    liveBlur,
     onPinchStart: stopElementDrags,
   });
 
@@ -214,6 +312,15 @@ const EditorStage = () => {
             visible={Boolean(backdrop.fill)}
             opacity={backdrop.opacity}
             globalCompositeOperation={preview ? backdrop.blend : "source-over"}
+          />
+          {/* El fondo desenfocado, solo donde pasó el pincel de desenfoque
+              (ver backgroundBlur.ts). Su imagen se pone desde fuera de React. */}
+          <KonvaImage
+            ref={blurNodeRef}
+            image={undefined}
+            width={canvasSize.width}
+            height={canvasSize.height}
+            visible={false}
           />
         </Layer>
         <Layer ref={highlightLayerRef} {...documentTransform}>
