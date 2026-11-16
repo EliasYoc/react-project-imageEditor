@@ -265,7 +265,7 @@ export async function tapAt(page: Page, point: Point, touch: boolean) {
  * inicio").
  */
 export async function openMenuItem(page: Page, name: string) {
-  await page.getByRole("button", { name: "Más opciones" }).click();
+  await page.getByRole("button", { name: "Más opciones", exact: true }).click();
   await page.getByRole("menuitem", { name }).click();
 }
 
@@ -274,7 +274,7 @@ export async function openBlankCanvas(page: Page, preset = "Cuadrado") {
   await page.goto("/");
   await page.getByRole("button", { name: new RegExp(`^${preset},`) }).click();
   await expect(
-    page.getByRole("button", { name: "Más opciones" })
+    page.getByRole("button", { name: "Más opciones", exact: true })
   ).toBeVisible();
   await expectDocumentVisible(page);
 }
@@ -286,7 +286,7 @@ export async function openPhoto(page: Page) {
   await page.getByRole("button", { name: "Abrir una foto" }).click();
   await (await chooser).setFiles(PHOTO.path);
   await expect(
-    page.getByRole("button", { name: "Más opciones" })
+    page.getByRole("button", { name: "Más opciones", exact: true })
   ).toBeVisible();
 }
 

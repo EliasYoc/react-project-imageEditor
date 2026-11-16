@@ -16,6 +16,7 @@ import { Menu, type MenuItem } from "../../../components/ui/Menu";
 import { Panel } from "../../../components/ui/Panel";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../../editor/store/selectors";
+import { classNames } from "../../../lib/classNames";
 import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { BackdropPanel } from "../../backdrop";
 import { ExportDialog } from "../../export";
@@ -24,7 +25,9 @@ import { UpdateButton } from "../../update";
 import styles from "./EditorHeader.module.css";
 
 /**
- * Cabecera del editor:
+ * Cabecera del editor. Es transparente y flota sobre el lienzo: cada grupo de
+ * botones lleva su propio fondo, como la barra inferior. Se oculta con las
+ * barras (menú de la vista → "Ocultar las barras").
  * - a la izquierda, deshacer y rehacer;
  * - en el centro, lo que pase el shell (en escritorio, el selector de modo);
  * - a la derecha, "Actualizar" (solo si hay una versión nueva de la app), el
@@ -45,6 +48,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const isExportOpen = useUiStore((state) => state.dialog === "export");
   const openDialog = useUiStore((state) => state.openDialog);
   const closeDialog = useUiStore((state) => state.closeDialog);
+  const areBarsHidden = useUiStore((state) => state.areBarsHidden);
   // Los atajos solo tienen sentido con teclado y ratón (no en el móvil).
   const hasKeyboard = useMediaQuery(HOVER_QUERY);
 
@@ -82,8 +86,13 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   ];
 
   return (
-    <header className={styles.header}>
-      <div className={styles.start}>
+    <header
+      className={styles.header}
+      data-hidden={areBarsHidden || undefined}
+      // Oculta: fuera del orden de Tab y de los lectores de pantalla.
+      inert={areBarsHidden}
+    >
+      <div className={classNames(styles.start, styles.group)}>
         {/* Siempre visibles (deshabilitados si no hay nada): así los botones
             no cambian de sitio mientras se dibuja. */}
         <IconButton
@@ -102,23 +111,27 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         />
       </div>
 
-      {center && <div className={styles.center}>{center}</div>}
+      {center && (
+        <div className={classNames(styles.center, styles.group)}>{center}</div>
+      )}
 
       <div className={styles.end}>
         <UpdateButton />
-        <IconButton
-          icon={Layers}
-          aria-label="Fondo"
-          title="Color o degradado de fondo"
-          aria-haspopup="dialog"
-          onClick={() => setIsBackdropOpen(true)}
-        />
-        <Menu
-          trigger={
-            <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
-          }
-          items={menuItems}
-        />
+        <div className={styles.group}>
+          <IconButton
+            icon={Layers}
+            aria-label="Fondo"
+            title="Color o degradado de fondo"
+            aria-haspopup="dialog"
+            onClick={() => setIsBackdropOpen(true)}
+          />
+          <Menu
+            trigger={
+              <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
+            }
+            items={menuItems}
+          />
+        </div>
       </div>
 
       <Panel

@@ -9,6 +9,15 @@
   animation: fadeIn 0.12s ease;
 }
 
+/* Texto informativo encima de las opciones (no se puede elegir). */
+.label {
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
 .item {
   display: flex;
   align-items: center;

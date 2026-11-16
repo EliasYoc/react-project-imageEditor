@@ -1,4 +1,7 @@
-/* Flota sobre el lienzo, que ocupa toda la pantalla (ver EditorShell). */
+/*
+ * Transparente y flotando sobre el lienzo, que ocupa toda la pantalla (ver
+ * EditorShell). No recibe el puntero: solo sus grupos de botones.
+ */
 .header {
   position: absolute;
   top: 0;
@@ -8,20 +11,35 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  flex-shrink: 0;
   height: var(--header-height);
   padding: 0 var(--space-2);
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-strong);
   color: var(--color-text);
+  pointer-events: none;
   animation: appearDown 0.3s ease;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s;
 }
 
-.start,
-.end {
+/* Barras ocultas: se desvanece y, al terminar, deja de verse del todo. */
+.header[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s linear 0.2s;
+}
+
+/* Cada grupo de botones lleva el fondo de la barra inferior. */
+.group {
   display: flex;
   align-items: center;
   gap: 2px;
+  padding: 2px var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  pointer-events: auto;
 }
 
 /* Cada grupo en su columna, aunque falte el del centro (en el móvil). */
@@ -33,12 +51,16 @@
 .center {
   grid-column: 2;
   justify-self: center;
+  padding: 2px;
 }
 
 .end {
+  display: flex;
   grid-column: 3;
   justify-self: end;
+  align-items: center;
   gap: var(--space-1);
+  pointer-events: auto;
 }
 
 @keyframes appearDown {
@@ -48,7 +70,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .header {
+  .header,
+  .header[data-hidden] {
     animation: none;
+    transition: none;
   }
 }

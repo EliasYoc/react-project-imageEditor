@@ -33,7 +33,10 @@ test.describe("Teclado", () => {
     await expect(backdrop).toBeFocused();
 
     await page.keyboard.press("Tab");
-    const more = page.getByRole("button", { name: "Más opciones" });
+    const more = page.getByRole("button", {
+      name: "Más opciones",
+      exact: true,
+    });
     await expect(more).toBeFocused();
 
     // Enter abre el menú con el foco en la primera opción: Exportar.

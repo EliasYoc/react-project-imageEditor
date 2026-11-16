@@ -36,10 +36,29 @@
   gap: var(--space-1);
   padding: var(--space-2) var(--space-2)
     calc(var(--space-2) + env(safe-area-inset-bottom));
+  transition:
+    opacity 0.2s ease,
+    visibility 0s;
 }
 
 .footer > * {
   pointer-events: auto;
+}
+
+/* Barras ocultas: se desvanece y, al terminar, deja de verse del todo. */
+.footer[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s linear 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer,
+  .footer[data-hidden] {
+    transition: none;
+  }
 }
 
 /* Barra de herramientas: si no cabe, pasa a dos filas sin salirse. */

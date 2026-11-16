@@ -1,0 +1,20 @@
+/* Donde estaba el zoom: abajo a la derecha, con el fondo de las barras. */
+.controls {
+  position: absolute;
+  right: var(--space-2);
+  /* Justo encima de la barra inferior (0 si las barras están ocultas). */
+  bottom: calc(var(--footer-height, 0px) + var(--space-2));
+  z-index: var(--z-toolbar);
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  transition: bottom 0.2s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .controls {
+    transition: none;
+  }
+}

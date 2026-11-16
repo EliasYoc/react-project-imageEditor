@@ -11,13 +11,19 @@ export interface MenuItem {
   /** Acción destructiva (en rojo). */
   danger?: boolean;
   disabled?: boolean;
+  /** El menú sigue abierto al elegirla (p. ej. acercar varias veces). */
+  keepOpen?: boolean;
 }
 
 export interface MenuProps {
   /** El botón que abre el menú (acepta ref y props, p. ej. un IconButton). */
   trigger: ReactElement;
   items: readonly MenuItem[];
+  /** Texto informativo encima de las opciones (p. ej. el nivel de zoom). */
+  label?: string;
   align?: "start" | "center" | "end";
+  /** Hacia dónde se abre si cabe (si no, Radix lo da la vuelta). */
+  side?: "top" | "bottom";
 }
 
 /**
@@ -28,7 +34,13 @@ export interface MenuProps {
  * No modal: así una opción puede abrir un diálogo sin que los dos se peleen
  * por el foco y los clics de la página.
  */
-export function Menu({ trigger, items, align = "end" }: MenuProps) {
+export function Menu({
+  trigger,
+  items,
+  label,
+  align = "end",
+  side = "bottom",
+}: MenuProps) {
   return (
     <DropdownMenu.Root modal={false}>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
@@ -36,19 +48,28 @@ export function Menu({ trigger, items, align = "end" }: MenuProps) {
         <DropdownMenu.Content
           className={styles.content}
           align={align}
+          side={side}
           sideOffset={6}
           collisionPadding={8}
         >
-          {items.map(({ label, icon: Icon, onSelect, danger, disabled }) => (
-            <DropdownMenu.Item
-              key={label}
-              className={styles.item}
-              data-danger={danger || undefined}
-              disabled={disabled}
-              onSelect={onSelect}
-            >
-              {Icon && <Icon aria-hidden="true" />}
+          {label && (
+            <DropdownMenu.Label className={styles.label}>
               {label}
+            </DropdownMenu.Label>
+          )}
+          {items.map((item) => (
+            <DropdownMenu.Item
+              key={item.label}
+              className={styles.item}
+              data-danger={item.danger || undefined}
+              disabled={item.disabled}
+              onSelect={(event) => {
+                if (item.keepOpen) event.preventDefault();
+                item.onSelect();
+              }}
+            >
+              {item.icon && <item.icon aria-hidden="true" />}
+              {item.label}
             </DropdownMenu.Item>
           ))}
         </DropdownMenu.Content>
