@@ -46,7 +46,7 @@ Si ninguna lo cubre:
 
 ## 4. Las PR son del dueño
 
-- **Trabaja solo con commits locales** en una rama por tarea. **Nunca hagas push** ni abras, edites o fusiones PR.
+- **Trabaja solo con commits locales.** **No crees ramas:** haz los commits en la rama en la que esté el repositorio (normalmente `dev`), actualizada antes de empezar. **Nunca hagas push** ni abras, edites o fusiones PR.
 - **Al terminar,** deja el texto de la PR en un archivo para que el dueño la abra.
 - **Cada commit** debe compilar y pasar `npm run check` por sí solo.
 
