@@ -22,7 +22,7 @@ Producción: https://editoryoc.netlify.app/
 | `npm install`           | Instala las dependencias                                             |
 | `npm run dev`           | Servidor de desarrollo en http://localhost:5173                      |
 | `npm run dev -- --host` | Igual, pero accesible desde el móvil en la misma red                 |
-| `npm run build`         | Build de producción en `build/` (la carpeta que publica Netlify)     |
+| `npm run build`         | Build de producción en `build/` (la carpeta que publica Vercel)      |
 | `npm run preview`       | Sirve el build de producción para probarlo                           |
 | `npm test`              | Tests con Vitest (modo watch; `npx vitest run` para una sola pasada) |
 | `npm run lint`          | ESLint                                                               |
@@ -139,7 +139,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
   - **Qué lleva:** todo lo que usa Konva (y el reconciliador de react-konva), en su propio archivo.
   - **El inicio** solo descarga el JS principal (~114 KB gzip; el motor de pinceles va con el editor) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
   - **Con una red lenta**, si se entra antes de que llegue, se ve "Cargando el editor" un momento.
-- **Caché:** los archivos de `/assets` llevan hash y Netlify los sirve con caché de un año (`public/_headers`).
+- **Caché:** los archivos de `/assets` llevan hash y Vercel los sirve con caché de un año (`headers` en `vercel.json`).
 - **Medido en Edge** con el build de producción y la red limitada a 150 ms / 1,6 Mbps:
 
   |                      | Antes (un solo JS) | Después |
@@ -157,10 +157,11 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
   - toda la app (también el editor, que se carga aparte) queda en caché al instalarse el service worker, unos 840 KB;
   - las **fuentes** se guardan la primera vez que se usan, o al abrir la lista de fuentes, y desde ahí también funcionan sin conexión.
 - **Actualizaciones:** una versión nueva se descarga en segundo plano y **se usa la próxima vez que se abre la app**. Nunca recarga una pestaña abierta, porque el dibujo vive en memoria y se perdería.
-- **Al publicar en otro hosting:**
-  - hace falta **HTTPS** (en `localhost` funciona sin él);
-  - `sw.js` e `index.html` **no** deben tener caché larga, porque si no las versiones nuevas tardan en llegar;
-  - `public/_headers` solo lo entiende Netlify (y Cloudflare Pages); en otro hosting la app funciona igual, sin esa caché de `/assets`.
+- **Hosting (Vercel, configurado en `vercel.json`):**
+  - hace falta **HTTPS** (en `localhost` funciona sin él); Vercel lo da siempre;
+  - `sw.js` e `index.html` **no** deben tener caché larga, porque si no las versiones nuevas tardan en llegar. Vercel ya los sirve así por defecto (`max-age=0, must-revalidate`), por eso `vercel.json` solo cambia la caché de `/assets`;
+  - `outputDirectory: "build"` hace falta porque Vercel busca `dist/` en los proyectos de Vite;
+  - en otro hosting la app funciona igual, pero hay que repetir estas dos cosas en su configuración.
 
 ## Tests e2e
 
