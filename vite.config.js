@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
+// El index.ts de una feature: src/features/<feature>/index.ts.
+const FEATURE_INDEX = /\/src\/features\/[^/]+\/index\.ts$/;
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -65,6 +68,15 @@ export default defineConfig({
     // Se publica desde "build/" (igual que con Create React App); vercel.json
     // le indica a Vercel esta carpeta con "outputDirectory".
     outDir: "build",
+    rolldownOptions: {
+      treeshake: {
+        // El index.ts de cada feature solo reexporta. Sin esto, importar
+        // algo pequeño de una feature desde el inicio (p. ej. un atajo)
+        // arrastraría al bundle del inicio todo lo demás que reexporta,
+        // aunque sea del editor (que se carga aparte, bajo demanda).
+        moduleSideEffects: (id) => !FEATURE_INDEX.test(id),
+      },
+    },
   },
   test: {
     // Solo los tests unitarios: los e2e (carpeta e2e/) son de Playwright.

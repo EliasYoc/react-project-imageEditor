@@ -12,6 +12,7 @@ import {
   pointIn,
   screenColor,
   stageRect,
+  openMenuItem,
 } from "./helpers";
 
 const BLUE = { r: 0, g: 122, b: 255 };
@@ -63,7 +64,7 @@ test.describe("Inicio", () => {
     const doc = await documentRect(page);
     expect(doc.width / doc.height).toBeCloseTo(1920 / 1080, 1);
 
-    await page.getByRole("button", { name: "Exportar" }).click();
+    await openMenuItem(page, "Exportar");
     await expect(
       page.getByRole("dialog", { name: "Exportar imagen" })
     ).toContainText("Se guarda a 1920 × 1080 px.");
@@ -80,7 +81,7 @@ test.describe("Inicio", () => {
     await expectColorAt(page, { ...center, x: center.x - 40 }, isDark);
     await expectColorAt(page, { ...center, x: center.x + 40 }, isWhite);
 
-    await page.getByRole("button", { name: "Exportar" }).click();
+    await openMenuItem(page, "Exportar");
     const dialog = page.getByRole("dialog", { name: "Exportar imagen" });
     await expect(dialog).toContainText("la resolución de la foto original");
     await expect(
@@ -128,14 +129,13 @@ test.describe("Inicio", () => {
     );
     await expectColorAt(page, middle, isDark);
 
-    const close = page.getByRole("button", { name: "Cerrar el editor" });
     const story = page.getByRole("button", { name: /^Historia,/ });
     const confirm = page.getByRole("alertdialog", {
       name: "¿Empezar de nuevo?",
     });
 
     // Cancelar: el dibujo sigue ahí.
-    await close.click();
+    await openMenuItem(page, "Volver al inicio");
     await story.click();
     await confirm.getByRole("button", { name: "Cancelar" }).click();
     await expect(confirm).toBeHidden();
@@ -143,7 +143,7 @@ test.describe("Inicio", () => {
     await expectColorAt(page, middle, isDark);
 
     // Descartar: lienzo nuevo, sin el dibujo ni su historial.
-    await close.click();
+    await openMenuItem(page, "Volver al inicio");
     await story.click();
     await confirm.getByRole("button", { name: "Descartar y abrir" }).click();
     await expectDocumentVisible(page);

@@ -45,7 +45,9 @@ src/
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, desenfoque, estabilizador, presets
     elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
-  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export
+  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, zoom.
+                Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
+                subcarpetas que tienen algo; los tests de la función quedan en su raíz
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
@@ -101,7 +103,8 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                   | Barra inferior                      |
 | Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                     | Igual                               |
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón) | Tocar el slider del borde izquierdo |
-| Exportar              | Ctrl/⌘ + S o el botón "Exportar" (Enter en el diálogo)                  | Botón "Exportar"                    |
+| Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                  | Menú ⋮ → "Exportar"                 |
+| Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                     | Igual                               |
 | Cerrar un panel       | Escape o ✕                                                              | ✕, tocar fuera o deslizar abajo     |
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                      | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V              | Botón "Abrir una foto"              |
@@ -110,7 +113,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 
 ## Inicio y avisos
 
-- **Pantalla de inicio** (`features/home/HomeScreen.tsx`):
+- **Pantalla de inicio** (`features/home/components/HomeScreen.tsx`):
   - **Seguir editando**, si ya hay un documento;
   - **Abrir una foto**, con el botón, arrastrándola a la ventana o pegándola;
   - **Lienzo en blanco** en cuatro tamaños: Pantalla, Cuadrado 2048², Historia 1080×1920 y Horizontal 1920×1080.
@@ -207,7 +210,7 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
 
 - Los valores de diseño (colores, espaciado, radios, z-index) viven en `src/styles/tokens.css` y se usan con `var(--…)`.
 - Todo el CSS son **CSS Modules** (`*.module.css`) y tokens; no hay CSS en JS.
-- Iconos de **lucide-react** (cada uno se importa por separado). Si falta uno, se crea con `createLucideIcon` y el mismo trazo (ver `features/drawing/brushIcons.ts`).
+- Iconos de **lucide-react** (cada uno se importa por separado). Si falta uno, se crea con `createLucideIcon` y el mismo trazo (ver `features/drawing/constants/brushIcons.ts`).
 - Para botones usa `Button` o `IconButton` de `components/ui/Button`: son `<button>` reales, accesibles con teclado. `IconButton` exige `aria-label` y acepta `shortcut` para su tooltip.
 - Para valores numéricos usa `Slider` (un `<input type="range">` nativo con etiqueta y valor) y, en el borde del lienzo, `VerticalSlider` (barra al estilo de iOS, sin pulgar visible).
 
