@@ -56,3 +56,11 @@ Si ninguna lo cubre:
 - Cuando salga un tema relacionado (hosting, dependencias…), recuérdale el punto que toca.
 - Si algo es **urgente** (una vulnerabilidad en dependencias de producción, un fallo que rompe la app), avísale enseguida.
 - Al terminar un punto, quítalo de `PENDIENTES.md` en la misma PR.
+
+## 6. Estructura de `src/features`
+
+- **Cada feature agrupa su código por tipo** en subcarpetas: `components/` (con sus `.module.css`), `hooks/`, `utils/`, `constants/` y, si algún día hace falta, `stores/`.
+- **Nunca crees subcarpetas vacías:** una subcarpeta existe solo si tiene algún archivo.
+- **Los tests de la feature** van en su raíz; un test unitario va junto al archivo que prueba.
+- **Cada feature tiene un `index.ts`** que reexporta solo lo que usa el resto de la app. Desde fuera de la feature se importa siempre ese `index.ts`, nunca un archivo interno. Dentro de la feature, los archivos se importan entre sí con rutas relativas, sin pasar por su propio `index.ts`.
+- El `index.ts` solo reexporta; no pongas código en él (en `vite.config.js` está marcado sin efectos secundarios para que no arrastre el editor al bundle del inicio).
