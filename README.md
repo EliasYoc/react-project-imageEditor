@@ -41,8 +41,8 @@ src/
   editor/       Núcleo del editor
     model/      Tipos del documento (TypeScript)
     store/      Store de Zustand: la única fuente de verdad del documento y su historial
-    engine/     Motor puro, sin React ni Konva: vista, raster con checkpoints, puntero
-      brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, estabilizador, presets
+    engine/     Motor puro, sin React ni nodos de Konva: vista, raster con checkpoints, puntero
+      brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, desenfoque, estabilizador, presets
     elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export
@@ -66,13 +66,23 @@ e2e/            Tests de punta a punta (Playwright) y sus imágenes de prueba (f
 Hay dos motores en `editor/engine/brushes/`:
 
 - **Tinta** (Pluma, Marcador): perfect-freehand calcula el contorno del trazo y se rellena. El grosor sigue la presión del lápiz o, con ratón y dedo, la velocidad.
-- **Sellos** (Lápiz, Tiza, Aerógrafo, Spray, Resaltador, borradores): se estampa una punta a lo largo del recorrido, con espaciado, flujo, dureza, curvas de presión y variación aleatoria.
+- **Sellos** (Lápiz, Tiza, Aerógrafo, Spray, Resaltador, Caligrafía, Neón, Formas, Desenfoque y los borradores): se estampa una punta a lo largo del recorrido, con espaciado, flujo, dureza, curvas de presión y variación aleatoria. Las puntas se dibujan una vez por color y tamaño y se guardan (`tips.ts`): estampar es copiar una imagen.
 
 Cada trazo se pinta primero en un **búfer** y luego se compone con su **opacidad** y su **modo de fusión**: un marcador semitransparente no se oscurece donde se cruza consigo mismo, pero sí sobre otro trazo. La variación aleatoria usa una **semilla** guardada en el trazo, así que se repinta siempre igual (al deshacer o al exportar). El **estabilizador** (una "cuerda" medida en píxeles de pantalla) se aplica al capturar los puntos.
 
 Los presets están en `presets.ts`: cambiar uno cambia cómo se ven los trazos ya hechos.
 
-El **resaltador** tiene su propia capa (`layers.ts`), entre el fondo y la pintura, que se **multiplica** con la foto (en el lienzo con `mix-blend-mode: multiply`; al exportar, con el mismo modo). Así tiñe la foto como un rotulador real en vez de verse como un color translúcido. Los borradores borran en las dos capas, y el resaltador queda siempre **debajo de la tinta**, aunque se pinte después (como al subrayar un texto impreso).
+El **resaltador** tiene su propia capa (`layers.ts`), entre el fondo y la pintura, que se **multiplica** con la foto (en el lienzo con `mix-blend-mode: multiply`; al exportar, con el mismo modo). Así tiñe la foto como un rotulador real en vez de verse como un color translúcido. Los borradores borran en todas las capas, y el resaltador queda siempre **debajo de la tinta**, aunque se pinte después (como al subrayar un texto impreso).
+
+Tres de los pinceles de sellos tienen algo propio:
+
+- **Formas** estampa figuras separadas (el espaciado es mayor que el tamaño): círculos, cuadrados, triángulos, estrellas o una mezcla. La figura se elige con el botón **⋮** de su tarjeta en la biblioteca y **se guarda en el trazo**; en la mezcla, la de cada sello sale de la semilla del sello. Por eso deshacer, rehacer y exportar repiten las mismas figuras.
+- **Neón** es un halo del color del trazo con un núcleo blanco encima. El halo de un sello teñiría el núcleo de los anteriores, así que después de cada halo se repasa el núcleo de los últimos sellos. Se hace sello a sello: el trazo queda igual pintado en vivo, por partes, que repintado de una vez.
+- **Desenfoque** no pinta con color: su forma es una máscara, y su opacidad, la intensidad.
+  - **Qué desenfoca:** la foto, la capa de color y lo ya pintado, resaltador incluido. Los textos y las imágenes añadidas quedan nítidos (son otra capa). El borrador lo quita, y se puede seguir pintando encima.
+  - **Cómo:** la pintura y el resaltador se desenfocan **en el sitio** al soltar el trazo (`paint.ts`). El fondo no es un raster de trazos, así que guarda una **máscara** y una copia desenfocada de sí mismo, y se muestra esa copia solo donde hay máscara (`editor/stage/backgroundBlur.ts`). Al cambiar el fondo se rehace la copia; los trazos no se repintan.
+  - **Por qué es barato** (`blur.ts`): se desenfoca una **copia reducida** (hasta que el radio queda en 4 px) con el filtro `Blur` de Konva y se dibuja ampliada. El radio es un 2 % del lado corto, así que cuesta casi lo mismo en un lienzo pequeño que al exportar una foto de 12 MP, y se ve igual. Mientras se arrastra no se desenfoca nada: los sellos nuevos **revelan** una copia de todo lo visible que se desenfocó una vez, al empezar el trazo.
+  - **Medido** en Edge, en un lienzo de 2048 × 2048: 0,4 ms por movimiento del puntero (igual que el Aerógrafo), 13 ms una vez al empezar el trazo y 17 ms una vez al soltarlo. No crea ningún canvas hasta que se usa por primera vez.
 
 Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del pincel actual (tamaño, opacidad y estabilización; cada preset recuerda los suyos) y todos los presets con una **vista previa real**, pintada con el mismo motor que el lienzo, con el color y los ajustes actuales.
 
@@ -89,6 +99,7 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Eliminar un elemento  | Supr / Retroceso (modo Texto)                                           | Botón de la papelera                |
 | Negrita               | Ctrl/⌘ + B (modo Texto)                                                 | Panel "Fuente"                      |
 | Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                   | Barra inferior                      |
+| Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                     | Igual                               |
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón) | Tocar el slider del borde izquierdo |
 | Exportar              | Ctrl/⌘ + S o el botón "Exportar" (Enter en el diálogo)                  | Botón "Exportar"                    |
 | Cerrar un panel       | Escape o ✕                                                              | ✕, tocar fuera o deslizar abajo     |
@@ -126,7 +137,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 
 - **El editor se carga bajo demanda** (`src/app/EditorShell.tsx`).
   - **Qué lleva:** todo lo que usa Konva (y el reconciliador de react-konva), en su propio archivo.
-  - **El inicio** solo descarga el JS principal (~118 KB gzip) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
+  - **El inicio** solo descarga el JS principal (~114 KB gzip; el motor de pinceles va con el editor) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
   - **Con una red lenta**, si se entra antes de que llegue, se ve "Cargando el editor" un momento.
 - **Caché:** los archivos de `/assets` llevan hash y Netlify los sirve con caché de un año (`public/_headers`).
 - **Medido en Edge** con el build de producción y la red limitada a 150 ms / 1,6 Mbps:
@@ -158,6 +169,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Qué prueban:**
   - el inicio: los lienzos en blanco, abrir, soltar o pegar una foto y la confirmación antes de descartar;
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
+  - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
   - el fondo de color y de degradado;
   - exportar: el nombre y el tamaño del PNG, y su contenido;
@@ -184,7 +196,7 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
 - **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
 - **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
   - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`) y el del **editor** (el resto);
-  - falla si pasan de **125 kB** y **130 kB**: hoy son unos 117 y 123;
+  - falla si pasan de **120 kB** y **140 kB**: hoy son unos 114 y 132;
   - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
 - **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
 - **Coste:** gratis en repos públicos. En privados, el plan gratuito incluye unos 2.000 minutos al mes, y cada ejecución tarda unos 5. Un push nuevo a la misma PR cancela la ejecución anterior.
@@ -203,7 +215,7 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
 Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.radix-ui.com/) (paquete `radix-ui`), que resuelve el foco, el teclado y el ARIA:
 
 - **`Panel`**: en el móvil es una **hoja inferior modal** (se cierra con ✕, Escape, tocando fuera o deslizándola hacia abajo); en escritorio (≥ 900 px) es un **panel lateral no modal**: el lienzo sigue a la vista y se puede dibujar o elegir otro texto con él abierto. Al cerrarse, el foco vuelve al botón que lo abrió (`useReturnFocus`).
-- **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
+- **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`ChoiceMenu`** (un menú para elegir una opción entre varias, con la elegida marcada: la figura del pincel Formas), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
 - **`Tooltip`**: solo con ratón o teclado, con el atajo de cada botón. No aparece cuando un panel devuelve el foco a su botón.
 - Los atajos de teclado no actúan sobre la selección (Supr, Escape) si el foco está dentro de un panel o un menú.
 

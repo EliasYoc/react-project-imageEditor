@@ -7,7 +7,7 @@ import { getLocalPoint, getPointerSamples } from "../engine/pointer";
 import { pinchView, zoomLimits, type View } from "../engine/viewport";
 import type { Point } from "../model/types";
 import { editorStore } from "../store/editorStore";
-import { createStrokeSession } from "./strokeSession";
+import { createStrokeSession, type LiveBlur } from "./strokeSession";
 import { viewStore } from "./viewStore";
 
 /**
@@ -48,6 +48,8 @@ interface StageInputOptions {
   /** Grupo de Konva con los círculos que marcan el tamaño del pincel. */
   cursorRef: RefObject<KonvaGroup | null>;
   requestDraw: () => void;
+  /** Lo que el trazo en curso necesita para el desenfoque (ver `LiveBlur`). */
+  liveBlur: LiveBlur;
   /**
    * Empieza un pellizco: en modo Texto hay que soltar el elemento que Konva
    * estuviera arrastrando con el primer dedo.
@@ -84,6 +86,7 @@ export function useStageInput({
   highlightLiveNodeRef,
   cursorRef,
   requestDraw,
+  liveBlur,
   onPinchStart,
 }: StageInputOptions) {
   useEffect(() => {
@@ -97,6 +100,7 @@ export function useStageInput({
         highlight: highlightLiveNodeRef.current,
       },
       requestDraw,
+      liveBlur,
     });
     /** Dedos apoyados, en coordenadas del área del lienzo. */
     const touches = new Map<number, Point>();
@@ -417,6 +421,7 @@ export function useStageInput({
     highlightLiveNodeRef,
     cursorRef,
     requestDraw,
+    liveBlur,
     onPinchStart,
   ]);
 }

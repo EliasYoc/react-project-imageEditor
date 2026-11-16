@@ -1,6 +1,10 @@
 import { createId } from "../../lib/createId";
 import { DEFAULT_FONT_ID } from "../elements/fonts";
-import { BRUSH_PRESETS, BRUSH_PRESET_IDS } from "../engine/brushes/presets";
+import {
+  BRUSH_PRESETS,
+  BRUSH_PRESET_IDS,
+  usesStampShape,
+} from "../engine/brushes/presets";
 import { createSeed } from "../engine/brushes/random";
 import type {
   BrushPresetId,
@@ -11,6 +15,7 @@ import type {
   Point,
   Rgba,
   Size,
+  StampShape,
   StrokeEntry,
   TextElement,
   TextStyle,
@@ -67,6 +72,7 @@ export const createInitialBrushState = (): BrushState => ({
   lastDrawPresetId: "pen",
   lastEraserPresetId: "eraserHard",
   color: { r: 0, g: 0, b: 0, a: 1 },
+  shape: "circle",
   settings: Object.fromEntries(
     BRUSH_PRESET_IDS.map((id) => [id, { ...BRUSH_PRESETS[id].defaults }])
   ) as Record<BrushPresetId, BrushSettings>,
@@ -78,11 +84,14 @@ export const createStroke = ({
   settings,
   color,
   hasPressure = false,
+  shape = "circle",
 }: {
   brush: BrushPresetId;
   settings: BrushSettings;
   color: Rgba;
   hasPressure?: boolean;
+  /** Figura elegida para el pincel de formas (los demás la ignoran). */
+  shape?: StampShape;
 }): StrokeEntry => ({
   whatTask: "stroke",
   id: createId(),
@@ -92,6 +101,8 @@ export const createStroke = ({
   opacity: settings.opacity,
   seed: createSeed(),
   hasPressure,
+  // Solo la guardan los trazos que la usan: cambiarla después no los altera.
+  ...(usesStampShape(brush) && { shape }),
   points: [],
 });
 

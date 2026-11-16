@@ -39,8 +39,18 @@ export type BrushPresetId =
   | "airbrush"
   | "spray"
   | "highlighter"
+  | "calligraphy"
+  | "neon"
+  | "shapes"
+  | "blur"
   | "eraserHard"
   | "eraserSoft";
+
+/**
+ * Figura que estampa el pincel de formas. "mix" elige una de las demás al
+ * azar en cada sello.
+ */
+export type StampShape = "circle" | "square" | "triangle" | "star" | "mix";
 
 /** Ajustes que el usuario cambia; cada preset recuerda los suyos. */
 export interface BrushSettings {
@@ -59,6 +69,8 @@ export interface BrushState {
   lastEraserPresetId: BrushPresetId;
   /** Color compartido por todos los pinceles (la transparencia es la opacidad). */
   color: Rgba;
+  /** Figura del pincel de formas (los demás pinceles no la usan). */
+  shape: StampShape;
   settings: Record<BrushPresetId, BrushSettings>;
 }
 
@@ -88,6 +100,8 @@ export interface StrokeEntry {
   seed: number;
   /** Se hizo con un lápiz que mide la presión. */
   hasPressure: boolean;
+  /** Figura estampada: solo en los trazos del pincel de formas. */
+  shape?: StampShape;
   points: StrokePoint[];
 }
 

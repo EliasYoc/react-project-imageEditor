@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { usesStampShape } from "../../editor/engine/brushes/presets";
 import type { BrushPresetId } from "../../editor/model/types";
 import { useEditorStore } from "../../editor/store/editorStore";
 import { selectBrushColor } from "../../editor/store/selectors";
@@ -13,6 +14,10 @@ const BrushPreview = ({ presetId }: { presetId: BrushPresetId }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const settings = useEditorStore((state) => state.brush.settings[presetId]);
   const color = useEditorStore(selectBrushColor);
+  // Solo la vista previa del pincel de formas depende de la figura elegida.
+  const shape = useEditorStore((state) =>
+    usesStampShape(presetId) ? state.brush.shape : undefined
+  );
 
   useEffect(
     function paintPreview() {
@@ -25,9 +30,9 @@ const BrushPreview = ({ presetId }: { presetId: BrushPresetId }) => {
       canvas.width = Math.round(PREVIEW_SIZE.width * ratio);
       canvas.height = Math.round(PREVIEW_SIZE.height * ratio);
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-      drawBrushPreview(ctx, presetId, settings, color);
+      drawBrushPreview(ctx, presetId, settings, color, shape);
     },
-    [presetId, settings, color]
+    [presetId, settings, color, shape]
   );
 
   return (

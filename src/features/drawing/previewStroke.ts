@@ -1,11 +1,15 @@
 import type { BrushStroke } from "../../editor/engine/brushes/brushStroke";
 import { paintStroke } from "../../editor/engine/brushes/paint";
-import { getBrushPreset } from "../../editor/engine/brushes/presets";
+import {
+  brushEffect,
+  getBrushPreset,
+} from "../../editor/engine/brushes/presets";
 import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
 import type {
   BrushPresetId,
   BrushSettings,
   Rgba,
+  StampShape,
   StrokePoint,
 } from "../../editor/model/types";
 import { createCanvas } from "../../lib/canvas";
@@ -18,6 +22,13 @@ const PADDING = 12;
 const PREVIEW_SEED = 7;
 /** Color de fondo sobre el que se ve lo que borra un borrador. */
 const ERASER_BACKGROUND: Rgba = { r: 120, g: 120, b: 120, a: 1 };
+/** Barras finas sobre las que se ve lo que desenfoca el desenfoque. */
+const BLUR_BARS = { color: "#3c3c3c", width: 3, gap: 5 };
+/**
+ * El desenfoque de la tarjeta es mucho mayor que el del lienzo en proporción:
+ * con el real (un 1,5 % de 52 px) no se vería nada.
+ */
+const PREVIEW_BLUR_AMOUNT = 0.06;
 
 /**
  * Grosor del trazo de muestra: el tamaño real no cabe (un aerógrafo de 120 px
@@ -52,7 +63,8 @@ export const previewPoints = (
 export const previewStroke = (
   brush: BrushPresetId,
   settings: BrushSettings,
-  color: Rgba
+  color: Rgba,
+  shape?: StampShape
 ): BrushStroke => ({
   brush,
   color,
@@ -60,18 +72,21 @@ export const previewStroke = (
   opacity: settings.opacity,
   seed: PREVIEW_SEED,
   hasPressure: true,
+  shape,
   points: previewPoints(),
 });
 
 /**
  * Pinta la vista previa con el mismo motor que el lienzo. Para los borradores
- * pinta antes una franja gris: lo que borran se ve como un hueco.
+ * pinta antes una franja gris: lo que borran se ve como un hueco. Para el
+ * desenfoque, unas barras finas: lo que desenfoca se ve borroso.
  */
 export const drawBrushPreview = (
   ctx: CanvasRenderingContext2D,
   brush: BrushPresetId,
   settings: BrushSettings,
-  color: Rgba
+  color: Rgba,
+  shape?: StampShape
 ) => {
   const { width, height } = ctx.canvas;
   ctx.save();
@@ -90,9 +105,27 @@ export const drawBrushPreview = (
     );
   }
 
+  if (brushEffect(brush) === "blur") {
+    ctx.fillStyle = BLUR_BARS.color;
+    const step = BLUR_BARS.width + BLUR_BARS.gap;
+    for (
+      let x = PADDING;
+      x + BLUR_BARS.width <= PREVIEW_SIZE.width - PADDING;
+      x += step
+    ) {
+      ctx.fillRect(
+        x,
+        PADDING / 2,
+        BLUR_BARS.width,
+        PREVIEW_SIZE.height - PADDING
+      );
+    }
+  }
+
   paintStroke(
     ctx,
-    previewStroke(brush, settings, color),
-    createCanvas({ width, height })
+    previewStroke(brush, settings, color, shape),
+    createCanvas({ width, height }),
+    { blurAmount: PREVIEW_BLUR_AMOUNT }
   );
 };

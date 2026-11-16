@@ -6,18 +6,21 @@ const stroke = (id: string, brush: BrushPresetId) => ({ id, brush });
 const ids = (strokes: readonly { id: string }[]) => strokes.map((s) => s.id);
 
 describe("strokeLayers", () => {
-  it("el resaltador va en su capa, el borrador en las dos y el resto en la de pintura", () => {
+  it("el resaltador va en su capa, el borrador en todas y el resto en la de pintura", () => {
     expect(strokeLayers({ brush: "highlighter" })).toEqual({
       paint: false,
       highlight: true,
+      blur: false,
     });
     expect(strokeLayers({ brush: "eraserHard" })).toEqual({
       paint: true,
       highlight: true,
+      blur: true,
     });
     expect(strokeLayers({ brush: "eraserSoft" })).toEqual({
       paint: true,
       highlight: true,
+      blur: true,
     });
     for (const brush of [
       "pen",
@@ -26,12 +29,24 @@ describe("strokeLayers", () => {
       "chalk",
       "airbrush",
       "spray",
+      "calligraphy",
+      "neon",
+      "shapes",
     ] as const) {
       expect(strokeLayers({ brush })).toEqual({
         paint: true,
         highlight: false,
+        blur: false,
       });
     }
+  });
+
+  it("el desenfoque afecta a todas las capas", () => {
+    expect(strokeLayers({ brush: "blur" })).toEqual({
+      paint: true,
+      highlight: true,
+      blur: true,
+    });
   });
 });
 
@@ -63,15 +78,52 @@ describe("splitStrokeLayers", () => {
       stroke("a", "eraserHard"),
       stroke("b", "highlighter"),
       stroke("c", "pen"),
+      stroke("d", "blur"),
     ];
     const before = splitStrokeLayers(strokes);
-    const after = splitStrokeLayers([...strokes, stroke("d", "eraserSoft")]);
-    expect(ids(after.paint).slice(0, before.paint.length)).toEqual(
-      ids(before.paint)
-    );
-    expect(ids(after.highlight).slice(0, before.highlight.length)).toEqual(
-      ids(before.highlight)
-    );
-    expect(ids(after.highlight)).toEqual(["b", "d"]);
+    const after = splitStrokeLayers([...strokes, stroke("e", "eraserSoft")]);
+    for (const layer of ["paint", "highlight", "blur"] as const) {
+      expect(ids(after[layer]).slice(0, before[layer].length)).toEqual(
+        ids(before[layer])
+      );
+    }
+    expect(ids(after.highlight)).toEqual(["b", "d", "e"]);
+    expect(ids(after.blur)).toEqual(["d", "e"]);
+  });
+
+  it("sin desenfoque, su máscara queda vacía (aunque haya borradores)", () => {
+    const { blur } = splitStrokeLayers([
+      stroke("a", "pen"),
+      stroke("b", "eraserHard"),
+      stroke("c", "highlighter"),
+    ]);
+    expect(blur).toEqual([]);
+  });
+
+  it("la máscara del desenfoque lleva sus trazos y los borradores posteriores", () => {
+    const { blur } = splitStrokeLayers([
+      stroke("goma1", "eraserHard"),
+      stroke("borroso1", "blur"),
+      stroke("tinta", "pen"),
+      stroke("goma2", "eraserSoft"),
+      stroke("borroso2", "blur"),
+    ]);
+    // goma1 es anterior al primer desenfoque: no tiene nada que quitar.
+    expect(ids(blur)).toEqual(["borroso1", "goma2", "borroso2"]);
+  });
+
+  it("el desenfoque solo entra en una capa de trazos si ya hay algo pintado en ella", () => {
+    const { paint, highlight } = splitStrokeLayers([
+      stroke("goma", "eraserHard"),
+      // Solo hay un borrador: nada que desenfocar en ninguna capa.
+      stroke("borroso1", "blur"),
+      stroke("tinta", "pen"),
+      // Ya hay pintura, pero nada resaltado.
+      stroke("borroso2", "blur"),
+      stroke("resalta", "highlighter"),
+      stroke("borroso3", "blur"),
+    ]);
+    expect(ids(paint)).toEqual(["goma", "tinta", "borroso2", "borroso3"]);
+    expect(ids(highlight)).toEqual(["resalta", "borroso3"]);
   });
 });

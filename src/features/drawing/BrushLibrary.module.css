@@ -46,6 +46,52 @@
   background: var(--color-surface-active);
 }
 
+/* Tarjeta con opciones propias (Formas): su botón ⋮ va encima, en la esquina. */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.card > .preset {
+  flex: 1;
+}
+
+/* Sobre un círculo oscuro: se ve también encima de la vista previa clara. */
+.library .more {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-1);
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  background: var(--color-surface-strong);
+  color: var(--color-text-active);
+  font-size: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* El círculo es pequeño; el área que responde al dedo, no. */
+.library .more::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.library .more:active:not(:disabled),
+.library .more[data-state="open"] {
+  background: var(--color-surface-active);
+  color: var(--color-text-strong);
+}
+
+@media (hover: hover) {
+  .library .more:hover:not(:disabled) {
+    background: var(--color-surface-active);
+    color: var(--color-text-strong);
+  }
+}
+
 /* Fondo claro: los colores oscuros y el resaltador se ven como en el papel. */
 .preview {
   display: block;

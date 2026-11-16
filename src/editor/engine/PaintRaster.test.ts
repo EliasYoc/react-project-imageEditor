@@ -131,3 +131,38 @@ describe("PaintRaster.sync", () => {
     expect(raster.checkpointCounts).toEqual([15, 20]);
   });
 });
+
+describe("búfer del trazo", () => {
+  const createRaster = (getScratch?: () => HTMLCanvasElement) => {
+    const created: FakeCanvas[] = [];
+    const scratches: unknown[] = [];
+    const shared = new PaintRaster(
+      { width: 10, height: 10 },
+      {
+        createCanvas: (size) => {
+          created.push(createFakeCanvas(size));
+          return created.at(-1) as unknown as HTMLCanvasElement;
+        },
+        paint: (_ctx, _entry, scratch) => scratches.push(scratch),
+        getScratch,
+      }
+    );
+    return { raster: shared, created, scratches };
+  };
+
+  it("por defecto crea el suyo la primera vez que pinta y lo reutiliza", () => {
+    const { raster, created, scratches } = createRaster();
+    expect(created).toHaveLength(1); // solo el raster
+    raster.sync(strokes(0, 3));
+    expect(created).toHaveLength(2);
+    expect(new Set(scratches)).toEqual(new Set([created[1]]));
+  });
+
+  it("con uno compartido no crea ninguno", () => {
+    const scratch = { compartido: true } as unknown as HTMLCanvasElement;
+    const { raster, created, scratches } = createRaster(() => scratch);
+    raster.sync(strokes(0, 3));
+    expect(created).toHaveLength(1);
+    expect(scratches).toEqual([scratch, scratch, scratch]);
+  });
+});
