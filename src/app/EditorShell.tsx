@@ -1,12 +1,12 @@
 import EditorStage from "../editor/stage/EditorStage";
 import { useEditorStore } from "../editor/store/editorStore";
-import DrawingTools from "../features/drawing/DrawingTools";
-import ModeSwitcher from "../features/drawing/ModeSwitcher";
-import SizeSlider from "../features/drawing/SizeSlider";
-import EditorHeader from "../features/editor-header/EditorHeader";
-import ShortcutsDialog from "../features/shortcuts/ShortcutsDialog";
-import TextToolbar from "../features/text/TextToolbar";
-import ZoomControls from "../features/zoom/ZoomControls";
+import DrawingTools from "../features/drawing/components/DrawingTools";
+import ModeSwitcher from "../features/drawing/components/ModeSwitcher";
+import SizeSlider from "../features/drawing/components/SizeSlider";
+import EditorHeader from "../features/editor-header/components/EditorHeader";
+import ShortcutsDialog from "../features/shortcuts/components/ShortcutsDialog";
+import TextToolbar from "../features/text/components/TextToolbar";
+import ZoomControls from "../features/zoom/components/ZoomControls";
 import { DESKTOP_QUERY, useMediaQuery } from "../lib/useMediaQuery";
 import styles from "./EditorShell.module.css";
 

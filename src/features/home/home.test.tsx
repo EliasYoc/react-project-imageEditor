@@ -6,11 +6,11 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
-import HomeScreen from "./HomeScreen";
+import HomeScreen from "./components/HomeScreen";
 
 const openImageFile = vi.hoisted(() => vi.fn());
-vi.mock("./openImageFile", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("./openImageFile")>()),
+vi.mock("./utils/openImageFile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./utils/openImageFile")>()),
   openImageFile,
 }));
 

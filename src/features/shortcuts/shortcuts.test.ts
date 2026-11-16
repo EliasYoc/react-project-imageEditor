@@ -6,8 +6,8 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
-import { getShortcutAction } from "./getShortcutAction";
-import { useKeyboardShortcuts } from "./useKeyboardShortcuts";
+import { getShortcutAction } from "./utils/getShortcutAction";
+import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
 const key = (key: string, modifiers: Partial<KeyboardEventInit> = {}) => ({
   key,

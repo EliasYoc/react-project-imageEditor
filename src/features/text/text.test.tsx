@@ -7,10 +7,10 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
-import { getShortcutAction } from "../shortcuts/getShortcutAction";
-import FontPicker from "./FontPicker";
-import TextStylePanel from "./TextStylePanel";
-import { DEFAULT_TEXT_GRADIENT } from "./textGradientPresets";
+import { getShortcutAction } from "../shortcuts/utils/getShortcutAction";
+import FontPicker from "./components/FontPicker";
+import TextStylePanel from "./components/TextStylePanel";
+import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
 
 // Las fuentes no se descargan en los tests.
 vi.mock("../../editor/elements/fontLoader", () => ({

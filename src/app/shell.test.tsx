@@ -5,18 +5,18 @@ import { Toaster, toastStore } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import { createStroke } from "../editor/model/factories";
 import { createInitialState, editorStore } from "../editor/store/editorStore";
-import SizeSlider from "../features/drawing/SizeSlider";
-import EditorHeader from "../features/editor-header/EditorHeader";
-import { defaultExportName } from "../features/export/exportName";
-import ShortcutsDialog from "../features/shortcuts/ShortcutsDialog";
-import { useKeyboardShortcuts } from "../features/shortcuts/useKeyboardShortcuts";
+import SizeSlider from "../features/drawing/components/SizeSlider";
+import EditorHeader from "../features/editor-header/components/EditorHeader";
+import { defaultExportName } from "../features/export/utils/exportName";
+import ShortcutsDialog from "../features/shortcuts/components/ShortcutsDialog";
+import { useKeyboardShortcuts } from "../features/shortcuts/hooks/useKeyboardShortcuts";
 import { mockMediaQueries } from "../test/media";
 import { uiStore } from "./uiStore";
 
 const exportImage = vi.hoisted(() =>
   vi.fn().mockResolvedValue({ result: "downloaded", fileName: "dibujo.png" })
 );
-vi.mock("../features/export/exportImage", () => ({ exportImage }));
+vi.mock("../features/export/utils/exportImage", () => ({ exportImage }));
 
 const state = () => editorStore.getState();
 
