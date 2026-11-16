@@ -52,7 +52,7 @@ describe("BrushLibrary", () => {
     expect(
       screen.getAllByRole("button", { pressed: false }).length +
         screen.getAllByRole("button", { pressed: true }).length
-    ).toBe(9);
+    ).toBe(10);
   });
 
   it("elegir un pincel lo activa y muestra sus ajustes", async () => {
@@ -71,7 +71,55 @@ describe("BrushLibrary", () => {
   it("cada pincel tiene su vista previa (oculta a los lectores de pantalla)", () => {
     const { container } = render(<BrushLibrary />);
     const previews = container.querySelectorAll('canvas[aria-hidden="true"]');
-    expect(previews).toHaveLength(9);
+    expect(previews).toHaveLength(10);
+  });
+
+  it("solo el pincel de formas tiene botón de más opciones", () => {
+    render(<BrushLibrary />);
+    expect(
+      screen.getAllByRole("button", { name: /^Más opciones/ })
+    ).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Más opciones de Formas" })
+    ).toBeInTheDocument();
+  });
+
+  it("más opciones ofrece las cinco figuras, con la actual marcada", async () => {
+    const user = userEvent.setup();
+    render(<BrushLibrary />);
+    await user.click(
+      screen.getByRole("button", { name: "Más opciones de Formas" })
+    );
+    const options = screen.getAllByRole("menuitemradio");
+    expect(options.map((option) => option.textContent)).toEqual([
+      "Círculos",
+      "Cuadrados",
+      "Triángulos",
+      "Estrellas",
+      "Mezcla",
+    ]);
+    expect(
+      screen.getByRole("menuitemradio", { name: "Círculos" })
+    ).toHaveAttribute("aria-checked", "true");
+  });
+
+  it("elegir una figura la guarda y activa el pincel de formas", async () => {
+    const user = userEvent.setup();
+    render(<BrushLibrary />);
+    expect(editorStore.getState().brush.presetId).toBe("pen");
+    await user.click(
+      screen.getByRole("button", { name: "Más opciones de Formas" })
+    );
+    await user.click(screen.getByRole("menuitemradio", { name: "Estrellas" }));
+
+    const { brush } = editorStore.getState();
+    expect(brush.shape).toBe("star");
+    expect(brush.presetId).toBe("shapes");
+    expect(screen.queryByRole("menu")).toBeNull();
+    expect(screen.getByRole("button", { name: "Formas" })).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
   });
 
   it("los sliders cambian los ajustes solo del pincel actual", () => {
@@ -127,5 +175,15 @@ describe("vista previa de los pinceles", () => {
       hasPressure: true,
       color: { r: 1, g: 2, b: 3 },
     });
+  });
+
+  it("la del pincel de formas usa la figura elegida", () => {
+    const stroke = previewStroke(
+      "shapes",
+      { size: 40, opacity: 1, stabilizer: 0 },
+      { r: 0, g: 0, b: 0, a: 1 },
+      "star"
+    );
+    expect(stroke.shape).toBe("star");
   });
 });

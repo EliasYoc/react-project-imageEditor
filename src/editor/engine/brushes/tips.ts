@@ -1,9 +1,15 @@
 import { createCanvas, get2dContext } from "../../../lib/canvas";
 import type { Rgba } from "../../model/types";
-import type { TipShape } from "./presets";
+import type { StampFigure, TipShape } from "./presets";
 import { createRandom } from "./random";
 
-export type BitmapTip = Exclude<TipShape, { shape: "particles" }>;
+/**
+ * Punta que se guarda como imagen. La del pincel de formas lleva además la
+ * figura concreta (en el preset no está: la elige el usuario en cada trazo).
+ */
+export type BitmapTip =
+  | Exclude<TipShape, { shape: "particles" } | { shape: "stamp" }>
+  | { shape: "stamp"; figure: StampFigure };
 
 /** Puntas guardadas como máximo (cada una es un canvas pequeño). */
 const MAX_CACHED_TIPS = 48;
@@ -87,6 +93,62 @@ const drawFlat = (
   ctx.fill();
 };
 
+/** Polígono regular o estrella: vértices alternos a `outer` e `inner` del centro. */
+const tracePolygon = (
+  ctx: CanvasRenderingContext2D,
+  center: { x: number; y: number },
+  vertices: number,
+  outer: number,
+  inner = outer
+) => {
+  for (let i = 0; i < vertices; i++) {
+    const radius = i % 2 ? inner : outer;
+    // Empieza arriba: la figura queda "de pie".
+    const angle = (Math.PI * 2 * i) / vertices - Math.PI / 2;
+    ctx.lineTo(
+      center.x + Math.cos(angle) * radius,
+      center.y + Math.sin(angle) * radius
+    );
+  }
+  ctx.closePath();
+};
+
+/**
+ * Figura rellena del pincel de formas, centrada. Los tamaños están ajustados
+ * a ojo para que las cuatro "pesen" parecido con el mismo tamaño de pincel.
+ */
+const drawFigure = (
+  ctx: CanvasRenderingContext2D,
+  size: number,
+  figure: StampFigure,
+  color: Rgba
+) => {
+  const center = size / 2;
+  ctx.fillStyle = rgb(color);
+  ctx.beginPath();
+  switch (figure) {
+    case "circle":
+      ctx.arc(center, center, center * 0.86, 0, Math.PI * 2);
+      break;
+    case "square": {
+      const side = size * 0.76;
+      ctx.rect(center - side / 2, center - side / 2, side, side);
+      break;
+    }
+    case "triangle": {
+      // Más grande que el círculo del sello y bajado un poco: así su caja
+      // queda centrada y aprovecha todo el alto de la punta.
+      const radius = center * 1.1;
+      tracePolygon(ctx, { x: center, y: center + radius / 4 }, 3, radius);
+      break;
+    }
+    case "star":
+      tracePolygon(ctx, { x: center, y: center }, 10, center, center * 0.5);
+      break;
+  }
+  ctx.fill();
+};
+
 const tipKey = (tip: BitmapTip, color: Rgba, bucket: number) =>
   `${JSON.stringify(tip)}|${color.r},${color.g},${color.b}|${bucket}`;
 
@@ -105,6 +167,8 @@ export const getTip = (tip: BitmapTip, color: Rgba, bucket: number) => {
   const ctx = get2dContext(canvas);
   if (tip.shape === "flat") {
     drawFlat(ctx, bucket, tip.ratio, color);
+  } else if (tip.shape === "stamp") {
+    drawFigure(ctx, bucket, tip.figure, color);
   } else {
     drawRound(ctx, bucket, tip.hardness, color);
     if (tip.shape === "grain") applyGrain(ctx, bucket, tip.density);

@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import type { StrokePoint } from "../../model/types";
 import type { BrushStroke } from "./brushStroke";
 import { createDabState, planDabs, type Dab } from "./dabEngine";
+import { stampFigure } from "./dabRenderer";
 import { inkOutline } from "./inkEngine";
-import { BRUSH_PRESETS, BRUSH_PRESET_IDS, type DabPreset } from "./presets";
+import {
+  BRUSH_PRESETS,
+  BRUSH_PRESET_IDS,
+  STAMP_FIGURES,
+  usesStampShape,
+  type DabPreset,
+} from "./presets";
 import { pressureFactor } from "./pressure";
 import { createRandom } from "./random";
 import { createSmoothPathState, smoothPath } from "./smoothPath";
@@ -213,6 +220,50 @@ describe("planDabs (motor de sellos)", () => {
     );
     expect(dabHard.size).toBeGreaterThan(dabSoft.size);
     expect(dabHard.alpha).toBeGreaterThan(dabSoft.alpha);
+  });
+});
+
+describe("pincel de formas", () => {
+  const shapes = BRUSH_PRESETS.shapes as DabPreset;
+  const line = (shape?: BrushStroke["shape"]) =>
+    stroke("shapes", [point(0, 0), point(600, 0)], { shape });
+  const plan = (s: BrushStroke) =>
+    planDabs(s, shapes, createDabState(s), s.points, true);
+
+  it("solo el preset de formas usa la figura del trazo", () => {
+    expect(BRUSH_PRESET_IDS.filter(usesStampShape)).toEqual(["shapes"]);
+  });
+
+  it("deja las figuras separadas: cada sello queda lejos del anterior", () => {
+    const dabs = plan(line());
+    expect(dabs.length).toBeGreaterThan(10);
+    for (let i = 1; i < dabs.length; i++) {
+      const gap = Math.hypot(
+        dabs[i].x - dabs[i - 1].x,
+        dabs[i].y - dabs[i - 1].y
+      );
+      // Tamaño 20: sin separación serían una línea continua.
+      expect(gap).toBeGreaterThan(20);
+    }
+  });
+
+  it("estampa la figura del trazo (círculos si no tiene ninguna)", () => {
+    const [dab] = plan(line("star"));
+    expect(stampFigure(line("star"), dab)).toBe("star");
+    expect(stampFigure(line("square"), dab)).toBe("square");
+    expect(stampFigure(line(), dab)).toBe("circle");
+  });
+
+  it("la mezcla usa todas las figuras y se repite con la misma semilla", () => {
+    const mix = line("mix");
+    const figures = plan(mix).map((dab) => stampFigure(mix, dab));
+    expect(new Set(figures)).toEqual(new Set(STAMP_FIGURES));
+    expect(plan({ ...mix }).map((dab) => stampFigure(mix, dab))).toEqual(
+      figures
+    );
+    expect(
+      plan({ ...mix, seed: 99 }).map((dab) => stampFigure(mix, dab))
+    ).not.toEqual(figures);
   });
 });
 

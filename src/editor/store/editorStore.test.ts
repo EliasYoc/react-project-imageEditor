@@ -4,6 +4,7 @@ import type { Backdrop, StrokeEntry, TextElement } from "../model/types";
 import { MAX_HISTORY, createEditorStore } from "./editorStore";
 import {
   selectBrushColor,
+  selectBrushShape,
   selectCanRedo,
   selectCanUndo,
   selectCurrentBrush,
@@ -428,6 +429,26 @@ describe("pinceles", () => {
     });
     expect(created.id).toEqual(expect.any(String));
     expect(created.seed).toEqual(expect.any(Number));
+  });
+
+  it("la figura del pincel de formas empieza en círculos y se puede cambiar", () => {
+    expect(selectBrushShape(state())).toBe("circle");
+    state().setBrushShape("star");
+    expect(selectBrushShape(state())).toBe("star");
+    // Es del pincel de formas: cambiar de pincel no la pierde.
+    state().setBrushPreset("pen");
+    state().setBrushPreset("shapes");
+    expect(selectBrushShape(state())).toBe("star");
+  });
+
+  it("createStroke guarda la figura solo en los trazos del pincel de formas", () => {
+    const base = {
+      settings: { size: 20, opacity: 1, stabilizer: 0 },
+      color: { r: 0, g: 0, b: 0, a: 1 },
+      shape: "triangle" as const,
+    };
+    expect(createStroke({ ...base, brush: "shapes" }).shape).toBe("triangle");
+    expect(createStroke({ ...base, brush: "pen" })).not.toHaveProperty("shape");
   });
 });
 

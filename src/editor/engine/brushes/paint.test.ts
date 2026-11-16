@@ -5,7 +5,7 @@ import { createLiveRenderer, paintStroke, strokeBlend } from "./paint";
 // jsdom no tiene canvas 2D: las puntas de los sellos se sustituyen por un
 // objeto cualquiera (solo se comprueba qué se dibuja y cómo se compone).
 vi.mock("./tips", () => ({
-  getTip: () => ({ tip: true }),
+  getTip: (tip: unknown) => ({ tip }),
   tipBucket: (size: number) => size,
 }));
 
@@ -133,6 +133,44 @@ describe("paintStroke", () => {
     );
     expect(strokeBlend(stroke("eraserHard", 1))).toBe("destination-out");
     expect(target.calls.every((c) => c.blend === "destination-out")).toBe(true);
+  });
+});
+
+describe("pincel de formas", () => {
+  /** Las puntas (falsas) que se estamparon, en orden. */
+  const stampedTips = (shape?: BrushStroke["shape"]) => {
+    const target = createContext("target");
+    const points = [
+      { x: 0, y: 0, pressure: 0.5 },
+      { x: 400, y: 0, pressure: 0.5 },
+    ];
+    paintStroke(
+      asCtx(target),
+      { ...stroke("shapes", 1), shape, points },
+      createScratch().scratch
+    );
+    return target.calls
+      .filter((c) => c.op === "drawImage")
+      .map((c) => (c.args[0] as { tip: unknown }).tip);
+  };
+
+  it("estampa la punta de la figura del trazo", () => {
+    const tips = stampedTips("triangle");
+    expect(tips.length).toBeGreaterThan(5);
+    for (const tip of tips) {
+      expect(tip).toEqual({ shape: "stamp", figure: "triangle" });
+    }
+  });
+
+  it("sin figura (trazos antiguos) estampa círculos", () => {
+    expect(stampedTips()[0]).toEqual({ shape: "stamp", figure: "circle" });
+  });
+
+  it("la mezcla cambia de punta de un sello a otro", () => {
+    const figures = new Set(
+      stampedTips("mix").map((tip) => (tip as { figure: string }).figure)
+    );
+    expect(figures.size).toBeGreaterThan(1);
   });
 });
 

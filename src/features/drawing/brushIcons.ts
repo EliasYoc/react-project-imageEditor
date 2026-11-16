@@ -5,6 +5,7 @@ import {
   PenLine,
   PenTool,
   Pencil,
+  Shapes,
   SprayCan,
   createLucideIcon,
   type LucideIcon,
@@ -49,6 +50,7 @@ export const BRUSH_ICONS: Record<BrushPresetId, LucideIcon> = {
   airbrush: Brush,
   spray: SprayCan,
   highlighter: Highlighter,
+  shapes: Shapes,
   eraserHard: Eraser,
   eraserSoft: SoftEraser,
 };

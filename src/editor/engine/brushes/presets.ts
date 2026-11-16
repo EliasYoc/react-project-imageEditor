@@ -1,4 +1,4 @@
-import type { BrushPresetId } from "../../model/types";
+import type { BrushPresetId, StampShape } from "../../model/types";
 import type { PressureRange } from "./pressure";
 
 /** Modo de fusión con el que el trazo se compone sobre la capa de pintura. */
@@ -25,7 +25,19 @@ export type TipShape =
   /** Rectángulo biselado (resaltador): `ratio` = alto / ancho. */
   | { shape: "flat"; ratio: number }
   /** Puntos sueltos dentro del radio (spray). */
-  | { shape: "particles"; density: number; dotSize: number };
+  | { shape: "particles"; density: number; dotSize: number }
+  /** Figura rellena (pincel de formas): la figura la guarda cada trazo. */
+  | { shape: "stamp" };
+
+/** Figuras que se pueden estampar ("mix" elige una de estas en cada sello). */
+export type StampFigure = Exclude<StampShape, "mix">;
+
+export const STAMP_FIGURES: readonly StampFigure[] = [
+  "circle",
+  "square",
+  "triangle",
+  "star",
+];
 
 interface BasePreset {
   id: BrushPresetId;
@@ -191,6 +203,22 @@ export const BRUSH_PRESETS: Record<BrushPresetId, BrushPreset> = {
     jitter: NO_JITTER,
     defaults: { size: 50, opacity: 0.5, stabilizer: 0.3 },
   },
+  shapes: {
+    id: "shapes",
+    name: "Formas",
+    kind: "draw",
+    blend: "source-over",
+    engine: "dab",
+    tip: { shape: "stamp" },
+    // Más de 1: las figuras quedan separadas, no forman una línea.
+    spacing: 1.25,
+    flow: 1,
+    sizePressure: { min: 0.5, max: 1 },
+    opacityPressure: FULL,
+    angle: 0,
+    jitter: { size: 0.15, angle: 0.1, scatter: 0.05, opacity: 0 },
+    defaults: { size: 40, opacity: 1, stabilizer: 0.1 },
+  },
   eraserHard: {
     id: "eraserHard",
     name: "Borrador duro",
@@ -227,3 +255,9 @@ export const BRUSH_PRESET_IDS = Object.keys(BRUSH_PRESETS) as BrushPresetId[];
 
 export const getBrushPreset = (id: BrushPresetId): BrushPreset =>
   BRUSH_PRESETS[id];
+
+/** El preset estampa la figura elegida por el usuario (pincel de formas). */
+export const usesStampShape = (id: BrushPresetId) => {
+  const preset = BRUSH_PRESETS[id];
+  return preset.engine === "dab" && preset.tip.shape === "stamp";
+};

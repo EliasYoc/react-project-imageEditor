@@ -96,6 +96,7 @@ export const createStrokeSession = ({
         color: brush.color,
         // Solo el lápiz mide la presión de verdad (el ratón y el dedo no).
         hasPressure: sample.pointerType === "pen",
+        shape: brush.shape,
       });
       const layers = strokeLayers(stroke);
       // La capa del resaltador se oculta mientras está vacía.

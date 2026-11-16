@@ -6,6 +6,7 @@ import type {
   BrushPresetId,
   BrushSettings,
   Rgba,
+  StampShape,
   StrokePoint,
 } from "../../editor/model/types";
 import { createCanvas } from "../../lib/canvas";
@@ -52,7 +53,8 @@ export const previewPoints = (
 export const previewStroke = (
   brush: BrushPresetId,
   settings: BrushSettings,
-  color: Rgba
+  color: Rgba,
+  shape?: StampShape
 ): BrushStroke => ({
   brush,
   color,
@@ -60,6 +62,7 @@ export const previewStroke = (
   opacity: settings.opacity,
   seed: PREVIEW_SEED,
   hasPressure: true,
+  shape,
   points: previewPoints(),
 });
 
@@ -71,7 +74,8 @@ export const drawBrushPreview = (
   ctx: CanvasRenderingContext2D,
   brush: BrushPresetId,
   settings: BrushSettings,
-  color: Rgba
+  color: Rgba,
+  shape?: StampShape
 ) => {
   const { width, height } = ctx.canvas;
   ctx.save();
@@ -92,7 +96,7 @@ export const drawBrushPreview = (
 
   paintStroke(
     ctx,
-    previewStroke(brush, settings, color),
+    previewStroke(brush, settings, color, shape),
     createCanvas({ width, height })
   );
 };

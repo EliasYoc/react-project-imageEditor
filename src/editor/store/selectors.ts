@@ -66,6 +66,8 @@ export const selectBrushPresetId = (state: EditorStore) => state.brush.presetId;
 
 export const selectBrushColor = (state: EditorStore) => state.brush.color;
 
+export const selectBrushShape = (state: EditorStore) => state.brush.shape;
+
 export const selectIsEditorOpen = (state: EditorStore) => state.mode !== "home";
 
 export const selectCanUndo = (state: EditorStore) => state.past.length > 0;

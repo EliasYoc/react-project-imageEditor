@@ -1,8 +1,13 @@
 import type { BrushStroke } from "./brushStroke";
 import type { Dab } from "./dabEngine";
-import type { DabPreset } from "./presets";
+import {
+  STAMP_FIGURES,
+  type DabPreset,
+  type StampFigure,
+  type TipShape,
+} from "./presets";
 import { createRandom } from "./random";
-import { getTip, tipBucket, type BitmapTip } from "./tips";
+import { getTip, tipBucket } from "./tips";
 
 /** Escala actual del contexto (1 en pantalla, mayor al exportar). */
 const contextScale = (ctx: CanvasRenderingContext2D) => {
@@ -10,21 +15,46 @@ const contextScale = (ctx: CanvasRenderingContext2D) => {
   return transform ? Math.hypot(transform.a, transform.b) : 1;
 };
 
+/**
+ * Figura de un sello del pincel de formas. En "mix" sale de la semilla del
+ * sello: el trazo se repinta siempre con las mismas figuras.
+ */
+export const stampFigure = (
+  stroke: Pick<BrushStroke, "shape">,
+  dab: Pick<Dab, "seed">
+): StampFigure => {
+  const shape = stroke.shape ?? "circle";
+  return shape === "mix"
+    ? STAMP_FIGURES[dab.seed % STAMP_FIGURES.length]
+    : shape;
+};
+
 const drawBitmapDabs = (
   ctx: CanvasRenderingContext2D,
   stroke: BrushStroke,
-  tipShape: BitmapTip,
+  tipShape: Exclude<TipShape, { shape: "particles" }>,
   dabs: readonly Dab[],
   baseAlpha: number
 ) => {
   const scale = contextScale(ctx);
   let bucket = 0;
+  let figure: StampFigure | null = null;
   let tip: HTMLCanvasElement | null = null;
   for (const dab of dabs) {
     const needed = tipBucket(dab.size * scale);
-    if (needed !== bucket || !tip) {
+    // Formas: la punta depende además de la figura de este sello.
+    const needsFigure =
+      tipShape.shape === "stamp" ? stampFigure(stroke, dab) : null;
+    if (needed !== bucket || needsFigure !== figure || !tip) {
       bucket = needed;
-      tip = getTip(tipShape, stroke.color, bucket);
+      figure = needsFigure;
+      tip = getTip(
+        tipShape.shape === "stamp"
+          ? { shape: "stamp", figure: stampFigure(stroke, dab) }
+          : tipShape,
+        stroke.color,
+        bucket
+      );
     }
     const half = dab.size / 2;
     ctx.globalAlpha = baseAlpha * dab.alpha;

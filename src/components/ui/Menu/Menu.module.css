@@ -35,6 +35,15 @@
   color: var(--color-text-strong);
 }
 
+/* Marca de la opción elegida (ChoiceMenu). */
+.check {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--color-text-strong);
+}
+
 .item[data-danger] {
   color: var(--color-danger);
 }

@@ -9,7 +9,7 @@ import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 import { mockMediaQueries } from "../../test/media";
 import { ColorControl, ColorPicker } from "./ColorControl";
 import { ConfirmDialog } from "./Dialog";
-import { Menu } from "./Menu";
+import { ChoiceMenu, Menu } from "./Menu";
 import { Panel } from "./Panel";
 import { Segmented } from "./Segmented";
 import { VerticalSlider } from "./VerticalSlider";
@@ -106,6 +106,41 @@ describe("Menu", () => {
     expect(screen.getByRole("menu")).toBeInTheDocument();
     await user.keyboard("{ArrowDown}{Enter}");
     expect(onClear).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+});
+
+describe("ChoiceMenu", () => {
+  const options = [
+    { value: "circle", label: "Círculos" },
+    { value: "square", label: "Cuadrados" },
+    { value: "star", label: "Estrellas" },
+  ] as const;
+
+  it("marca la opción elegida y cambia con el teclado", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <ChoiceMenu
+        trigger={<button type="button">Formas</button>}
+        label="Forma"
+        value="square"
+        onChange={onChange}
+        options={options}
+      />
+    );
+    screen.getByRole("button", { name: "Formas" }).focus();
+    await user.keyboard("{Enter}");
+
+    expect(screen.getByRole("group", { name: "Forma" })).toBeInTheDocument();
+    const checked = screen
+      .getAllByRole("menuitemradio")
+      .filter((item) => item.getAttribute("aria-checked") === "true");
+    expect(checked.map((item) => item.textContent)).toEqual(["Cuadrados"]);
+
+    // Enter abre con el foco en la primera opción; la flecha baja una.
+    await user.keyboard("{ArrowDown}{ArrowDown}{Enter}");
+    expect(onChange).toHaveBeenCalledWith("star");
     expect(screen.queryByRole("menu")).toBeNull();
   });
 });
