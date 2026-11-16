@@ -3,7 +3,7 @@ import type { StrokePoint } from "../../model/types";
 import { blurLayers, revealBlurred } from "./blur";
 import type { BrushStroke } from "./brushStroke";
 import { createDabState, planDabs, type Dab } from "./dabEngine";
-import { drawDabs } from "./dabRenderer";
+import { createDabRenderState, drawDabs } from "./dabRenderer";
 import { renderInk } from "./inkEngine";
 import {
   brushEffect,
@@ -181,13 +181,15 @@ export const createLiveRenderer = (
   }
 
   const state = createDabState(stroke);
+  const renderState = createDabRenderState();
   return {
     update(_allPoints: StrokePoint[], newPoints: readonly StrokePoint[]) {
       drawDabs(
         ctx,
         stroke,
         preset,
-        planDabs(stroke, preset, state, newPoints, false)
+        planDabs(stroke, preset, state, newPoints, false),
+        renderState
       );
     },
   };

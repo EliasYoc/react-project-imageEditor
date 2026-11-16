@@ -29,6 +29,8 @@ describe("strokeLayers", () => {
       "chalk",
       "airbrush",
       "spray",
+      "calligraphy",
+      "neon",
       "shapes",
     ] as const) {
       expect(strokeLayers({ brush })).toEqual({

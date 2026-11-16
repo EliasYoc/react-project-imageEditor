@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { blurLayers } from "./blur";
 import type { BrushStroke } from "./brushStroke";
+import type { Dab } from "./dabEngine";
+import { createDabRenderState, drawDabs, glowTailLength } from "./dabRenderer";
 import {
   createLiveRenderer,
   paintBlurMask,
   paintStroke,
   strokeBlend,
 } from "./paint";
+import { BRUSH_PRESETS, type DabPreset } from "./presets";
 
 // jsdom no tiene canvas 2D: las puntas de los sellos se sustituyen por un
 // objeto cualquiera (solo se comprueba qué se dibuja y cómo se compone).
 vi.mock("./tips", () => ({
-  getTip: (tip: unknown) => ({ tip }),
+  getTip: (tip: unknown, color: unknown) => ({ tip, color }),
   tipBucket: (size: number) => size,
 }));
 
@@ -320,6 +323,100 @@ describe("pincel de formas", () => {
       stampedTips("mix").map((tip) => (tip as { figure: string }).figure)
     );
     expect(figures.size).toBeGreaterThan(1);
+  });
+});
+
+describe("neón", () => {
+  const neon = BRUSH_PRESETS.neon as DabPreset;
+  const core = neon.tip.shape === "glow" ? neon.tip.core : 0;
+  const tail = glowTailLength(neon.spacing, core);
+  const s = stroke("neon", 1);
+  /** Sellos en línea, tan juntos como los pone el preset. */
+  const dabs: Dab[] = Array.from({ length: 14 }, (_, i) => ({
+    x: 100 + i * neon.spacing * 44,
+    y: 50,
+    size: 44,
+    alpha: neon.flow,
+    angle: 0,
+    seed: i,
+  }));
+
+  /** Cada cosa estampada: si es núcleo o halo y sobre qué sello (por su x). */
+  const stamps = (ctx: ReturnType<typeof createContext>) =>
+    draws(ctx).map(({ alpha, args }) => {
+      const [image, x, , size] = args as [
+        { tip: { hardness: number }; color: { r: number } },
+        number,
+        number,
+        number,
+      ];
+      const isCore = image.tip.hardness > 0;
+      return {
+        isCore,
+        dab: dabs.findIndex((dab) => Math.abs(dab.x - (x + size / 2)) < 0.01),
+        white: image.color.r === 255,
+        alpha,
+        size,
+      };
+    });
+
+  it("el halo es del color del trazo y el núcleo, blanco, opaco y más fino", () => {
+    const ctx = createContext("target");
+    drawDabs(asCtx(ctx), s, neon, dabs.slice(0, 1));
+    expect(stamps(ctx)).toEqual([
+      { isCore: false, dab: 0, white: false, alpha: neon.flow, size: 44 },
+      { isCore: true, dab: 0, white: true, alpha: 1, size: 44 * core },
+    ]);
+  });
+
+  it("después de cada halo repasa el núcleo de los últimos sellos", () => {
+    expect(tail).toBeGreaterThan(3);
+    const ctx = createContext("target");
+    drawDabs(asCtx(ctx), s, neon, dabs);
+    const all = stamps(ctx);
+
+    let index = 0;
+    for (let i = 0; i < dabs.length; i++) {
+      expect(all[index++]).toMatchObject({ isCore: false, dab: i });
+      // Los anteriores al alcance del halo, y al final el suyo.
+      for (let previous = Math.max(0, i - tail); previous <= i; previous++) {
+        expect(all[index++]).toMatchObject({ isCore: true, dab: previous });
+      }
+    }
+    expect(index).toBe(all.length);
+  });
+
+  it("pintado por partes (en vivo) queda igual que de una vez", () => {
+    const whole = createContext("target");
+    drawDabs(asCtx(whole), s, neon, dabs);
+
+    const parts = createContext("target");
+    const state = createDabRenderState();
+    drawDabs(asCtx(parts), s, neon, dabs.slice(0, 3), state);
+    drawDabs(asCtx(parts), s, neon, dabs.slice(3, 4), state);
+    drawDabs(asCtx(parts), s, neon, dabs.slice(4), state);
+
+    expect(stamps(parts)).toEqual(stamps(whole));
+  });
+
+  it("el trazo en curso recuerda los últimos sellos entre una tanda y otra", () => {
+    const live = createContext("live");
+    const points = Array.from({ length: 30 }, (_, i) => ({
+      x: 20 + i * 6,
+      y: 40,
+      pressure: 0.5,
+    }));
+    const renderer = createLiveRenderer(asCtx(live), { ...s, points: [] });
+    renderer.update(points.slice(0, 15), points.slice(0, 15));
+    const cores = () => draws(live).filter((c) => c.alpha === 1).length;
+    const halos = () => draws(live).length - cores();
+    const firstHalos = halos();
+    const firstCores = cores();
+    renderer.update(points, points.slice(15));
+    // Una tanda que empezara de cero solo repasaría sus propios núcleos.
+    const newHalos = halos() - firstHalos;
+    expect(newHalos).toBeGreaterThan(tail);
+    expect(cores() - firstCores).toBe(newHalos * (tail + 1));
   });
 });
 

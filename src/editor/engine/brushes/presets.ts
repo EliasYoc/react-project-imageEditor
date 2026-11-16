@@ -27,7 +27,12 @@ export type TipShape =
   /** Puntos sueltos dentro del radio (spray). */
   | { shape: "particles"; density: number; dotSize: number }
   /** Figura rellena (pincel de formas): la figura la guarda cada trazo. */
-  | { shape: "stamp" };
+  | { shape: "stamp" }
+  /**
+   * Tubo de neón: un halo difuso del color del trazo y, encima, un núcleo
+   * blanco. `core` = diámetro del núcleo respecto al del sello.
+   */
+  | { shape: "glow"; core: number };
 
 /** Figuras que se pueden estampar ("mix" elige una de estas en cada sello). */
 export type StampFigure = Exclude<StampShape, "mix">;
@@ -209,6 +214,39 @@ export const BRUSH_PRESETS: Record<BrushPresetId, BrushPreset> = {
     angle: -45,
     jitter: NO_JITTER,
     defaults: { size: 50, opacity: 0.5, stabilizer: 0.3 },
+  },
+  calligraphy: {
+    id: "calligraphy",
+    name: "Caligrafía",
+    kind: "draw",
+    blend: "source-over",
+    engine: "dab",
+    // La punta plana del resaltador, más fina y opaca: el trazo sale grueso
+    // o fino según la dirección, como con una pluma de caligrafía.
+    tip: { shape: "flat", ratio: 0.16 },
+    spacing: 0.03,
+    flow: 1,
+    sizePressure: { min: 0.6, max: 1 },
+    opacityPressure: FULL,
+    angle: -40,
+    jitter: NO_JITTER,
+    defaults: { size: 30, opacity: 1, stabilizer: 0.35 },
+  },
+  neon: {
+    id: "neon",
+    name: "Neón",
+    kind: "draw",
+    blend: "source-over",
+    engine: "dab",
+    tip: { shape: "glow", core: 0.28 },
+    spacing: 0.08,
+    // Es el flujo del halo: se acumula hasta el color pleno junto al núcleo.
+    flow: 0.25,
+    sizePressure: { min: 0.7, max: 1 },
+    opacityPressure: FULL,
+    angle: 0,
+    jitter: NO_JITTER,
+    defaults: { size: 44, opacity: 1, stabilizer: 0.25 },
   },
   shapes: {
     id: "shapes",

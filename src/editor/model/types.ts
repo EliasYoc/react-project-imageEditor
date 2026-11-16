@@ -39,6 +39,8 @@ export type BrushPresetId =
   | "airbrush"
   | "spray"
   | "highlighter"
+  | "calligraphy"
+  | "neon"
   | "shapes"
   | "blur"
   | "eraserHard"

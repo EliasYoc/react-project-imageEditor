@@ -8,7 +8,10 @@ import { createRandom } from "./random";
  * figura concreta (en el preset no está: la elige el usuario en cada trazo).
  */
 export type BitmapTip =
-  | Exclude<TipShape, { shape: "particles" } | { shape: "stamp" }>
+  | Exclude<
+      TipShape,
+      { shape: "particles" } | { shape: "stamp" } | { shape: "glow" }
+    >
   | { shape: "stamp"; figure: StampFigure };
 
 /** Puntas guardadas como máximo (cada una es un canvas pequeño). */

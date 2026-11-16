@@ -52,7 +52,35 @@ describe("BrushLibrary", () => {
     expect(
       screen.getAllByRole("button", { pressed: false }).length +
         screen.getAllByRole("button", { pressed: true }).length
-    ).toBe(11);
+    ).toBe(13);
+  });
+
+  it("los pinceles nuevos van al final de Dibujo, sin mover los anteriores", () => {
+    render(<BrushLibrary />);
+    const drawing = screen.getByRole("region", { name: "Dibujo" });
+    expect(
+      within(drawing)
+        .getAllByRole("button", { pressed: false })
+        .concat(within(drawing).getAllByRole("button", { pressed: true }))
+        .sort((a, b) =>
+          a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
+            ? -1
+            : 1
+        )
+        .map((button) => button.textContent)
+    ).toEqual([
+      "Pluma",
+      "Marcador",
+      "Lápiz",
+      "Tiza",
+      "Aerógrafo",
+      "Spray",
+      "Resaltador",
+      "Caligrafía",
+      "Neón",
+      "Formas",
+      "Desenfoque",
+    ]);
   });
 
   it("elegir un pincel lo activa y muestra sus ajustes", async () => {
@@ -71,7 +99,7 @@ describe("BrushLibrary", () => {
   it("cada pincel tiene su vista previa (oculta a los lectores de pantalla)", () => {
     const { container } = render(<BrushLibrary />);
     const previews = container.querySelectorAll('canvas[aria-hidden="true"]');
-    expect(previews).toHaveLength(11);
+    expect(previews).toHaveLength(13);
   });
 
   it("el Desenfoque está entre los pinceles de dibujo, con los mismos ajustes", async () => {

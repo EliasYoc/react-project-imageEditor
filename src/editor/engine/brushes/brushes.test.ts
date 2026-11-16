@@ -335,6 +335,17 @@ describe("presets", () => {
     }
   });
 
+  it("la Caligrafía es una punta plana, fina e inclinada, que pinta opaca", () => {
+    const calligraphy = BRUSH_PRESETS.calligraphy as DabPreset;
+    expect(calligraphy.tip).toMatchObject({ shape: "flat" });
+    expect(
+      calligraphy.tip.shape === "flat" && calligraphy.tip.ratio
+    ).toBeLessThan(0.3);
+    expect(calligraphy.angle).not.toBe(0);
+    expect(calligraphy).toMatchObject({ blend: "source-over", flow: 1 });
+    expect(calligraphy.defaults.opacity).toBe(1);
+  });
+
   it("solo el Desenfoque aplica un efecto en vez de pintar con color", () => {
     expect(BRUSH_PRESET_IDS.filter((id) => brushEffect(id) !== null)).toEqual([
       "blur",
