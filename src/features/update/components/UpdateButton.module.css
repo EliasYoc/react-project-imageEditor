@@ -1,0 +1,11 @@
+/* Mismo estilo que tenía el botón Exportar de la cabecera. */
+.button {
+  margin-right: var(--space-1);
+}
+
+/* En pantallas muy estrechas se queda solo con el icono. */
+@media (max-width: 359px) {
+  .label {
+    display: none;
+  }
+}

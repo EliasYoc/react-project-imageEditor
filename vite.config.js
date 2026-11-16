@@ -11,13 +11,14 @@ export default defineConfig({
     react(),
     // PWA: se puede instalar y funciona sin conexión.
     VitePWA({
-      // La versión nueva se descarga en segundo plano y ESPERA a que se cierren
-      // las pestañas de la app: se usa al volver a abrirla. Nunca recarga una
-      // pestaña abierta (el dibujo vive en memoria y se perdería).
+      // La versión nueva se descarga en segundo plano y ESPERA a que la app le
+      // pida tomar el control: src/features/update la aplica sola si recargar
+      // no pierde nada (inicio sin documento) y, si no, muestra "Actualizar"
+      // en la cabecera. El dibujo vive en memoria: nunca se recarga sin más.
       registerType: "prompt",
-      // Un script pequeño (registerSW.js) registra el service worker: no hace
-      // falta meter workbox-window en el bundle de la app.
-      injectRegister: "script-defer",
+      // El service worker lo registra la app (registerUpdates, con
+      // virtual:pwa-register), no un script aparte.
+      injectRegister: false,
       includeAssets: ["favicon.ico", "favicon.svg", "apple-touch-icon.png"],
       manifest: {
         name: "Editor de imágenes",

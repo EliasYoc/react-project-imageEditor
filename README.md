@@ -2,7 +2,7 @@
 
 Editor de imágenes en el navegador: dibuja con pinceles, añade texto e imágenes y aplica colores o degradados de fondo (o encima de una foto, como un filtro).
 
-Producción: https://editoryoc.netlify.app/
+Producción: https://editoryoc.vercel.app/
 
 <img width="1264" alt="Captura de pantalla 2023-01-29 a la(s) 17 31 29" src="https://user-images.githubusercontent.com/64809211/215362310-aefbfe15-f129-4357-8af3-e5865edf8f15.png">
 
@@ -159,7 +159,10 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 - **Sin conexión:**
   - toda la app (también el editor, que se carga aparte) queda en caché al instalarse el service worker, unos 840 KB;
   - las **fuentes** se guardan la primera vez que se usan, o al abrir la lista de fuentes, y desde ahí también funcionan sin conexión.
-- **Actualizaciones:** una versión nueva se descarga en segundo plano y **se usa la próxima vez que se abre la app**. Nunca recarga una pestaña abierta, porque el dibujo vive en memoria y se perdería.
+- **Actualizaciones** (`features/update`): una versión nueva se descarga en segundo plano y se aplica **sin cerrar las pestañas**. El dibujo vive en memoria y recargar lo perdería, así que:
+  - si no hay nada que perder (inicio sin documento), la app se recarga sola con la versión nueva; si se está eligiendo una foto, espera a que termine;
+  - si hay algo abierto, la cabecera muestra **Actualizar**; con un dibujo, pide confirmación antes de recargar;
+  - la app pregunta si hay versión nueva al abrirse, cada hora y al volver a su pestaña.
 - **Hosting (Vercel, configurado en `vercel.json`):**
   - hace falta **HTTPS** (en `localhost` funciona sin él); Vercel lo da siempre;
   - `sw.js` e `index.html` **no** deben tener caché larga, porque si no las versiones nuevas tardan en llegar. Vercel ya los sirve así por defecto (`max-age=0, must-revalidate`), por eso `vercel.json` solo cambia la caché de `/assets`;
