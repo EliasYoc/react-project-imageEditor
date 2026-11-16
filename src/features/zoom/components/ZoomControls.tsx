@@ -15,11 +15,12 @@ const ZoomControls = () => {
   const scale = useViewStore((state) => state.view.scale);
   const isFitted = useViewStore((state) => state.isFitted);
   const stageSize = useViewStore((state) => state.stageSize);
+  const insets = useViewStore((state) => state.insets);
   const zoomBy = useViewStore((state) => state.zoomBy);
   const fitToScreen = useViewStore((state) => state.fitToScreen);
   const canvasSize = useEditorStore((state) => state.canvasSize);
 
-  const limits = zoomLimits(stageSize, canvasSize);
+  const limits = zoomLimits(stageSize, canvasSize, insets);
   // Margen pequeño: la escala límite puede no coincidir exactamente.
   const canZoomOut = scale > limits.min * 1.001;
   const canZoomIn = scale < limits.max * 0.999;

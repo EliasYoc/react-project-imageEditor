@@ -5,6 +5,7 @@ import {
   expectColorAt,
   exportImage,
   fakeShareSheet,
+  fittedCenter,
   isColorful,
   isDark,
   isWhite,
@@ -148,11 +149,7 @@ test.describe("Dibujo", () => {
 
     // La foto es negra a la izquierda y blanca a la derecha; el trazo
     // amarillo cruza las dos mitades por el centro.
-    const stage = await stageRect(page);
-    const center = {
-      x: Math.round(stage.x + stage.width / 2),
-      y: Math.round(stage.y + stage.height / 2),
-    };
+    const center = await fittedCenter(page);
     await drag(
       page,
       [

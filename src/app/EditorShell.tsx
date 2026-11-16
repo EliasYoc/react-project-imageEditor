@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
+import { NO_INSETS } from "../editor/engine/viewport";
 import EditorStage from "../editor/stage/EditorStage";
+import { viewStore } from "../editor/stage/viewStore";
 import { useEditorStore } from "../editor/store/editorStore";
 import { DrawingTools, ModeSwitcher, SizeSlider } from "../features/drawing";
 import { EditorHeader } from "../features/editor-header";
@@ -15,6 +17,10 @@ import styles from "./EditorShell.module.css";
  * Es todo lo que necesita Konva, así que va en su propio archivo y se carga
  * bajo demanda (ver App): la pantalla de inicio no lo descarga.
  *
+ * La cabecera es opaca: al ajustar a pantalla, el documento deja libre su
+ * altura. La barra inferior es transparente (solo sus piezas tienen fondo):
+ * el documento sí puede quedar debajo.
+ *
  * El lienzo es el Stage de Konva con el fondo, la pintura, los textos y las
  * imágenes. Encima, el slider de tamaño (borde izquierdo) y el zoom
  * (derecha), colocados por encima de la barra inferior con su altura
@@ -29,6 +35,18 @@ const EditorShell = ({ isOpen }: { isOpen: boolean }) => {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const stageRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
+
+  useEffect(function keepDocumentClearOfHeader() {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const headerHeight = parseFloat(
+      getComputedStyle(stage).getPropertyValue("--header-height")
+    );
+    viewStore.getState().setInsets({
+      ...NO_INSETS,
+      top: Number.isFinite(headerHeight) ? headerHeight : 0,
+    });
+  }, []);
 
   useEffect(
     function shareFooterHeight() {

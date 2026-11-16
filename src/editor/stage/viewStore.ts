@@ -2,12 +2,14 @@ import { useStore } from "zustand";
 import { createStore } from "zustand/vanilla";
 import {
   IDENTITY_VIEW,
+  NO_INSETS,
   clampPan,
   fitView,
   panBy,
   screenToDocument,
   zoomAt,
   zoomLimits,
+  type Insets,
   type View,
 } from "../engine/viewport";
 import type { Point, Size } from "../model/types";
@@ -33,11 +35,17 @@ export interface ViewState {
    * usuario hizo zoom, se respeta.
    */
   isFitted: boolean;
+  /**
+   * Bordes del área tapados por algo opaco que flota encima (la cabecera):
+   * al ajustar, el documento los deja libres.
+   */
+  insets: Insets;
   setStageSize: (stageSize: Size) => void;
+  setInsets: (insets: Insets) => void;
   fitToScreen: () => void;
   /** Zoom manteniendo fijo un punto de la pantalla (cursor, dedos). */
   zoomAt: (screen: Point, factor: number) => void;
-  /** Zoom respecto al centro del área (botones y teclado). */
+  /** Zoom respecto al centro de lo que se ve (botones y teclado). */
   zoomBy: (factor: number) => void;
   panBy: (dx: number, dy: number) => void;
   /** Vista calculada fuera (p. ej. el pellizco); se le aplican los límites. */
@@ -45,6 +53,10 @@ export interface ViewState {
 }
 
 const documentSize = () => editorStore.getState().canvasSize;
+
+/** Límites de zoom de la vista: dependen del ajuste (y de lo que tapa la cabecera). */
+export const selectZoomLimits = (state: ViewState) =>
+  zoomLimits(state.stageSize, documentSize(), state.insets);
 
 export const createViewStore = () =>
   createStore<ViewState>()((set, get) => {
@@ -59,6 +71,7 @@ export const createViewStore = () =>
       stageSize: { width: 0, height: 0 },
       view: IDENTITY_VIEW,
       isFitted: true,
+      insets: NO_INSETS,
 
       setStageSize: (stageSize) => {
         set({ stageSize });
@@ -66,22 +79,32 @@ export const createViewStore = () =>
         else setFreeView(get().view);
       },
 
+      setInsets: (insets) => {
+        set({ insets });
+        if (get().isFitted) get().fitToScreen();
+      },
+
       fitToScreen: () =>
         set({
-          view: fitView(get().stageSize, documentSize()),
+          view: fitView(get().stageSize, documentSize(), get().insets),
           isFitted: true,
         }),
 
       zoomAt: (screen, factor) => {
-        const { view, stageSize } = get();
         setFreeView(
-          zoomAt(view, screen, factor, zoomLimits(stageSize, documentSize()))
+          zoomAt(get().view, screen, factor, selectZoomLimits(get()))
         );
       },
 
       zoomBy: (factor) => {
-        const { width, height } = get().stageSize;
-        get().zoomAt({ x: width / 2, y: height / 2 }, factor);
+        const { stageSize, insets } = get();
+        get().zoomAt(
+          {
+            x: (insets.left + stageSize.width - insets.right) / 2,
+            y: (insets.top + stageSize.height - insets.bottom) / 2,
+          },
+          factor
+        );
       },
 
       panBy: (dx, dy) => setFreeView(panBy(get().view, dx, dy)),
