@@ -64,6 +64,23 @@ describe("Panel", () => {
     await user.click(screen.getByRole("button", { name: "Cerrar" }));
     expect(screen.queryByRole("dialog")).toBeNull();
   });
+
+  it("no quita el foco a lo que se usó mientras se cerraba", async () => {
+    asDesktop();
+    const user = userEvent.setup();
+    render(<PanelHarness />);
+    await user.click(screen.getByRole("button", { name: "Abrir" }));
+
+    // Se cierra y, antes de que Radix devuelva el foco (en el siguiente
+    // tick, tras la animación), se usa otro control: p. ej. abrir el
+    // selector de color justo después de cerrar los pinceles.
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+    const outside = screen.getByRole("button", { name: "Fuera" });
+    outside.focus();
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(outside).toHaveFocus();
+  });
 });
 
 describe("Menu", () => {
