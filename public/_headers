@@ -1,7 +1,0 @@
-# Cabeceras de Netlify (https://docs.netlify.com/routing/headers/).
-#
-# Los archivos de /assets llevan un hash en el nombre: si cambian, cambia el
-# nombre. Se pueden guardar en caché un año sin volver a pedirlos. index.html
-# no está aquí: se revalida siempre, así que una versión nueva llega enseguida.
-/assets/*
-  Cache-Control: public, max-age=31536000, immutable
