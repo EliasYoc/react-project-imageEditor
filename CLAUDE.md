@@ -40,6 +40,7 @@ Si ninguna lo cubre:
   - para qué sirve;
   - su peso aproximado;
   - si hay una alternativa sin instalar nada.
+- **Si el dueño ya autorizó la instalación**, ejecuta el comando de npm sin volver a preguntar. El permiso vale solo para ese paquete y esa versión: otro paquete, otra versión o desinstalar algo se pregunta de nuevo.
 - **Elige versiones publicadas hace al menos 2 semanas** y fíjalas con `--save-exact`.
 - Estos comandos además piden confirmación por configuración (`.claude/settings.local.json`).
 
@@ -48,3 +49,10 @@ Si ninguna lo cubre:
 - **Trabaja solo con commits locales** en una rama por tarea. **Nunca hagas push** ni abras, edites o fusiones PR.
 - **Al terminar,** deja el texto de la PR en un archivo para que el dueño la abra.
 - **Cada commit** debe compilar y pasar `npm run check` por sí solo.
+
+## 5. Pendientes
+
+- **Las mejoras pendientes están en `PENDIENTES.md`.** No se empieza ninguna sin permiso del dueño.
+- Cuando salga un tema relacionado (hosting, dependencias…), recuérdale el punto que toca.
+- Si algo es **urgente** (una vulnerabilidad en dependencias de producción, un fallo que rompe la app), avísale enseguida.
+- Al terminar un punto, quítalo de `PENDIENTES.md` en la misma PR.
