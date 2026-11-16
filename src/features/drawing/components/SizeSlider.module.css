@@ -5,7 +5,8 @@
  */
 .wrapper {
   position: absolute;
-  top: 50%;
+  /* Centrado entre la cabecera y la barra inferior, que flotan sobre el lienzo. */
+  top: calc(50% + (var(--header-height) - var(--footer-height, 0px)) / 2);
   left: 0;
   z-index: var(--z-toolbar);
   padding: 0 0.5rem;

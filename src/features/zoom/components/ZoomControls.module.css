@@ -1,7 +1,8 @@
 .controls {
   position: absolute;
   right: var(--space-2);
-  bottom: var(--space-2);
+  /* Justo encima de la barra inferior, que flota sobre el lienzo. */
+  bottom: calc(var(--footer-height, 0px) + var(--space-2));
   z-index: var(--z-toolbar);
   display: flex;
   align-items: center;
