@@ -62,7 +62,8 @@ export default defineConfig({
     }),
   ],
   build: {
-    // Netlify publica desde "build/" (igual que con Create React App).
+    // Se publica desde "build/" (igual que con Create React App); vercel.json
+    // le indica a Vercel esta carpeta con "outputDirectory".
     outDir: "build",
   },
   test: {
