@@ -49,6 +49,10 @@ Si ninguna lo cubre:
 - **Trabaja solo con commits locales.** **No crees ramas:** haz los commits en la rama en la que esté el repositorio (normalmente `dev`), actualizada antes de empezar. **Nunca hagas push** ni abras, edites o fusiones PR.
 - **Al terminar,** deja el texto de la PR en un archivo para que el dueño la abra.
 - **Cada commit** debe compilar y pasar `npm run check` por sí solo.
+- **Un commit por tarea.** Si el dueño pide varias tareas a la vez (p. ej. una lista numerada), cada una va en su propio commit y en ese orden, **aunque toquen los mismos archivos**. Así se pueden revisar y revertir por separado.
+  - **Cuándo hacer el commit:** al terminar una tarea y comprobarla (`npm run check`, y los e2e si cambia algo que prueban), **antes de empezar la siguiente**.
+  - **Qué va en él:** el código de la tarea, sus tests y su documentación (README, comentarios). Si al hacerla aparece un arreglo que no tiene que ver con ella, va en un commit aparte.
+  - **Cambios que el dueño pida después** sobre una tarea ya hecha van en un commit nuevo; no se reescribe un commit que ya existe (nada de `--amend` ni de rebase) salvo que él lo pida.
 
 ## 5. Pendientes
 
