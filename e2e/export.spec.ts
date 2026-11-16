@@ -13,6 +13,7 @@ import {
   pngSize,
   pointIn,
   readPng,
+  openMenuItem,
 } from "./helpers";
 
 test.describe("Exportar", () => {
@@ -72,13 +73,13 @@ test.describe("Exportar", () => {
   test("el nombre se puede cambiar", async ({ page, isMobile }) => {
     await openBlankCanvas(page);
     // Cancelar no guarda el nombre escrito: al volver, está el sugerido.
-    await page.getByRole("button", { name: "Exportar" }).click();
+    await openMenuItem(page, "Exportar");
     const dialog = page.getByRole("dialog", { name: "Exportar imagen" });
     const field = dialog.getByRole("textbox", { name: "Nombre del archivo" });
     await field.fill("otro nombre");
     await dialog.getByRole("button", { name: "Cancelar" }).click();
     await expect(dialog).toBeHidden();
-    await page.getByRole("button", { name: "Exportar" }).click();
+    await openMenuItem(page, "Exportar");
     await expect(field).toHaveValue(/^dibujo-/);
     await dialog.getByRole("button", { name: "Cancelar" }).click();
 

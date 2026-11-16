@@ -7,10 +7,10 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
-import AngleDial from "./AngleDial";
-import BackdropPanel from "./BackdropPanel";
-import GradientStopsBar from "./GradientStopsBar";
-import { normalizeAngle, pointerAngle } from "./angle";
+import AngleDial from "./components/AngleDial";
+import BackdropPanel from "./components/BackdropPanel";
+import GradientStopsBar from "./components/GradientStopsBar";
+import { normalizeAngle, pointerAngle } from "./utils/angle";
 
 const gradient = (): Gradient => ({
   type: "linear",

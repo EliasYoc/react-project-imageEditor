@@ -242,11 +242,22 @@ export async function tapAt(page: Page, point: Point, touch: boolean) {
   else await page.mouse.click(point.x, point.y);
 }
 
+/**
+ * Elige una opción del menú ⋮ de la cabecera (p. ej. "Exportar" o "Volver al
+ * inicio").
+ */
+export async function openMenuItem(page: Page, name: string) {
+  await page.getByRole("button", { name: "Más opciones" }).click();
+  await page.getByRole("menuitem", { name }).click();
+}
+
 /** Empieza un lienzo en blanco desde el inicio y espera a que se vea. */
 export async function openBlankCanvas(page: Page, preset = "Cuadrado") {
   await page.goto("/");
   await page.getByRole("button", { name: new RegExp(`^${preset},`) }).click();
-  await expect(page.getByRole("button", { name: "Exportar" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Más opciones" })
+  ).toBeVisible();
   await expectDocumentVisible(page);
 }
 
@@ -256,7 +267,9 @@ export async function openPhoto(page: Page) {
   const chooser = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Abrir una foto" }).click();
   await (await chooser).setFiles(PHOTO.path);
-  await expect(page.getByRole("button", { name: "Exportar" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Más opciones" })
+  ).toBeVisible();
 }
 
 /** Espera a que el lienzo muestre el documento (blanco en el centro). */
@@ -350,7 +363,7 @@ export async function exportImage(
   isMobile: boolean,
   fileName?: string
 ) {
-  await page.getByRole("button", { name: "Exportar" }).click();
+  await openMenuItem(page, "Exportar");
   const dialog = page.getByRole("dialog", { name: "Exportar imagen" });
   if (fileName !== undefined) {
     await dialog

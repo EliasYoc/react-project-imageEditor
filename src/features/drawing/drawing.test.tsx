@@ -6,14 +6,14 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
-import BrushLibrary from "./BrushLibrary";
+import BrushLibrary from "./components/BrushLibrary";
 import {
   PREVIEW_SIZE,
   previewPoints,
   previewStroke,
   previewStrokeSize,
-} from "./previewStroke";
-import { SLIDER_STEPS, sizeToSlider, sliderToSize } from "./sizeScale";
+} from "./utils/previewStroke";
+import { SLIDER_STEPS, sizeToSlider, sliderToSize } from "./utils/sizeScale";
 
 describe("escala del slider de tamaño", () => {
   it("los extremos del slider son el tamaño mínimo y el máximo", () => {
