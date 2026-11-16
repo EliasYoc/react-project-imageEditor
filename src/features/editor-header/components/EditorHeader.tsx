@@ -20,13 +20,15 @@ import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { BackdropPanel } from "../../backdrop";
 import { ExportDialog } from "../../export";
 import { SHORTCUT_LABELS } from "../../shortcuts";
+import { UpdateButton } from "../../update";
 import styles from "./EditorHeader.module.css";
 
 /**
  * Cabecera del editor:
  * - a la izquierda, deshacer y rehacer;
  * - en el centro, lo que pase el shell (en escritorio, el selector de modo);
- * - a la derecha, el fondo (siempre a la vista) y el menú ⋮, con Exportar
+ * - a la derecha, "Actualizar" (solo si hay una versión nueva de la app), el
+ *   fondo (siempre a la vista) y el menú ⋮, con Exportar
  *   (también Ctrl/⌘ + S), volver al inicio (el documento se conserva), los
  *   atajos y borrar el dibujo.
  */
@@ -103,6 +105,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
       {center && <div className={styles.center}>{center}</div>}
 
       <div className={styles.end}>
+        <UpdateButton />
         <IconButton
           icon={Layers}
           aria-label="Fondo"
