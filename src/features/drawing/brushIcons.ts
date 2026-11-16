@@ -1,11 +1,15 @@
 import {
   Brush,
+  Droplet,
   Eraser,
+  Feather,
   Highlighter,
   PenLine,
   PenTool,
   Pencil,
+  Shapes,
   SprayCan,
+  Zap,
   createLucideIcon,
   type LucideIcon,
 } from "lucide-react";
@@ -49,6 +53,10 @@ export const BRUSH_ICONS: Record<BrushPresetId, LucideIcon> = {
   airbrush: Brush,
   spray: SprayCan,
   highlighter: Highlighter,
+  calligraphy: Feather,
+  neon: Zap,
+  shapes: Shapes,
+  blur: Droplet,
   eraserHard: Eraser,
   eraserSoft: SoftEraser,
 };

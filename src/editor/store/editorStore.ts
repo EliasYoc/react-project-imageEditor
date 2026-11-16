@@ -24,6 +24,7 @@ import {
   type Point,
   type Rgba,
   type Size,
+  type StampShape,
   type Status,
   type StrokeEntry,
   type TextElement,
@@ -130,6 +131,8 @@ export interface EditorActions {
   setBrushStabilizer: (stabilizer: number) => void;
   /** Color compartido por todos los pinceles. */
   setBrushColor: (color: Rgba) => void;
+  /** Figura que estampa el pincel de formas. */
+  setBrushShape: (shape: StampShape) => void;
 }
 
 export type EditorStore = EditorState & EditorActions;
@@ -519,6 +522,12 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
               ({ brush }) => ({ brush: { ...brush, color } }),
               false,
               "setBrushColor"
+            ),
+          setBrushShape: (shape) =>
+            set(
+              ({ brush }) => ({ brush: { ...brush, shape } }),
+              false,
+              "setBrushShape"
             ),
         };
       },

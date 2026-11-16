@@ -29,5 +29,4 @@ Mejoras opcionales e ideas guardadas al terminar el plan de 8 fases (15/11/2026)
 Cada una necesita un plan propio, aprobado antes de empezar:
 
 - capas;
-- filtros;
-- más pinceles.
+- filtros.

@@ -1,8 +1,13 @@
 import type { BrushStroke } from "./brushStroke";
 import type { Dab } from "./dabEngine";
-import type { DabPreset } from "./presets";
+import {
+  STAMP_FIGURES,
+  type DabPreset,
+  type StampFigure,
+  type TipShape,
+} from "./presets";
 import { createRandom } from "./random";
-import { getTip, tipBucket, type BitmapTip } from "./tips";
+import { getTip, tipBucket } from "./tips";
 
 /** Escala actual del contexto (1 en pantalla, mayor al exportar). */
 const contextScale = (ctx: CanvasRenderingContext2D) => {
@@ -10,21 +15,57 @@ const contextScale = (ctx: CanvasRenderingContext2D) => {
   return transform ? Math.hypot(transform.a, transform.b) : 1;
 };
 
+/**
+ * Figura de un sello del pincel de formas. En "mix" sale de la semilla del
+ * sello: el trazo se repinta siempre con las mismas figuras.
+ */
+export const stampFigure = (
+  stroke: Pick<BrushStroke, "shape">,
+  dab: Pick<Dab, "seed">
+): StampFigure => {
+  const shape = stroke.shape ?? "circle";
+  return shape === "mix"
+    ? STAMP_FIGURES[dab.seed % STAMP_FIGURES.length]
+    : shape;
+};
+
+/**
+ * Lo que el pintado de los sellos recuerda de una llamada a la siguiente
+ * mientras se dibuja un trazo (los sellos llegan por partes).
+ */
+export interface DabRenderState {
+  /** Neón: los últimos sellos, cuyo núcleo hay que repasar. */
+  tail: Dab[];
+}
+
+export const createDabRenderState = (): DabRenderState => ({ tail: [] });
+
 const drawBitmapDabs = (
   ctx: CanvasRenderingContext2D,
   stroke: BrushStroke,
-  tipShape: BitmapTip,
+  tipShape: Exclude<TipShape, { shape: "particles" } | { shape: "glow" }>,
   dabs: readonly Dab[],
   baseAlpha: number
 ) => {
   const scale = contextScale(ctx);
   let bucket = 0;
+  let figure: StampFigure | null = null;
   let tip: HTMLCanvasElement | null = null;
   for (const dab of dabs) {
     const needed = tipBucket(dab.size * scale);
-    if (needed !== bucket || !tip) {
+    // Formas: la punta depende además de la figura de este sello.
+    const needsFigure =
+      tipShape.shape === "stamp" ? stampFigure(stroke, dab) : null;
+    if (needed !== bucket || needsFigure !== figure || !tip) {
       bucket = needed;
-      tip = getTip(tipShape, stroke.color, bucket);
+      figure = needsFigure;
+      tip = getTip(
+        tipShape.shape === "stamp"
+          ? { shape: "stamp", figure: stampFigure(stroke, dab) }
+          : tipShape,
+        stroke.color,
+        bucket
+      );
     }
     const half = dab.size / 2;
     ctx.globalAlpha = baseAlpha * dab.alpha;
@@ -69,21 +110,78 @@ const drawParticleDabs = (
   }
 };
 
-/** Estampa los sellos con la punta del preset (con el modo de fusión del contexto). */
+const WHITE = { r: 255, g: 255, b: 255, a: 1 };
+/** Puntas del neón: el halo se difumina del todo; el núcleo, solo el borde. */
+const GLOW_HALO = { shape: "round", hardness: 0 } as const;
+const GLOW_CORE = { shape: "round", hardness: 0.55 } as const;
+
+/**
+ * Cuántos sellos anteriores tienen el núcleo al alcance del halo de uno
+ * nuevo (los sellos están a `spacing` × tamaño unos de otros).
+ */
+export const glowTailLength = (spacing: number, core: number) =>
+  Math.ceil((1 + core) / (2 * spacing));
+
+/**
+ * Neón: cada sello pinta su halo (del color del trazo) y su núcleo blanco.
+ *
+ * El halo de un sello cae encima del núcleo de los anteriores y lo teñiría,
+ * así que después de cada halo se repasa el núcleo de los últimos sellos
+ * (`state.tail`). Se hace sello a sello, no por tandas: el trazo queda igual
+ * se pinte de una vez (al deshacer, al exportar) o por partes (en vivo).
+ */
+const drawGlowDabs = (
+  ctx: CanvasRenderingContext2D,
+  stroke: BrushStroke,
+  preset: DabPreset,
+  core: number,
+  dabs: readonly Dab[],
+  baseAlpha: number,
+  state: DabRenderState
+) => {
+  const scale = contextScale(ctx);
+  const tailLength = glowTailLength(preset.spacing, core);
+  const stamp = (dab: Dab, isCore: boolean) => {
+    const size = isCore ? dab.size * core : dab.size;
+    const tip = getTip(
+      isCore ? GLOW_CORE : GLOW_HALO,
+      isCore ? WHITE : stroke.color,
+      tipBucket(size * scale)
+    );
+    ctx.globalAlpha = isCore ? baseAlpha : baseAlpha * dab.alpha;
+    ctx.drawImage(tip, dab.x - size / 2, dab.y - size / 2, size, size);
+  };
+  for (const dab of dabs) {
+    stamp(dab, false);
+    for (const previous of state.tail) stamp(previous, true);
+    stamp(dab, true);
+    state.tail.push(dab);
+    if (state.tail.length > tailLength) state.tail.shift();
+  }
+};
+
+/**
+ * Estampa los sellos con la punta del preset (con el modo de fusión del
+ * contexto). `state` se conserva mientras dura un trazo que llega por partes.
+ */
 export const drawDabs = (
   ctx: CanvasRenderingContext2D,
   stroke: BrushStroke,
   preset: DabPreset,
-  dabs: readonly Dab[]
+  dabs: readonly Dab[],
+  state: DabRenderState = createDabRenderState()
 ) => {
   if (!dabs.length) return;
   // La opacidad que ya tenga el contexto se respeta (multiplica la del sello).
   const baseAlpha = ctx.globalAlpha;
+  const { tip } = preset;
   ctx.save();
-  if (preset.tip.shape === "particles") {
-    drawParticleDabs(ctx, stroke, preset.tip, dabs, baseAlpha);
+  if (tip.shape === "particles") {
+    drawParticleDabs(ctx, stroke, tip, dabs, baseAlpha);
+  } else if (tip.shape === "glow") {
+    drawGlowDabs(ctx, stroke, preset, tip.core, dabs, baseAlpha, state);
   } else {
-    drawBitmapDabs(ctx, stroke, preset.tip, dabs, baseAlpha);
+    drawBitmapDabs(ctx, stroke, tip, dabs, baseAlpha);
   }
   ctx.restore();
 };

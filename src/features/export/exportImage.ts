@@ -1,4 +1,5 @@
-import { paintStroke } from "../../editor/engine/brushes/paint";
+import { blurLayers, revealBlurred } from "../../editor/engine/brushes/blur";
+import { paintBlurMask, paintStroke } from "../../editor/engine/brushes/paint";
 import { paintFill } from "../../editor/engine/fill/paintFill";
 import { editorStore } from "../../editor/store/editorStore";
 import {
@@ -26,12 +27,13 @@ const paintStrokeLayer = (
   strokes: readonly StrokeEntry[],
   output: Size,
   docSize: Size,
-  scratch: HTMLCanvasElement
+  scratch: HTMLCanvasElement,
+  paint: typeof paintBlurMask = paintStroke
 ) => {
   const layer = createCanvas(output);
   const ctx = get2dContext(layer);
   ctx.scale(output.width / docSize.width, output.height / docSize.height);
-  for (const stroke of strokes) paintStroke(ctx, stroke, scratch);
+  for (const stroke of strokes) paint(ctx, stroke, scratch);
   return layer;
 };
 
@@ -40,9 +42,10 @@ const paintStrokeLayer = (
  * orden que las capas del lienzo:
  * 1. el fondo (la foto completa, o blanco) y encima la capa de color o
  *    degradado, pintada también a esa resolución;
- * 2. el resaltador, MULTIPLICADO con el fondo;
- * 3. la pintura (el resto de trazos);
- * 4. los textos e imágenes, con Konva y también a esa resolución.
+ * 2. ese fondo desenfocado, donde pasó el pincel de desenfoque;
+ * 3. el resaltador, MULTIPLICADO con el fondo;
+ * 4. la pintura (el resto de trazos);
+ * 5. los textos e imágenes, con Konva y también a esa resolución.
  */
 export const renderDocument = async () => {
   const state = editorStore.getState();
@@ -73,6 +76,22 @@ export const renderDocument = async () => {
   const strokes = selectStrokeLayers(state);
   // Búfer de cada trazo, a la resolución de salida (opacidad y modo de fusión).
   const scratch = createCanvas(output);
+  if (strokes.blur.length) {
+    // Como en el lienzo (backgroundBlur.ts): la máscara de los trazos de
+    // desenfoque, rellena con el fondo desenfocado.
+    const blurred = paintStrokeLayer(
+      strokes.blur,
+      output,
+      canvasSize,
+      scratch,
+      paintBlurMask
+    );
+    revealBlurred(
+      get2dContext(blurred),
+      blurLayers([{ image: canvas }], output)
+    );
+    ctx.drawImage(blurred, 0, 0);
+  }
   if (strokes.highlight.length) {
     const highlight = paintStrokeLayer(
       strokes.highlight,

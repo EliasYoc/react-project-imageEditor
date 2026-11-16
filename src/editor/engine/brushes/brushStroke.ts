@@ -1,4 +1,9 @@
-import type { BrushPresetId, Rgba, StrokePoint } from "../../model/types";
+import type {
+  BrushPresetId,
+  Rgba,
+  StampShape,
+  StrokePoint,
+} from "../../model/types";
 
 /**
  * Lo que el motor necesita de un trazo. `StrokeEntry` (el trazo del
@@ -15,5 +20,7 @@ export interface BrushStroke {
   seed: number;
   /** El trazo se hizo con un lápiz que mide la presión. */
   hasPressure: boolean;
+  /** Figura del pincel de formas (sin ella, círculos). */
+  shape?: StampShape;
   points: StrokePoint[];
 }

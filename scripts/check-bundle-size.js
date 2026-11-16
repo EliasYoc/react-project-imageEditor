@@ -8,12 +8,18 @@
 // Se mide comprimido con gzip, como lo envía el servidor. Si un cambio
 // necesita de verdad más espacio, se sube el límite aquí, en la misma PR,
 // explicando el porqué.
+//
+// Historial de los límites (Inicio / Editor, en kB):
+// - 125 / 130: al crear el presupuesto (medían 117,2 y 122,7).
+// - 120 / 140: pinceles Formas, Desenfoque, Caligrafía y Neón (miden 113,6 y
+//   132,0). El motor de pinceles pasó del inicio al editor (3,6 kB) y los
+//   pinceles añaden 5,7 kB, 1,5 de ellos del filtro Blur de Konva.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 125, Editor: 130 };
+const BUDGETS_KB = { Inicio: 120, Editor: 140 };
 
 const gzipKb = (file) =>
   gzipSync(readFileSync(join(BUILD_DIR, file)), { level: 9 }).length / 1000;
