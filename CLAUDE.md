@@ -73,3 +73,13 @@ Si ninguna lo cubre:
 - **Los tests de la feature** van en su raíz; un test unitario va junto al archivo que prueba.
 - **Cada feature tiene un `index.ts`** que reexporta solo lo que usa el resto de la app. Desde fuera de la feature se importa siempre ese `index.ts`, nunca un archivo interno. Dentro de la feature, los archivos se importan entre sí con rutas relativas, sin pasar por su propio `index.ts`.
 - El `index.ts` solo reexporta; no pongas código en él (en `vite.config.js` está marcado sin efectos secundarios para que no arrastre el editor al bundle del inicio).
+
+## 7. Modelo para un refactor
+
+El modelo de la conversación lo elige el dueño (`/model`). Antes de empezar un refactor, Claude le recuerda cuál conviene:
+
+- **Pequeño o mecánico** (renombrar, mover archivos, sacar una función repetida, ordenar imports): **Sonnet** con esfuerzo _medium_.
+- **Mediano** (reorganizar una feature, cambiar cómo se comunica un componente con el store): **Sonnet** con esfuerzo _high_, u **Opus** si toca código delicado (el lienzo, los pinceles, la exportación).
+- **Grande o de arquitectura** (el store, el motor de pinceles, una versión mayor de TypeScript): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
+
+Un refactor no cambia lo que hace la app: lo vigilan los tests que ya existen y normalmente no necesita tests nuevos.
