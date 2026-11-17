@@ -218,6 +218,19 @@ describe("useKeyboardShortcuts", () => {
     expect(viewStore.getState().view.scale).toBeGreaterThan(before);
   });
 
+  it("no actúa mientras se abre o se exporta algo", () => {
+    renderHook(() => useKeyboardShortcuts());
+    for (const status of ["exportingVideo", "exporting", "loading"] as const) {
+      editorStore.setState({ status });
+      const event = press(window, { key: "e" });
+      expect(event.defaultPrevented).toBe(false);
+      expect(editorStore.getState().brush.presetId).toBe("pen");
+    }
+    editorStore.setState({ status: "idle" });
+    press(window, { key: "e" });
+    expect(editorStore.getState().brush.presetId).toBe("eraserHard");
+  });
+
   it("no actúa mientras se escribe en un campo", () => {
     renderHook(() => useKeyboardShortcuts());
     const input = document.createElement("input");

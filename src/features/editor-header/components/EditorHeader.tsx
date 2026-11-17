@@ -40,7 +40,9 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const hasVideo = useEditorStore((state) => state.photo.video !== null);
   const canUndo = useEditorStore(selectCanUndo);
   const canRedo = useEditorStore(selectCanRedo);
-  const isExporting = useEditorStore((state) => state.status === "exporting");
+  const isExporting = useEditorStore(
+    (state) => state.status === "exporting" || state.status === "exportingVideo"
+  );
   const setMode = useEditorStore((state) => state.setMode);
   const undo = useEditorStore((state) => state.undo);
   const redo = useEditorStore((state) => state.redo);

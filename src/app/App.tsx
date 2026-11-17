@@ -2,16 +2,21 @@ import { useEffect, useState } from "react";
 import { Spinner } from "../components/ui/Spinner";
 import { Toaster, toast } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
+import type { Status } from "../editor/model/types";
 import { editorStore, useEditorStore } from "../editor/store/editorStore";
 import { HomeScreen, usePreventFileDropNavigation } from "../features/home";
 import { useKeyboardShortcuts } from "../features/shortcuts";
 import styles from "./App.module.css";
 
-const STATUS_LABELS = {
+/**
+ * Lo que tapa la pantalla con el indicador de carga. Exportar un video no:
+ * su avance se ve en el diálogo de exportar.
+ */
+const STATUS_LABELS: Partial<Record<Status, string>> = {
   loading: "Abriendo la imagen",
   loadingVideo: "Abriendo el video",
   exporting: "Exportando la imagen",
-} as const;
+};
 
 /**
  * El editor (con Konva, la mayor parte del JavaScript) va en otro archivo: el
@@ -92,7 +97,7 @@ function App() {
         {isEditorOpen && !EditorShell && <Spinner label="Cargando el editor" />}
         {!isEditorOpen && <HomeScreen />}
 
-        {status !== "idle" && <Spinner label={STATUS_LABELS[status]} />}
+        {STATUS_LABELS[status] && <Spinner label={STATUS_LABELS[status]} />}
         <Toaster />
       </div>
     </TooltipProvider>

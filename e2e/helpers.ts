@@ -471,6 +471,113 @@ export async function exportImage(
   return { name, bytes: new Uint8Array(bytes) };
 }
 
+/**
+ * Exporta el video con el diálogo y devuelve el archivo, como `exportImage`.
+ * En el móvil, si la exportación tardó más de lo que dura el último toque, el
+ * diálogo pide otro ("Compartir o guardar") antes de abrir la hoja.
+ */
+export async function exportVideo(page: Page, isMobile: boolean) {
+  await openMenuItem(page, "Exportar");
+  const dialog = page.getByRole("dialog", { name: "Exportar video" });
+  const submit = dialog.getByRole("button", { name: "Exportar" });
+  if (!isMobile) {
+    const download = page.waitForEvent("download");
+    await submit.click();
+    const file = await download;
+    return { name: file.suggestedFilename(), bytes: await downloadBytes(file) };
+  }
+  await submit.click();
+  const ready = dialog.getByRole("button", { name: "Compartir o guardar" });
+  const hasShared = () => page.evaluate(() => Boolean(window.__shared));
+  await expect
+    .poll(async () => (await hasShared()) || (await ready.isVisible()), {
+      timeout: 30_000,
+    })
+    .toBe(true);
+  if (!(await hasShared())) await ready.click();
+  const shared = await page.waitForFunction(() => window.__shared);
+  const { name, type, bytes } = (await shared.jsonValue()) as SharedFile;
+  expect(type).toBe("video/mp4");
+  return { name, bytes: new Uint8Array(bytes) };
+}
+
+/** Lo que se lee de un video exportado (ver `readVideo`). */
+export interface VideoContents {
+  width: number;
+  height: number;
+  /** Duración, en segundos. */
+  duration: number;
+  /** Los colores de `points` en cada momento de `times` (`colors[t][p]`). */
+  colors: Rgba[][];
+  /** Duración del sonido, en segundos (0 si no tiene). */
+  soundSeconds: number;
+}
+
+/**
+ * Abre un video en el navegador (un `<video>` con sus bytes) y lee sus
+ * medidas, su duración, los colores de algunos puntos en algunos momentos y
+ * si tiene sonido. Falla si el navegador no lo puede reproducir.
+ */
+export const readVideo = (
+  page: Page,
+  bytes: Uint8Array,
+  { times, points }: { times: number[]; points: Point[] }
+): Promise<VideoContents> =>
+  page.evaluate(
+    async ({ bytes, times, points }) => {
+      const blob = new Blob([new Uint8Array(bytes)], { type: "video/mp4" });
+      const url = URL.createObjectURL(blob);
+      const video = document.createElement("video");
+      video.muted = true;
+      video.preload = "auto";
+      video.src = url;
+      await new Promise((resolve, reject) => {
+        video.onloadeddata = resolve;
+        video.onerror = () =>
+          reject(new Error("El navegador no puede reproducir el video"));
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) throw new Error("Sin contexto 2D");
+
+      const colors = [];
+      for (const time of times) {
+        const seeked = new Promise((resolve) =>
+          video.addEventListener("seeked", resolve, { once: true })
+        );
+        video.currentTime = time;
+        await seeked;
+        ctx.drawImage(video, 0, 0);
+        colors.push(
+          points.map(({ x, y }) => {
+            const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
+            return { r, g, b, a };
+          })
+        );
+      }
+
+      let soundSeconds = 0;
+      try {
+        const context = new OfflineAudioContext(1, 1, 48_000);
+        const sound = await context.decodeAudioData(await blob.arrayBuffer());
+        soundSeconds = sound.duration;
+      } catch {
+        // Sin pista de sonido.
+      }
+      URL.revokeObjectURL(url);
+      return {
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: video.duration,
+        colors,
+        soundSeconds,
+      };
+    },
+    { bytes: Array.from(bytes), times, points }
+  );
+
 /** Ancho y alto de un PNG, leídos de su cabecera (el bloque IHDR). */
 export function pngSize(bytes: Uint8Array) {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);

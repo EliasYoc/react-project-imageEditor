@@ -113,7 +113,7 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Reproducir / pausar   | K, o el botón de la barra de reproducción (encima de las herramientas)                | Botón de la barra de reproducción   |
 | Ir a otro momento     | Arrastrar la barra de tiempo, o con el foco en ella: flechas, Inicio y Fin            | Arrastrar la barra de tiempo        |
 
-El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
+El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema. Con un video abierto, Exportar guarda el video en MP4 (ver [Video](#video)).
 
 ## Inicio y avisos
 
@@ -145,7 +145,15 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
   - Su estado se lee del propio `<video>` (`useVideoPlayback`, con `useSyncExternalStore`): no hay un store con una copia que pueda quedarse atrás.
   - La barra de tiempo es un slider de Radix, así que funciona con el dedo, el ratón y el teclado. Al arrastrarla se pide un salto cada vez, y solo el último destino (`createSeeker`): cada salto tarda en decodificarse.
 - **Desenfoque sobre un video:** el fondo cambia en cada fotograma, así que su copia desenfocada se rehace en cada uno (solo si hay trazos de desenfoque, y solo mientras se reproduce). Empezar un trazo de desenfoque **pausa** el video: el trazo en curso muestra una copia de un instante.
-- **Exportar** guarda, de momento, una imagen del fotograma que se ve.
+- **Exportar** (menú ⋮ → "Exportar", o Ctrl/⌘ + S) guarda el video en **MP4**, del tamaño del documento, con el dibujo encima durante todo el video y con su sonido.
+  - **Cómo** (`features/export/utils/exportVideo.ts` y `encodeVideo.ts`): con [mediabunny](https://mediabunny.dev), que lee el archivo original, decodifica y vuelve a codificar con **WebCodecs** (el codificador del propio navegador, normalmente por hardware) y escribe el MP4. Va tan rápido como el equipo pueda, no a la velocidad del video, y pasa por todos los fotogramas con sus tiempos originales.
+  - **Cada fotograma** se compone como una imagen exportada (`documentCompositor.ts`): lo fijo (trazos, textos, imágenes, capa de color) se pinta una sola vez, y por fotograma solo se repite lo que depende del fondo (la capa de color encima, su desenfoque y el resaltador multiplicado).
+  - **Sonido:** se copia tal cual cuando el MP4 admite su códec (AAC, el de casi todos los teléfonos); si no se pudiera conservar, el video sale sin sonido y se avisa.
+  - **Giro:** los videos de teléfono suelen guardarse tumbados, con una nota de "girar 90°". Se ven y se exportan derechos, y el MP4 no lleva esa nota.
+  - **El diálogo** se queda abierto con el avance y un botón para **cancelar**; mientras tanto no se cierra con Escape ni tocando fuera, la pantalla no se apaga (`navigator.wakeLock`) y los atajos de teclado no actúan.
+  - **En el móvil** se abre la hoja de "Compartir", que exige un toque reciente. Si la exportación tardó más, el diálogo muestra "El video está listo" y un botón **Compartir o guardar**.
+  - **Medido** en Edge (escritorio), un Full HD de 10 s: 2,7 s en exportarse; con un trazo de desenfoque, 3,7 s. Reproducir con desenfoque no produce tareas largas (más de 50 ms).
+  - **Peso:** mediabunny va en su propio archivo de JavaScript (~111 kB con gzip), que solo se descarga al exportar un video. El diálogo de exportar un video (~2 kB) también va aparte.
 
 ## Fondo (color y degradado)
 
@@ -180,7 +188,7 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
 
 - **Plugin:** `vite-plugin-pwa` (configuración en `vite.config.js`) genera el `manifest.webmanifest` y el service worker (`sw.js`, con Workbox). El navegador ofrece instalar la app con su icono (`public/pwa-*.png`, `maskable-512x512.png`, `favicon.svg`).
 - **Sin conexión:**
-  - toda la app (también el editor, que se carga aparte) queda en caché al instalarse el service worker, unos 840 KB;
+  - toda la app (también el editor y el codificador de video, que se cargan aparte) queda en caché al instalarse el service worker, unos 1,3 MB (de ellos, unos 440 KB son el codificador de video). Así también se puede exportar un video sin conexión;
   - las **fuentes** se guardan la primera vez que se usan, o al abrir la lista de fuentes, y desde ahí también funcionan sin conexión.
 - **Actualizaciones** (`features/update`): una versión nueva se descarga en segundo plano y se aplica **sin cerrar las pestañas**. El dibujo vive en memoria y recargar lo perdería, así que:
   - si no hay nada que perder (inicio sin documento), la app se recarga sola con la versión nueva; si se está eligiendo una foto, espera a que termine;
@@ -200,6 +208,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
   - el inicio: los lienzos en blanco, abrir, soltar o pegar una foto y la confirmación antes de descartar;
   - el video: abrirlo y ver su primer fotograma, dibujar encima, la confirmación antes de descartarlo y el aviso si el archivo no se puede abrir;
   - su reproducción: que el lienzo sigue los fotogramas, pausar con el botón y con K, la barra de tiempo, silenciar y el desenfoque, que sigue al video;
+  - exportar el video: que el MP4 se reproduce, su tamaño, su duración, su sonido y el dibujo en dos momentos distintos; en el móvil, también el paso "El video está listo";
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
@@ -230,8 +239,8 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
   - **Si al repetirlo pasa, era "flaky":** un fallo intermitente que conviene investigar.
 - **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
 - **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
-  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`) y el del **editor** (el resto);
-  - falla si pasan de **120 kB** y **140 kB**: hoy son unos 114 y 132;
+  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga con un video abierto: el diálogo de exportarlo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`) y el del **editor** (el resto);
+  - falla si pasan de **120 kB**, **119 kB** y **140 kB**: hoy son unos 115, 113 y 138;
   - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
 - **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
 - **Coste:** gratis en repos públicos. En privados, el plan gratuito incluye unos 2.000 minutos al mes, y cada ejecución tarda unos 5. Un push nuevo a la misma PR cancela la ejecución anterior.
@@ -252,8 +261,9 @@ Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.r
 - **`Panel`**: en el móvil es una **hoja inferior modal** (se cierra con ✕, Escape, tocando fuera o deslizándola hacia abajo); en escritorio (≥ 900 px) es un **panel lateral no modal**: el lienzo sigue a la vista y se puede dibujar o elegir otro texto con él abierto. Al cerrarse, el foco vuelve al botón que lo abrió (`useReturnFocus`).
 - **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`ChoiceMenu`** (un menú para elegir una opción entre varias, con la elegida marcada: la figura del pincel Formas), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
 - **`Tooltip`**: solo con ratón o teclado, con el atajo de cada botón. No aparece cuando un panel devuelve el foco a su botón.
+- Con un video: **`Slider`** de Radix en la barra de tiempo y **`Progress`** en el avance de la exportación.
 - Los atajos de teclado no actúan sobre la selección (Supr, Escape) si el foco está dentro de un panel o un menú.
 
 ## Stack
 
-React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier
+React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · mediabunny (video) · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier

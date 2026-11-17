@@ -9,7 +9,12 @@
 import type { FontId } from "../elements/fonts";
 
 export type Mode = "home" | "draw" | "text";
-export type Status = "idle" | "loading" | "loadingVideo" | "exporting";
+/**
+ * Qué está haciendo la app. `exportingVideo` va aparte de `exporting` porque
+ * tarda: no se tapa la pantalla, el avance se ve en el diálogo de exportar.
+ */
+export type Status =
+  "idle" | "loading" | "loadingVideo" | "exporting" | "exportingVideo";
 
 export interface Rgba {
   r: number;

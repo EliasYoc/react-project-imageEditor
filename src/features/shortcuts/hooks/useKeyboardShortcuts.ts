@@ -83,6 +83,7 @@ const isInsideOverlay = (target: EventTarget | null) =>
 
 /**
  * Atajos de teclado del editor (ver `getShortcutAction`). No actúan:
+ * - mientras se abre o se exporta algo;
  * - mientras se escribe en un texto o en un campo (ahí Ctrl + Z deshace lo
  *   escrito);
  * - si un componente ya usó la tecla (p. ej. Supr en una parada del
@@ -100,7 +101,11 @@ export function useKeyboardShortcuts() {
       ) {
         return;
       }
-      const action = getShortcutAction(event, editorStore.getState().mode);
+      const { mode, status } = editorStore.getState();
+      // Mientras se abre o se exporta algo no se toca el documento: un video
+      // tarda en exportarse, y deshacer a medias no cambiaría lo que sale.
+      if (status !== "idle") return;
+      const action = getShortcutAction(event, mode);
       if (!action) return;
       const actsOnSelection =
         action.type === "deleteElement" || action.type === "deselect";

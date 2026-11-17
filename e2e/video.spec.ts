@@ -6,6 +6,8 @@ import {
   drag,
   expectColorAt,
   expectDocumentVisible,
+  exportVideo,
+  fakeShareSheet,
   isBlue,
   isDark,
   isRed,
@@ -14,6 +16,7 @@ import {
   openPhoto,
   openVideo,
   pointIn,
+  readVideo,
   videoRect,
   type Rgba,
 } from "./helpers";
@@ -227,5 +230,100 @@ test.describe("Reproducción del video", () => {
   test("una foto no tiene barra de reproducción", async ({ page }) => {
     await openPhoto(page);
     await expect(playbackBar(page)).toHaveCount(0);
+  });
+});
+
+test.describe("Exportar el video", () => {
+  // Puntos del video exportado (320 × 240, el tamaño del de prueba).
+  const STROKE = { x: 240, y: 144 }; // sobre la mitad blanca, bajo el trazo
+  const STRIP = { x: 240, y: 12 }; // la franja de arriba
+  const LEFT = { x: 60, y: 200 }; // la mitad negra
+  const RIGHT = { x: 240, y: 210 }; // la mitad blanca, lejos del trazo
+
+  /** Abre el video de prueba y dibuja un trazo negro sobre su mitad blanca. */
+  async function openAndDraw(page: Page, isMobile: boolean) {
+    await openVideo(page);
+    const video = await videoRect(page);
+    await drag(
+      page,
+      [pointIn(video, 0.6, 0.6), pointIn(video, 0.9, 0.6)],
+      isMobile
+    );
+    if (!isMobile) await page.mouse.move(2, 2);
+    await expectColorAt(page, pointIn(video, 0.75, 0.6), isDark);
+  }
+
+  test("sale un MP4 con el dibujo en todos sus fotogramas, su duración y su sonido", async ({
+    page,
+    isMobile,
+  }) => {
+    if (isMobile) await fakeShareSheet(page);
+    await openAndDraw(page, isMobile);
+
+    await openMenuItem(page, "Exportar");
+    const dialog = page.getByRole("dialog", { name: "Exportar video" });
+    await expect(dialog).toContainText(
+      "Se guarda en MP4 a 320 × 240 px, con su sonido."
+    );
+    await expect(
+      dialog.getByRole("textbox", { name: "Nombre del archivo" })
+    ).toHaveValue("video-editado");
+    await page.keyboard.press("Escape");
+
+    const { name, bytes } = await exportVideo(page, isMobile);
+    expect(name).toBe("video-editado.mp4");
+    const exported = await readVideo(page, bytes, {
+      times: [0.5, 1.5],
+      points: [STROKE, STRIP, LEFT, RIGHT],
+    });
+    expect(exported.width).toBe(VIDEO.width);
+    expect(exported.height).toBe(VIDEO.height);
+    expect(exported.duration).toBeCloseTo(VIDEO.duration, 1);
+    expect(exported.soundSeconds).toBeGreaterThan(VIDEO.duration - 0.2);
+
+    const [early, late] = exported.colors;
+    // El trazo está en los dos momentos; el video sigue moviéndose debajo.
+    expect(isDark(early[0])).toBe(true);
+    expect(isDark(late[0])).toBe(true);
+    expect(isRed(early[1])).toBe(true);
+    expect(isBlue(late[1])).toBe(true);
+    expect(isDark(early[2])).toBe(true);
+    expect(isWhite(early[3])).toBe(true);
+
+    if (!isMobile) {
+      await expect(
+        page.getByText("Video descargado: video-editado.mp4", { exact: true })
+      ).toBeVisible();
+    }
+  });
+
+  test("en el móvil, si exportar tardó, el video se comparte con un toque más", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, "La hoja de compartir es del móvil");
+    await fakeShareSheet(page);
+    // Como si la exportación hubiera durado más que el último toque.
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "userActivation", {
+        configurable: true,
+        get: () => ({ isActive: false, hasBeenActive: true }),
+      });
+    });
+    await openAndDraw(page, isMobile);
+
+    await openMenuItem(page, "Exportar");
+    const dialog = page.getByRole("dialog", { name: "Exportar video" });
+    await dialog.getByRole("button", { name: "Exportar" }).click();
+    await expect(dialog.getByText("El video está listo.")).toBeVisible();
+    expect(await page.evaluate(() => Boolean(window.__shared))).toBe(false);
+
+    await dialog.getByRole("button", { name: "Compartir o guardar" }).click();
+    const shared = await page.waitForFunction(() => window.__shared);
+    expect(await shared.jsonValue()).toMatchObject({
+      name: "video-editado.mp4",
+      type: "video/mp4",
+    });
+    await expect(dialog).toBeHidden();
   });
 });
