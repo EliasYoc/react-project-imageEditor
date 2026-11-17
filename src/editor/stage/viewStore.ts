@@ -58,6 +58,12 @@ const documentSize = () => editorStore.getState().canvasSize;
 export const selectZoomLimits = (state: ViewState) =>
   zoomLimits(state.stageSize, documentSize(), state.insets);
 
+/** Centro de la pantalla del área del lienzo que no tapan los `insets`. */
+const visibleCenter = ({ stageSize, insets }: ViewState): Point => ({
+  x: (insets.left + stageSize.width - insets.right) / 2,
+  y: (insets.top + stageSize.height - insets.bottom) / 2,
+});
+
 export const createViewStore = () =>
   createStore<ViewState>()((set, get) => {
     /** Aplica los límites de desplazamiento y marca la vista como libre. */
@@ -96,16 +102,7 @@ export const createViewStore = () =>
         );
       },
 
-      zoomBy: (factor) => {
-        const { stageSize, insets } = get();
-        get().zoomAt(
-          {
-            x: (insets.left + stageSize.width - insets.right) / 2,
-            y: (insets.top + stageSize.height - insets.bottom) / 2,
-          },
-          factor
-        );
-      },
+      zoomBy: (factor) => get().zoomAt(visibleCenter(get()), factor),
 
       panBy: (dx, dy) => setFreeView(panBy(get().view, dx, dy)),
 
@@ -115,14 +112,14 @@ export const createViewStore = () =>
 
 export const viewStore = createViewStore();
 
-/** Punto del documento que se ve en el centro del lienzo (donde aparecen los elementos nuevos). */
+/**
+ * Punto del documento que se ve en el centro de lo que no tapa la cabecera
+ * (donde aparecen los elementos nuevos): con el documento ajustado, su
+ * centro.
+ */
 export const documentPointAtViewCenter = (
   state: ViewState = viewStore.getState()
-) =>
-  screenToDocument(
-    { x: state.stageSize.width / 2, y: state.stageSize.height / 2 },
-    state.view
-  );
+) => screenToDocument(visibleCenter(state), state.view);
 
 export const useViewStore = <T>(selector: (state: ViewState) => T): T =>
   useStore(viewStore, selector);

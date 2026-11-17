@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_ZOOM } from "../engine/viewport";
 import { editorStore } from "../store/editorStore";
-import { createViewStore } from "./viewStore";
+import { createViewStore, documentPointAtViewCenter } from "./viewStore";
 
 let store: ReturnType<typeof createViewStore>;
 const state = () => store.getState();
@@ -60,6 +60,13 @@ describe("viewStore", () => {
     const { x, y, scale } = state().view;
     expect((500 - x) / scale).toBeCloseTo(500);
     expect((350 - y) / scale).toBeCloseTo(500);
+  });
+
+  it("los elementos nuevos aparecen en el centro de lo que se ve", () => {
+    state().setStageSize({ width: 1000, height: 600 });
+    state().setInsets({ top: 100, right: 0, bottom: 0, left: 0 });
+    // Ajustado: el centro de lo que se ve es el centro del documento.
+    expect(documentPointAtViewCenter(state())).toEqual({ x: 500, y: 500 });
   });
 
   it("panBy no deja perder el documento", () => {
