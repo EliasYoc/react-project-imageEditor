@@ -19,6 +19,7 @@ const GROUPS: { title: string; items: [action: string, keys: string][] }[] = [
       ["Acercar / alejar", `${KEYS.zoomIn} · ${KEYS.zoomOut}`],
       ["Zoom con la rueda", `${MOD_KEY}+rueda`],
       ["Ajustar a la pantalla", KEYS.fit],
+      ["Ocultar / mostrar las barras", KEYS.toggleBars],
       ["Desplazar", "Espacio + arrastrar"],
     ],
   },

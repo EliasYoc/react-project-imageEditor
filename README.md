@@ -45,7 +45,7 @@ src/
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, desenfoque, estabilizador, presets
     elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
-  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, zoom.
+  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, view.
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
                 subcarpetas que tienen algo; los tests de la función quedan en su raíz
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
@@ -90,24 +90,25 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 
 ## Uso
 
-| Acción                | Ratón / teclado                                                         | Pantalla táctil                     |
-| --------------------- | ----------------------------------------------------------------------- | ----------------------------------- |
-| Dibujar               | Clic izquierdo y arrastrar                                              | Un dedo o el lápiz                  |
-| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / −                | Pellizcar con dos dedos             |
-| Desplazar             | Rueda, espacio + arrastrar o botón central                              | Arrastrar con dos dedos             |
-| Ajustar a la pantalla | Ctrl/⌘ + 0                                                              | Doble toque con dos dedos           |
-| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)                            | Botones de la cabecera              |
-| Editar un texto       | Doble clic, o clic en un texto ya seleccionado                          | Tocar un texto ya seleccionado      |
-| Eliminar un elemento  | Supr / Retroceso (modo Texto)                                           | Botón de la papelera                |
-| Negrita               | Ctrl/⌘ + B (modo Texto)                                                 | Panel "Fuente"                      |
-| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                   | Barra inferior                      |
-| Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                     | Igual                               |
-| Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón) | Tocar el slider del borde izquierdo |
-| Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                  | Menú ⋮ → "Exportar"                 |
-| Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                     | Igual                               |
-| Cerrar un panel       | Escape o ✕                                                              | ✕, tocar fuera o deslizar abajo     |
-| Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                      | —                                   |
-| Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V              | Botón "Abrir una foto"              |
+| Acción                | Ratón / teclado                                                                       | Pantalla táctil                     |
+| --------------------- | ------------------------------------------------------------------------------------- | ----------------------------------- |
+| Dibujar               | Clic izquierdo y arrastrar                                                            | Un dedo o el lápiz                  |
+| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / −, o menú …                    | Pellizcar con dos dedos o menú …    |
+| Desplazar             | Rueda, espacio + arrastrar o botón central                                            | Arrastrar con dos dedos             |
+| Ajustar a la pantalla | Ctrl/⌘ + 0 o menú … → "Ajustar a la pantalla"                                         | Doble toque con dos dedos o menú …  |
+| Ocultar las barras    | O (otra vez para mostrarlas), o el botón del ojo junto al menú … (abajo a la derecha) | Botón del ojo junto al menú …       |
+| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)                                          | Botones de la cabecera              |
+| Editar un texto       | Doble clic, o clic en un texto ya seleccionado                                        | Tocar un texto ya seleccionado      |
+| Eliminar un elemento  | Supr / Retroceso (modo Texto)                                                         | Botón de la papelera                |
+| Negrita               | Ctrl/⌘ + B (modo Texto)                                                               | Panel "Fuente"                      |
+| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                                 | Barra inferior                      |
+| Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                                   | Igual                               |
+| Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón)               | Tocar el slider del borde izquierdo |
+| Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                                | Menú ⋮ → "Exportar"                 |
+| Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                                   | Igual                               |
+| Cerrar un panel       | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo     |
+| Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
+| Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 

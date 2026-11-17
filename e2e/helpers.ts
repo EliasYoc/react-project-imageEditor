@@ -113,19 +113,35 @@ export async function stageRect(page: Page): Promise<Rect> {
 }
 
 /**
- * Dónde se ve el documento: el rectángulo blanco alrededor del centro del
- * lienzo (vale con el documento aún en blanco). Se busca en una fila y una
+ * El centro del documento ajustado. El lienzo ocupa toda la pantalla y el
+ * ajuste deja libre la cabecera: el documento queda centrado entre la
+ * cabecera y el borde de abajo.
+ */
+export async function fittedCenter(page: Page): Promise<Point> {
+  const stage = await stageRect(page);
+  // Su alto de layout: la cabecera entra con una animación (translateY) y su
+  // posición en pantalla puede no ser la final todavía.
+  const headerHeight = await page
+    .getByRole("banner")
+    .evaluate((header) => (header as HTMLElement).offsetHeight);
+  return {
+    x: Math.round(stage.x + stage.width / 2),
+    y: Math.round(stage.y + (headerHeight + stage.height) / 2),
+  };
+}
+
+/**
+ * Dónde se ve el documento ajustado: el rectángulo blanco alrededor de su
+ * centro (vale con el documento aún en blanco). Se busca en una fila y una
  * columna que pasan por el centro.
  *
- * El ancho se mide hacia la derecha y se duplica (el documento ajustado está
- * centrado): en el móvil, el slider de tamaño tapa el borde izquierdo.
+ * El ancho se mide hacia la derecha y el alto hacia arriba, y se duplican:
+ * en el móvil, el slider de tamaño tapa el borde izquierdo, y abajo el
+ * documento puede quedar bajo la barra de herramientas, que flota encima.
  */
 export async function documentRect(page: Page): Promise<Rect> {
   const stage = await stageRect(page);
-  const center = {
-    x: Math.round(stage.x + stage.width / 2),
-    y: Math.round(stage.y + stage.height / 2),
-  };
+  const center = await fittedCenter(page);
   const row = await screenPixels(page, {
     x: stage.x,
     y: center.y,
@@ -152,11 +168,13 @@ export async function documentRect(page: Page): Promise<Rect> {
     center.y - stage.y
   );
   const halfWidth = across.end - (center.x - stage.x);
+  const halfHeight = center.y - stage.y - down.start;
+  // Simétrico respecto al centro: pointIn(rect, 0.5, 0.5) cae justo en él.
   return {
     x: center.x - halfWidth,
-    y: stage.y + down.start,
-    width: halfWidth * 2 + 1,
-    height: down.end - down.start + 1,
+    y: center.y - halfHeight,
+    width: halfWidth * 2,
+    height: halfHeight * 2,
   };
 }
 
@@ -247,7 +265,7 @@ export async function tapAt(page: Page, point: Point, touch: boolean) {
  * inicio").
  */
 export async function openMenuItem(page: Page, name: string) {
-  await page.getByRole("button", { name: "Más opciones" }).click();
+  await page.getByRole("button", { name: "Más opciones", exact: true }).click();
   await page.getByRole("menuitem", { name }).click();
 }
 
@@ -256,7 +274,7 @@ export async function openBlankCanvas(page: Page, preset = "Cuadrado") {
   await page.goto("/");
   await page.getByRole("button", { name: new RegExp(`^${preset},`) }).click();
   await expect(
-    page.getByRole("button", { name: "Más opciones" })
+    page.getByRole("button", { name: "Más opciones", exact: true })
   ).toBeVisible();
   await expectDocumentVisible(page);
 }
@@ -268,7 +286,7 @@ export async function openPhoto(page: Page) {
   await page.getByRole("button", { name: "Abrir una foto" }).click();
   await (await chooser).setFiles(PHOTO.path);
   await expect(
-    page.getByRole("button", { name: "Más opciones" })
+    page.getByRole("button", { name: "Más opciones", exact: true })
   ).toBeVisible();
 }
 

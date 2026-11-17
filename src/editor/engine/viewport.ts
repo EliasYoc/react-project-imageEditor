@@ -17,19 +17,39 @@ export interface View {
 export const IDENTITY_VIEW: View = { x: 0, y: 0, scale: 1 };
 
 /**
- * Vista que muestra el documento completo y centrado (como `object-fit:
- * contain`). Antes este cálculo se repetía a mano en cada conversión de
- * coordenadas (`getCalculatedCoordsOfContainCanvas`).
+ * Bordes del área del lienzo tapados por algo opaco (p. ej. la cabecera, que
+ * flota encima): al ajustar, el documento los deja libres.
  */
-export const fitView = (stage: Size, doc: Size): View => {
-  if (!stage.width || !stage.height || !doc.width || !doc.height) {
+export interface Insets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
+
+/**
+ * Vista que muestra el documento completo y centrado (como `object-fit:
+ * contain`) en el área del lienzo menos `insets`. Antes este cálculo se
+ * repetía a mano en cada conversión de coordenadas
+ * (`getCalculatedCoordsOfContainCanvas`).
+ */
+export const fitView = (
+  stage: Size,
+  doc: Size,
+  insets: Insets = NO_INSETS
+): View => {
+  const width = stage.width - insets.left - insets.right;
+  const height = stage.height - insets.top - insets.bottom;
+  if (width <= 0 || height <= 0 || !doc.width || !doc.height) {
     return IDENTITY_VIEW;
   }
-  const scale = Math.min(stage.width / doc.width, stage.height / doc.height);
+  const scale = Math.min(width / doc.width, height / doc.height);
   return {
     scale,
-    x: (stage.width - doc.width * scale) / 2,
-    y: (stage.height - doc.height * scale) / 2,
+    x: insets.left + (width - doc.width * scale) / 2,
+    y: insets.top + (height - doc.height * scale) / 2,
   };
 };
 
@@ -62,8 +82,12 @@ export interface ZoomLimits {
 }
 
 /** Se puede alejar hasta la mitad del ajuste y acercar hasta MAX_ZOOM. */
-export const zoomLimits = (stage: Size, doc: Size): ZoomLimits => {
-  const fit = fitView(stage, doc).scale;
+export const zoomLimits = (
+  stage: Size,
+  doc: Size,
+  insets: Insets = NO_INSETS
+): ZoomLimits => {
+  const fit = fitView(stage, doc, insets).scale;
   return { min: fit / 2, max: Math.max(MAX_ZOOM, fit) };
 };
 

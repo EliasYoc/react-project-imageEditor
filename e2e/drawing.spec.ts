@@ -5,6 +5,7 @@ import {
   expectColorAt,
   exportImage,
   fakeShareSheet,
+  fittedCenter,
   isColorful,
   isDark,
   isWhite,
@@ -90,7 +91,9 @@ test.describe("Dibujo", () => {
       );
     } else {
       await slider.focus();
-      for (let i = 0; i < 5; i++) await page.keyboard.press("PageUp");
+      // Fin: el tamaño máximo. Con el ratón el trazo se afina por la
+      // velocidad; así el grueso mide con holgura más del doble que el fino.
+      await page.keyboard.press("End");
     }
     const size = parseInt((await slider.getAttribute("aria-valuetext")) ?? "");
     expect(size).toBeGreaterThan(40);
@@ -148,11 +151,7 @@ test.describe("Dibujo", () => {
 
     // La foto es negra a la izquierda y blanca a la derecha; el trazo
     // amarillo cruza las dos mitades por el centro.
-    const stage = await stageRect(page);
-    const center = {
-      x: Math.round(stage.x + stage.width / 2),
-      y: Math.round(stage.y + stage.height / 2),
-    };
+    const center = await fittedCenter(page);
     await drag(
       page,
       [
@@ -180,11 +179,19 @@ test.describe("Dibujo", () => {
 
   test("acerca y aleja el lienzo", async ({ page, isMobile }) => {
     await openBlankCanvas(page);
-    const zoom = page.getByTitle("Nivel de zoom");
-    const percent = async () => parseInt(await zoom.innerText());
+    const viewMenu = page.getByRole("button", {
+      name: "Más opciones de la vista",
+    });
+    const menu = page.getByRole("menu");
+    // El nivel de zoom se lee en el menú de la vista ("Zoom: 36 %").
+    const percent = async () =>
+      Number((await menu.getByText(/^Zoom:/).innerText()).match(/\d+/)?.[0]);
+    await viewMenu.click();
     const fitted = await percent();
 
     if (isMobile) {
+      await viewMenu.click(); // cierra el menú
+      await expect(menu).toBeHidden();
       const stage = await stageRect(page);
       await pinch(
         page,
@@ -192,12 +199,42 @@ test.describe("Dibujo", () => {
         80,
         240
       );
+      await viewMenu.click();
     } else {
-      await page.getByRole("button", { name: "Acercar" }).click();
+      // Acercar deja el menú abierto.
+      await menu.getByRole("menuitem", { name: "Acercar" }).click();
     }
     await expect.poll(percent).toBeGreaterThan(fitted);
 
-    await page.getByRole("button", { name: "Ajustar a la pantalla" }).click();
+    await menu.getByRole("menuitem", { name: "Ajustar a la pantalla" }).click();
+    await expect(menu).toBeHidden();
+    await viewMenu.click();
     await expect.poll(percent).toBe(fitted);
+  });
+
+  test("ocultar las barras deja todo el sitio al lienzo", async ({
+    page,
+    isMobile,
+  }) => {
+    await openBlankCanvas(page);
+    const undo = page.getByRole("button", { name: "Deshacer" });
+    const tools = page.getByRole("group", { name: "Herramientas de dibujo" });
+    const stage = await stageRect(page);
+    // Justo debajo del borde de arriba, en el centro.
+    const top = { x: stage.x + stage.width / 2, y: stage.y + 10 };
+    await expect(undo).toBeVisible();
+    if (!isMobile) await expectColorAt(page, top, isDark);
+
+    // El botón del ojo, junto al menú de la vista.
+    await page.getByRole("button", { name: "Ocultar las barras" }).click();
+    await expect(undo).toBeHidden();
+    await expect(tools).toBeHidden();
+    // En escritorio el lienzo cuadrado manda el alto: ahora llega arriba.
+    if (!isMobile) await expectColorAt(page, top, isWhite);
+
+    // Sigue a la vista con las barras ocultas.
+    await page.getByRole("button", { name: "Mostrar las barras" }).click();
+    await expect(undo).toBeVisible();
+    await expect(tools).toBeVisible();
   });
 });

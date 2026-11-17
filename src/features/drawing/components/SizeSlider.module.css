@@ -5,7 +5,11 @@
  */
 .wrapper {
   position: absolute;
-  top: 50%;
+  /*
+   * Centrado entre la cabecera y la barra inferior, que flotan sobre el
+   * lienzo (EditorShell pone sus alturas; 0 con las barras ocultas).
+   */
+  top: calc(50% + (var(--header-offset, 0px) - var(--footer-height, 0px)) / 2);
   left: 0;
   z-index: var(--z-toolbar);
   padding: 0 0.5rem;

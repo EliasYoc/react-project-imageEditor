@@ -13,7 +13,8 @@ export type ShortcutAction =
   | { type: "toggleBold" }
   | { type: "deselect" }
   | { type: "export" }
-  | { type: "showShortcuts" };
+  | { type: "showShortcuts" }
+  | { type: "toggleBars" };
 
 type KeyInfo = Pick<
   KeyboardEvent,
@@ -30,6 +31,7 @@ export const BRUSH_SIZE_STEP = 1.25;
  * - Ctrl/⌘ + Z: deshacer · Ctrl/⌘ + Shift + Z o Ctrl/⌘ + Y: rehacer
  * - Ctrl/⌘ + S: exportar · ?: lista de atajos
  * - Ctrl/⌘ + 0: ajustar · Ctrl/⌘ + = / −: acercar / alejar
+ * - O: ocultar / mostrar las barras (de "Ocultar"; en los dos modos)
  * - B / E: último pincel / último borrador (modo Dibujar)
  * - [ / ]: pincel más pequeño / más grande (modo Dibujar). Se usa la tecla
  *   física (`code`): en un teclado español los corchetes necesitan AltGr.
@@ -58,6 +60,7 @@ export const getShortcutAction = (
   }
 
   if (key === "?") return { type: "showShortcuts" };
+  if (lowerKey === "o" && !shiftKey) return { type: "toggleBars" };
 
   if (mode === "text") {
     if (key === "Delete" || key === "Backspace")

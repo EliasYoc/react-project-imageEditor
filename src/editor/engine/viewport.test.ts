@@ -35,6 +35,26 @@ describe("fitView", () => {
       fitView({ width: 0, height: 0 }, { width: 1000, height: 1000 })
     ).toEqual(IDENTITY_VIEW);
   });
+
+  it("deja libre lo que tapa la cabecera y se centra en el resto", () => {
+    // Área 1000 × 600 con 100 px tapados arriba: quedan 1000 × 500.
+    expect(
+      fitView(
+        { width: 1000, height: 600 },
+        { width: 1000, height: 1000 },
+        { top: 100, right: 0, bottom: 0, left: 0 }
+      )
+    ).toEqual({ scale: 0.5, x: 250, y: 100 });
+  });
+
+  it("los límites de zoom parten del ajuste con lo que tapa la cabecera", () => {
+    const limits = zoomLimits(
+      { width: 1000, height: 600 },
+      { width: 1000, height: 1000 },
+      { top: 100, right: 0, bottom: 0, left: 0 }
+    );
+    expect(limits.min).toBe(0.25);
+  });
 });
 
 describe("conversión pantalla ↔ documento", () => {

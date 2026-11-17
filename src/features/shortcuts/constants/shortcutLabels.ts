@@ -17,6 +17,7 @@ export const SHORTCUT_LABELS = {
   zoomIn: `${MOD_KEY}+=`,
   zoomOut: `${MOD_KEY}+−`,
   fit: `${MOD_KEY}+0`,
+  toggleBars: "O",
   drawBrush: "B",
   eraser: "E",
   brushSize: "[ / ]",

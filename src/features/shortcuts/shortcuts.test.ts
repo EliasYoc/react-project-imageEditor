@@ -1,5 +1,6 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { uiStore } from "../../app/uiStore";
 import { createStroke } from "../../editor/model/factories";
 import { viewStore } from "../../editor/stage/viewStore";
 import {
@@ -91,6 +92,16 @@ describe("getShortcutAction", () => {
     expect(getShortcutAction(key("s", { metaKey: true }), "home")).toBeNull();
   });
 
+  it("O oculta o muestra las barras, en los dos modos", () => {
+    for (const mode of ["draw", "text"] as const) {
+      expect(getShortcutAction(key("o"), mode)).toEqual({
+        type: "toggleBars",
+      });
+    }
+    expect(getShortcutAction(key("o", { ctrlKey: true }), "draw")).toBeNull();
+    expect(getShortcutAction(key("o"), "home")).toBeNull();
+  });
+
   it("no hace nada en la pantalla de inicio ni con Alt", () => {
     expect(getShortcutAction(key("z", { ctrlKey: true }), "home")).toBeNull();
     expect(
@@ -146,6 +157,15 @@ describe("useKeyboardShortcuts", () => {
     expect(editorStore.getState().brush.settings.pen.size).toBe(3);
     for (let i = 0; i < 5; i++) press(window, { key: "[" });
     expect(editorStore.getState().brush.settings.pen.size).toBe(1);
+  });
+
+  it("O oculta y vuelve a mostrar las barras", () => {
+    renderHook(() => useKeyboardShortcuts());
+    uiStore.setState({ areBarsHidden: false });
+    press(window, { key: "o" });
+    expect(uiStore.getState().areBarsHidden).toBe(true);
+    press(window, { key: "O" });
+    expect(uiStore.getState().areBarsHidden).toBe(false);
   });
 
   it("acerca la vista con Ctrl + =", () => {
