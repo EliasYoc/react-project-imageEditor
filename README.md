@@ -51,7 +51,7 @@ src/
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
-e2e/            Tests de punta a punta (Playwright) y sus imágenes de prueba (fixtures/)
+e2e/            Tests de punta a punta (Playwright) y sus archivos de prueba (fixtures/)
 ```
 
 ## Cómo funciona el lienzo
@@ -109,6 +109,7 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Cerrar un panel       | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo     |
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |
+| Abrir un video        | En el inicio: botón "Agregar video"                                                   | Igual                               |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 
@@ -117,17 +118,31 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 - **Pantalla de inicio** (`features/home/components/HomeScreen.tsx`):
   - **Seguir editando**, si ya hay un documento;
   - **Abrir una foto**, con el botón, arrastrándola a la ventana o pegándola;
+  - **Agregar video**, con el botón (ver [Video](#video));
   - **Lienzo en blanco** en cuatro tamaños: Pantalla, Cuadrado 2048², Historia 1080×1920 y Horizontal 1920×1080.
-- **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo, se pide confirmación antes.
+- **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo (un dibujo, una foto, un video o un fondo), se pide confirmación antes.
 - **Soltar un archivo** sobre la app nunca hace que el navegador lo abra (y se salga del editor).
 - **Avisos** (`components/ui/Toast`, Radix Toast):
   - `toast.success(…)` y `toast.error(…)` desde cualquier parte;
-  - se usan al descargar la imagen y cuando falla exportar o abrir una imagen.
+  - se usan al descargar la imagen y cuando falla exportar o abrir una imagen o un video.
 - **Diálogos globales:** los que se abren desde un botón y un atajo (exportar y la lista de atajos) viven en `app/uiStore.ts`.
+
+## Video
+
+Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se escribe y se ponen fondos encima, y esos cambios se ven durante todo el video.
+
+- **Abrirlo** (`features/home/utils/openVideoFile.ts`): el archivo se lee con un `<video>` que no está en la página, desde una URL de objeto. Así no se carga entero en memoria. Queda en pausa en su primer fotograma.
+- **Límites**, comprobados al abrir (con un aviso que dice el motivo):
+  - hasta **2 minutos**: el video exportado se arma en memoria, unos 47 MB por minuto en Full HD;
+  - el documento mide lo que el video, hasta **1920 px** de lado mayor (Full HD) y con los lados pares, que es lo que admite el códec H.264. Ese es también el tamaño al exportar;
+  - el navegador tiene que tener **WebCodecs** (Edge, Chrome, Safari 16.4 o posterior y Firefox de escritorio): sin él no se podría exportar, y es mejor saberlo antes de editar.
+- **En el store** va en `photo.video` (el elemento, el archivo, su URL y la duración), fuera del historial como la foto. Al empezar otro documento se suelta: deja de reproducirse y se libera la URL (`editor/store/videoLifecycle.ts`). Al volver al inicio se pausa.
+- **En el lienzo**, la capa de fondo es una imagen de Konva cuyo origen es el `<video>`: pinta su fotograma actual. La capa de color, el resaltador y el desenfoque lo tratan como a una foto.
+- **Exportar** guarda, de momento, una imagen del fotograma que se ve.
 
 ## Fondo (color y degradado)
 
-- La **capa de color** (`backdrop` en el store) es parte del documento y del historial: se puede deshacer. Sin foto es el fondo del lienzo; con foto va **encima como un filtro**, con opacidad y modo de fusión, sin reemplazarla.
+- La **capa de color** (`backdrop` en el store) es parte del documento y del historial: se puede deshacer. Sin foto ni video es el fondo del lienzo; con uno de ellos va **encima como un filtro**, con opacidad y modo de fusión, sin reemplazarlo.
 - Los degradados (lineal, radial y cónico) usan la **geometría de CSS** (`editor/engine/fill/`): el mismo ángulo y centro se ven igual que en `linear-gradient`, `radial-gradient` y `conic-gradient`. `paintFill` los pinta a cualquier resolución (lienzo, exportación, vistas previas).
 - El editor (botón **Fondo** de la cabecera) aplica los cambios en vivo: paradas que se arrastran o se mueven con el teclado, dial de ángulo, centro arrastrable y presets.
 
@@ -141,7 +156,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 
 - **El editor se carga bajo demanda** (`src/app/EditorShell.tsx`).
   - **Qué lleva:** todo lo que usa Konva (y el reconciliador de react-konva), en su propio archivo.
-  - **El inicio** solo descarga el JS principal (~114 KB gzip; el motor de pinceles va con el editor) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
+  - **El inicio** solo descarga el JS principal (~115 KB gzip; el motor de pinceles va con el editor) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
   - **Con una red lenta**, si se entra antes de que llegue, se ve "Cargando el editor" un momento.
 - **Caché:** los archivos de `/assets` llevan hash y Vercel los sirve con caché de un año (`headers` en `vercel.json`).
 - **Medido en Edge** con el build de producción y la red limitada a 150 ms / 1,6 Mbps:
@@ -176,6 +191,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 
 - **Qué prueban:**
   - el inicio: los lienzos en blanco, abrir, soltar o pegar una foto y la confirmación antes de descartar;
+  - el video: abrirlo y ver su primer fotograma, dibujar encima, la confirmación antes de descartarlo y el aviso si el archivo no se puede abrir;
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
@@ -186,6 +202,9 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Dos pantallas:** escritorio (1280 × 800, ratón y teclado) y móvil (390 × 844, táctil). En el móvil los trazos y el pellizco son toques reales, y la hoja de compartir se cambia por una falsa que guarda el archivo.
 - **Navegador:** el **Microsoft Edge** del equipo (`channel: "msedge"`), así que no hace falta `npx playwright install`.
 - **Cómo se comprueba el lienzo:** leyendo los **píxeles** de capturas de pantalla y de la imagen exportada. Se decodifican en el propio navegador, sin librerías de imágenes.
+- **Archivos de prueba** (`e2e/fixtures/`):
+  - `foto.png`: 400 × 300, negra a la izquierda y blanca a la derecha;
+  - `video.mp4`: 320 × 240, 2 segundos, H.264 con sonido AAC (un tono). También es negro a la izquierda y blanco a la derecha, y su franja de arriba es roja el primer segundo y azul el segundo: así un test sabe en qué momento del video está. Se generó una vez en Edge, dibujando en un canvas y codificándolo con mediabunny.
 - **Si un test falla:** Playwright guarda una traza (capturas, DOM y red de cada paso) en `test-results/`. Se abre con `npx playwright show-trace <ruta>/trace.zip`. El informe HTML queda en `playwright-report/`.
 
 ## CI (GitHub Actions)

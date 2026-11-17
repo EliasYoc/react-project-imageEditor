@@ -7,6 +7,7 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
+import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
 import AngleDial from "./components/AngleDial";
 import BackdropPanel from "./components/BackdropPanel";
 import GradientStopsBar from "./components/GradientStopsBar";
@@ -116,6 +117,7 @@ describe("GradientStopsBar", () => {
 
 describe("BackdropPanel", () => {
   beforeEach(() => {
+    mockObjectUrls();
     editorStore.setState({ ...createInitialState(), mode: "draw" });
   });
 
@@ -154,6 +156,7 @@ describe("BackdropPanel", () => {
         preview: null,
         mimeType: "image/png",
         fileName: "foto",
+        video: null,
       },
     });
     render(<BackdropPanel />);
@@ -162,5 +165,26 @@ describe("BackdropPanel", () => {
       "multiply"
     );
     expect(editorStore.getState().backdrop.blend).toBe("multiply");
+  });
+
+  it("con un video de fondo, los textos hablan del video", async () => {
+    editorStore.setState({
+      photo: {
+        source: null,
+        preview: null,
+        mimeType: null,
+        fileName: "clip",
+        video: createFakeVideoSource(),
+      },
+    });
+    render(<BackdropPanel />);
+    expect(screen.getByText(/^El video se ve tal cual\./)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Color" }));
+    expect(
+      screen.getByRole("heading", { name: "Sobre el video" })
+    ).toBeInTheDocument();
+    // Como sobre una foto, la capa de color se puede fundir con el video.
+    expect(screen.getByLabelText("Modo de fusión")).toBeInTheDocument();
   });
 });

@@ -1,4 +1,4 @@
-import { ArrowRight, ImagePlus } from "lucide-react";
+import { ArrowRight, ImagePlus, Video } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { Button } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
@@ -11,6 +11,7 @@ import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { MOD_KEY } from "../../shortcuts";
 import styles from "./HomeScreen.module.css";
 import { openImageFile } from "../utils/openImageFile";
+import { openVideoFile, VideoOpenError } from "../utils/openVideoFile";
 import { useImageDropAndPaste } from "../hooks/useImageDrop";
 
 /** Lado mayor del lienzo "Pantalla". */
@@ -56,7 +57,8 @@ const CANVAS_PRESETS: { id: string; label: string; size: () => Size }[] = [
 
 /**
  * Pantalla de inicio: seguir con el documento abierto, abrir una foto (botón,
- * arrastrar o pegar) o empezar un lienzo en blanco de un tamaño.
+ * arrastrar o pegar), abrir un video (botón) o empezar un lienzo en blanco de
+ * un tamaño.
  *
  * Empezar otro documento borra el actual y su historial, así que si tiene
  * algo se pide confirmación antes.
@@ -69,6 +71,7 @@ const HomeScreen = () => {
   const newDocument = useEditorStore((state) => state.newDocument);
   const canHover = useMediaQuery(HOVER_QUERY);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
   // Lo que se hará al confirmar "Descartar y abrir".
   const [pending, setPending] = useState<(() => void) | null>(null);
 
@@ -90,17 +93,36 @@ const HomeScreen = () => {
     }
   };
 
+  const openVideo = async (file: File) => {
+    setStatus("loadingVideo");
+    try {
+      loadPhoto(await openVideoFile(file));
+      setMode("draw");
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        error instanceof VideoOpenError
+          ? error.message
+          : "No se pudo abrir el video"
+      );
+    } finally {
+      setStatus("idle");
+    }
+  };
+
   const isDragging = useImageDropAndPaste((file) =>
     runOrConfirm(() => void openFile(file))
   );
 
-  const onFileChosen = (event: ChangeEvent<HTMLInputElement>) => {
-    const input = event.target;
-    const file = input.files?.[0];
-    // Permite volver a elegir el mismo archivo.
-    input.value = "";
-    if (file) void openFile(file);
-  };
+  const onFileChosen =
+    (open: (file: File) => Promise<void>) =>
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const input = event.target;
+      const file = input.files?.[0];
+      // Permite volver a elegir el mismo archivo.
+      input.value = "";
+      if (file) void open(file);
+    };
 
   return (
     <div className={styles.home}>
@@ -129,7 +151,7 @@ const HomeScreen = () => {
             hidden
             type="file"
             accept="image/*"
-            onChange={onFileChosen}
+            onChange={onFileChosen(openFile)}
           />
           <Button
             variant="primary"
@@ -145,6 +167,21 @@ const HomeScreen = () => {
             </p>
           )}
         </div>
+
+        <input
+          ref={videoInputRef}
+          hidden
+          type="file"
+          accept="video/*"
+          onChange={onFileChosen(openVideo)}
+        />
+        <Button
+          className={styles.action}
+          onClick={() => runOrConfirm(() => videoInputRef.current?.click())}
+        >
+          <Video aria-hidden="true" />
+          Agregar video
+        </Button>
 
         <section className={styles.blank} aria-labelledby="home-blank">
           <h2 id="home-blank" className={styles.sectionTitle}>

@@ -9,6 +9,7 @@ import styles from "./App.module.css";
 
 const STATUS_LABELS = {
   loading: "Abriendo la imagen",
+  loadingVideo: "Abriendo el video",
   exporting: "Exportando la imagen",
 } as const;
 

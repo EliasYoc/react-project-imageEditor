@@ -110,7 +110,8 @@ vi.mock("../../../editor/engine/fill/paintFill", () => ({
   paintFill: vi.fn((ctx: FakeContext) => ctx.canvas.steps.push("fill")),
 }));
 
-vi.mock("../../../editor/store/selectors", () => ({
+vi.mock("../../../editor/store/selectors", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../editor/store/selectors")>()),
   selectStrokeLayers: () => fakes.layers,
   selectElements: () => fakes.elementList,
 }));
@@ -124,11 +125,15 @@ const OUTPUT = { width: 800, height: 600 };
 
 const stateWith = ({
   hasPhoto = true,
+  hasVideo = false,
   fill = null,
-}: { hasPhoto?: boolean; fill?: string | null } = {}) =>
+}: { hasPhoto?: boolean; hasVideo?: boolean; fill?: string | null } = {}) =>
   ({
     canvasSize: DOC,
-    photo: { source: hasPhoto ? { name: "foto" } : null },
+    photo: {
+      source: hasPhoto ? { name: "foto" } : null,
+      video: hasVideo ? { element: { name: "video" } } : null,
+    },
     backdrop: { fill, opacity: 0.5, blend: "overlay" },
   }) as unknown as EditorStore;
 
@@ -261,6 +266,17 @@ describe("createDocumentCompositor", () => {
     expect(steps(result)).toEqual([
       "rect white",
       `draw canvas${canvasAt(2).id} source-over 0.5`,
+    ]);
+  });
+
+  it("sobre un video, la capa de color se funde como sobre una foto", async () => {
+    const compositor = await createDocumentCompositor(
+      stateWith({ hasPhoto: false, hasVideo: true, fill: "red" }),
+      OUTPUT
+    );
+    expect(steps(compositor.render(paintWhite))).toEqual([
+      "rect white",
+      `draw canvas${canvasAt(2).id} overlay 0.5`,
     ]);
   });
 

@@ -15,16 +15,20 @@ const sourceSize = (source: NonNullable<Photo["source"]>): Size =>
  * Compone la imagen final a la resolución de la foto original: el fondo (la
  * foto completa, o blanco) y encima el resto del documento, en el mismo orden
  * que las capas del lienzo (ver `createDocumentCompositor`).
+ *
+ * Con un video de fondo, la imagen es su fotograma actual, al tamaño del
+ * documento.
  */
 export const renderDocument = async () => {
   const state = editorStore.getState();
   const { photo, canvasSize } = state;
   const output = photo.source ? sourceSize(photo.source) : canvasSize;
+  const background = photo.source ?? photo.video?.element;
 
   const compositor = await createDocumentCompositor(state, output);
   return compositor.render((ctx, { width, height }) => {
-    if (photo.source) {
-      ctx.drawImage(photo.source, 0, 0, width, height);
+    if (background) {
+      ctx.drawImage(background, 0, 0, width, height);
     } else {
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, width, height);

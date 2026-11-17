@@ -8,14 +8,15 @@ import type { Size, StrokeEntry } from "../../../editor/model/types";
 import type { EditorStore } from "../../../editor/store/editorStore";
 import {
   selectElements,
+  selectHasBackground,
   selectStrokeLayers,
 } from "../../../editor/store/selectors";
 import { createCanvas, get2dContext } from "../../../lib/canvas";
 import { renderElements } from "./renderElements";
 
 /**
- * Pinta el fondo de un fotograma (la foto, o blanco) en `ctx`, cubriendo todo
- * el canvas, que mide `size`.
+ * Pinta el fondo de un fotograma (la foto, un fotograma del video, o blanco)
+ * en `ctx`, cubriendo todo el canvas, que mide `size`.
  */
 export type DrawBackground = (
   ctx: CanvasRenderingContext2D,
@@ -66,7 +67,7 @@ export const createDocumentCompositor = async (
   state: EditorStore,
   output: Size
 ): Promise<DocumentCompositor> => {
-  const { photo, backdrop, canvasSize } = state;
+  const { backdrop, canvasSize } = state;
   const strokes = selectStrokeLayers(state);
   const elements = selectElements(state);
 
@@ -80,8 +81,8 @@ export const createDocumentCompositor = async (
     fill = createCanvas(output);
     paintFill(get2dContext(fill), backdrop.fill, output);
   }
-  // El modo de fusión solo tiene sentido sobre una foto.
-  const fillBlend = photo.source ? backdrop.blend : "source-over";
+  // El modo de fusión solo tiene sentido sobre una foto o un video.
+  const fillBlend = selectHasBackground(state) ? backdrop.blend : "source-over";
 
   // Como en el lienzo (backgroundBlur.ts): la máscara de los trazos de
   // desenfoque, que en cada `render` se rellena con el fondo desenfocado.

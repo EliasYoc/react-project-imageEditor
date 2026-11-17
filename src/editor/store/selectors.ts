@@ -72,12 +72,26 @@ export const selectIsEditorOpen = (state: EditorStore) => state.mode !== "home";
 
 export const selectCanUndo = (state: EditorStore) => state.past.length > 0;
 
+/** El video abierto como fondo, o null (foto o lienzo en blanco). */
+export const selectVideo = (state: EditorStore) => state.photo.video;
+
+/** El documento tiene de fondo una foto o un video (no es un lienzo en blanco). */
+export const selectHasBackground = (state: EditorStore) =>
+  state.photo.source !== null || state.photo.video !== null;
+
+/**
+ * Lo que el lienzo pinta de fondo: el `<video>` (su fotograma actual) o la
+ * copia de la foto; null en un lienzo en blanco.
+ */
+export const selectBackgroundImage = (state: EditorStore) =>
+  state.photo.video?.element ?? state.photo.preview;
+
 /**
  * El documento tiene algo que se perdería al empezar otro: dibujo, textos o
- * imágenes, una foto o una capa de color.
+ * imágenes, una foto o un video, o una capa de color.
  */
 export const selectHasDocumentContent = (state: EditorStore) =>
   state.log.length > 0 ||
-  state.photo.source !== null ||
+  selectHasBackground(state) ||
   state.backdrop.fill !== null;
 export const selectCanRedo = (state: EditorStore) => state.future.length > 0;

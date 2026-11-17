@@ -32,6 +32,20 @@ export const PHOTO = {
 } as const;
 
 /**
+ * Video de prueba: 320 × 240, 2 segundos a 30 fotogramas por segundo, con
+ * H.264 y sonido AAC (un tono de 440 Hz). Como la foto, es negro a la
+ * izquierda y blanco a la derecha; además, la franja de arriba (1/6 del alto)
+ * es roja durante el primer segundo y azul durante el segundo: así se sabe en
+ * qué momento del video se está.
+ */
+export const VIDEO = {
+  path: "e2e/fixtures/video.mp4",
+  width: 320,
+  height: 240,
+  duration: 2,
+} as const;
+
+/**
  * Decodifica un PNG en el navegador (createImageBitmap + canvas): así se leen
  * píxeles sin instalar un decodificador de PNG para Node. `region` limita los
  * datos que vuelven del navegador (una imagen grande serían millones).
@@ -101,6 +115,8 @@ export const expectColorAt = (
 
 export const isWhite = ({ r, g, b }: Rgba) => r > 240 && g > 240 && b > 240;
 export const isDark = ({ r, g, b }: Rgba) => r < 60 && g < 60 && b < 60;
+export const isRed = ({ r, g, b }: Rgba) => r > 180 && g < 90 && b < 90;
+export const isBlue = ({ r, g, b }: Rgba) => b > 180 && r < 90 && g < 90;
 /** Tiene color (no es gris): el canal más alto y el más bajo se separan. */
 export const isColorful = ({ r, g, b }: Rgba) =>
   Math.max(r, g, b) - Math.min(r, g, b) > 60;
@@ -288,6 +304,46 @@ export async function openPhoto(page: Page) {
   await expect(
     page.getByRole("button", { name: "Más opciones", exact: true })
   ).toBeVisible();
+}
+
+/** Abre el video de prueba con el botón "Agregar video". */
+export async function openVideo(page: Page) {
+  await page.goto("/");
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Agregar video" }).click();
+  await (await chooser).setFiles(VIDEO.path);
+  await expect(
+    page.getByRole("button", { name: "Más opciones", exact: true })
+  ).toBeVisible();
+}
+
+/**
+ * Dónde se ve el video de prueba ajustado. Su centro es el del ajuste y su
+ * proporción se conoce: basta medir el ancho de su mitad derecha, que es
+ * blanca (a la izquierda es negro, como el fondo de la app).
+ */
+export async function videoRect(page: Page): Promise<Rect> {
+  const stage = await stageRect(page);
+  const center = await fittedCenter(page);
+  // Unos píxeles a la derecha del centro: justo en él cambia de negro a blanco.
+  const from = center.x + 4;
+  await expectColorAt(page, { x: from, y: center.y }, isWhite);
+  const row = await screenPixels(page, {
+    x: from,
+    y: center.y,
+    width: Math.floor(stage.x + stage.width - from),
+    height: 1,
+  });
+  let end = 0;
+  while (end < row.width - 1 && isWhite(row.at(end + 1, 0))) end++;
+  const halfWidth = from + end - center.x;
+  const halfHeight = (halfWidth * VIDEO.height) / VIDEO.width;
+  return {
+    x: center.x - halfWidth,
+    y: center.y - halfHeight,
+    width: halfWidth * 2,
+    height: halfHeight * 2,
+  };
 }
 
 /** Espera a que el lienzo muestre el documento (blanco en el centro). */

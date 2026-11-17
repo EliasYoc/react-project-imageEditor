@@ -37,6 +37,7 @@ import styles from "./EditorHeader.module.css";
  */
 const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const hasContent = useEditorStore((state) => state.log.length > 0);
+  const hasVideo = useEditorStore((state) => state.photo.video !== null);
   const canUndo = useEditorStore(selectCanUndo);
   const canRedo = useEditorStore(selectCanRedo);
   const isExporting = useEditorStore((state) => state.status === "exporting");
@@ -149,7 +150,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         open={isClearOpen}
         onOpenChange={setIsClearOpen}
         title="¿Borrar el dibujo?"
-        description="Se quitan los trazos, los textos y las imágenes (la foto y el fondo se quedan). Puedes recuperarlo con Deshacer."
+        description={`Se quitan los trazos, los textos y las imágenes (${hasVideo ? "el video" : "la foto"} y el fondo se quedan). Puedes recuperarlo con Deshacer.`}
         confirmLabel="Borrar"
         destructive
         onConfirm={clearLog}
