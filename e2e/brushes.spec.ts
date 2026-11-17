@@ -4,6 +4,7 @@ import {
   drag,
   exportImage,
   fakeShareSheet,
+  fittedCenter,
   isDark,
   isWhite,
   openBlankCanvas,
@@ -11,7 +12,6 @@ import {
   pointIn,
   readPng,
   screenPixels,
-  stageRect,
   type Pixels,
   type Point,
 } from "./helpers";
@@ -138,12 +138,8 @@ test.describe("Desenfoque", () => {
     await openPhoto(page);
 
     // La foto es negra a la izquierda y blanca a la derecha: el borde entre
-    // las dos mitades pasa por el centro del lienzo.
-    const stage = await stageRect(page);
-    const center = {
-      x: Math.round(stage.x + stage.width / 2),
-      y: Math.round(stage.y + stage.height / 2),
-    };
+    // las dos mitades pasa por el centro del documento.
+    const center = await fittedCenter(page);
     const edge = () => screenRow(page, center, 30);
     const across = [
       { x: center.x - 70, y: center.y },

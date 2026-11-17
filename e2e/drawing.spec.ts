@@ -91,7 +91,9 @@ test.describe("Dibujo", () => {
       );
     } else {
       await slider.focus();
-      for (let i = 0; i < 5; i++) await page.keyboard.press("PageUp");
+      // Fin: el tamaño máximo. Con el ratón el trazo se afina por la
+      // velocidad; así el grueso mide con holgura más del doble que el fino.
+      await page.keyboard.press("End");
     }
     const size = parseInt((await slider.getAttribute("aria-valuetext")) ?? "");
     expect(size).toBeGreaterThan(40);
