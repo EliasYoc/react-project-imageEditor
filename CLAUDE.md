@@ -56,6 +56,7 @@ Si ninguna lo cubre:
     - **Siempre** se ejecutan los que ya existen: `npm run check` y los e2e de lo que cambia.
     - **Con la tarea, pocos tests nuevos:** los de la lógica con riesgo (cálculos, el store, lo que pueda perder datos) y uno o dos e2e del camino principal.
     - **El resto de casos** (bordes, variantes de móvil, mensajes de error…) se apuntan en `TESTS-PENDIENTES.md`, con la tarea a la que pertenecen, para escribirlos cuando el dueño lo pida. Al escribir uno, se quita de la lista.
+    - **Quién los escribe:** si son varios (una feature grande, o los de `TESTS-PENDIENTES.md`), se encargan a un subagente con **Sonnet**, que gasta menos; Claude le explica qué probar y revisa lo que escribe. Dos o tres tests los escribe Claude directamente: explicárselos a un subagente costaría más.
   - **Cambios que el dueño pida después** sobre una tarea ya hecha van en un commit nuevo; no se reescribe un commit que ya existe (nada de `--amend` ni de rebase) salvo que él lo pida.
 
 ## 5. Pendientes
