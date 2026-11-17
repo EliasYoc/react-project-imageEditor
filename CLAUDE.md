@@ -74,7 +74,16 @@ Si ninguna lo cubre:
 - **Cada feature tiene un `index.ts`** que reexporta solo lo que usa el resto de la app. Desde fuera de la feature se importa siempre ese `index.ts`, nunca un archivo interno. Dentro de la feature, los archivos se importan entre sí con rutas relativas, sin pasar por su propio `index.ts`.
 - El `index.ts` solo reexporta; no pongas código en él (en `vite.config.js` está marcado sin efectos secundarios para que no arrastre el editor al bundle del inicio).
 
-## 7. Modelo para un refactor
+## 7. Refactor
+
+El objetivo de un refactor es que el código quede **organizado y fácil de entender para un desarrollador**.
+
+- **Antes de empezar, propón.** Explica qué cambiarías y por qué, con sus ventajas e inconvenientes, y espera la respuesta del dueño.
+- **Si una biblioteca lo resuelve mejor**, sugiérela en esa propuesta: que mejore el rendimiento, simplifique el código o resuelva algo que JavaScript o TypeScript no resuelven bien. Instalarla sigue las reglas 2 y 3: di qué aporta, su peso, su mantenimiento y su licencia, y no la instales sin permiso.
+- **Legible antes que corto.** Si un código más largo se entiende mejor que uno corto y difícil de leer, usa el largo: nombres claros, pasos separados y comentarios donde ayuden.
+- **Al terminar, evalúa el resultado.** Di si el cambio fue una buena opción o no, qué mejoró, qué no y qué harías después: tus conclusiones, con sinceridad.
+
+### Modelo para un refactor
 
 El modelo de la conversación lo elige el dueño (`/model`). Antes de empezar un refactor, Claude le recuerda cuál conviene:
 
