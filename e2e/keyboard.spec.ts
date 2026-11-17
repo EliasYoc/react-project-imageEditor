@@ -33,7 +33,10 @@ test.describe("Teclado", () => {
     await expect(backdrop).toBeFocused();
 
     await page.keyboard.press("Tab");
-    const more = page.getByRole("button", { name: "Más opciones" });
+    const more = page.getByRole("button", {
+      name: "Más opciones",
+      exact: true,
+    });
     await expect(more).toBeFocused();
 
     // Enter abre el menú con el foco en la primera opción: Exportar.
@@ -60,6 +63,15 @@ test.describe("Teclado", () => {
     await expect(shortcuts).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(shortcuts).toBeHidden();
+  });
+
+  test("O oculta y vuelve a mostrar las barras", async ({ page }) => {
+    const undo = page.getByRole("button", { name: "Deshacer" });
+    await expect(undo).toBeVisible();
+    await page.keyboard.press("o");
+    await expect(undo).toBeHidden();
+    await page.keyboard.press("o");
+    await expect(undo).toBeVisible();
   });
 
   test("B, E, [ y ] cambian la herramienta y el tamaño", async ({ page }) => {

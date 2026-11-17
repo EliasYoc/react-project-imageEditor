@@ -1,4 +1,7 @@
-/* Ocupa todo el espacio libre; los <canvas> se colocan dentro con inset: 0. */
+/*
+ * Ocupa toda la pantalla (la cabecera y la barra inferior flotan encima); los
+ * <canvas> se colocan dentro con inset: 0.
+ */
 .stage {
   position: relative;
   flex: 1;
@@ -16,15 +19,46 @@
   visibility: hidden;
 }
 
+/*
+ * Flota sobre el lienzo. Es transparente y no recibe el puntero: entre la
+ * barra y el selector de modo se puede dibujar. Solo sus piezas lo reciben.
+ */
 .footer {
-  position: relative;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: var(--z-toolbar);
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-2) var(--space-2)
     calc(var(--space-2) + env(safe-area-inset-bottom));
+  transition:
+    opacity 0.2s ease,
+    visibility 0s;
+}
+
+.footer > * {
+  pointer-events: auto;
+}
+
+/* Barras ocultas: se desvanece y, al terminar, deja de verse del todo. */
+.footer[data-hidden] {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    visibility 0s linear 0.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer,
+  .footer[data-hidden] {
+    transition: none;
+  }
 }
 
 /* Barra de herramientas: si no cabe, pasa a dos filas sin salirse. */

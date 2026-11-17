@@ -40,7 +40,13 @@
   --font-size-icon: 1.5rem;
 
   /* Paneles (hoja inferior en el móvil, lateral en escritorio). */
-  --header-height: 56px;
+  /*
+   * Alto de la cabecera: sus cápsulas (51px: el botón táctil de 45px, 2px
+   * de relleno y 1px de borde por lado) con 8px (--space-2) por encima y por
+   * debajo, el mismo margen que deja la barra inferior. En px fijos: el
+   * editor lo lee desde JS para ajustar el documento.
+   */
+  --header-height: 67px;
   --panel-width: 360px;
   --sheet-max-height: 75dvh;
   --color-primary: #3d8bff; /* la acción principal (Exportar) */

@@ -4,11 +4,11 @@ import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import { useEffect, type RefObject } from "react";
 import { isTypingTarget } from "../../lib/isTypingTarget";
 import { getLocalPoint, getPointerSamples } from "../engine/pointer";
-import { pinchView, zoomLimits, type View } from "../engine/viewport";
+import { pinchView, type View } from "../engine/viewport";
 import type { Point } from "../model/types";
 import { editorStore } from "../store/editorStore";
 import { createStrokeSession, type LiveBlur } from "./strokeSession";
-import { viewStore } from "./viewStore";
+import { selectZoomLimits, viewStore } from "./viewStore";
 
 /**
  * Si un segundo dedo toca la pantalla antes de este tiempo, el trazo que
@@ -175,9 +175,10 @@ export function useStageInput({
       ) {
         gesture.moved = true;
       }
-      const { stageSize, setView } = viewStore.getState();
-      const limits = zoomLimits(stageSize, editorStore.getState().canvasSize);
-      setView(pinchView(gesture.start, mid, spread, limits));
+      const view = viewStore.getState();
+      view.setView(
+        pinchView(gesture.start, mid, spread, selectZoomLimits(view))
+      );
     };
 
     const endPinch = () => {

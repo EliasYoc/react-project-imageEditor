@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { MAX_ZOOM } from "../engine/viewport";
 import { editorStore } from "../store/editorStore";
-import { createViewStore } from "./viewStore";
+import { createViewStore, documentPointAtViewCenter } from "./viewStore";
 
 let store: ReturnType<typeof createViewStore>;
 const state = () => store.getState();
@@ -47,6 +47,26 @@ describe("viewStore", () => {
     state().fitToScreen();
     expect(state().view).toEqual({ x: 0, y: 250, scale: 0.5 });
     expect(state().isFitted).toBe(true);
+  });
+
+  it("al tapar la cabecera parte del área, se vuelve a ajustar en el resto", () => {
+    state().setStageSize({ width: 1000, height: 600 });
+    state().setInsets({ top: 100, right: 0, bottom: 0, left: 0 });
+    expect(state().view).toEqual({ x: 250, y: 100, scale: 0.5 });
+
+    // Los botones acercan respecto al centro de lo que se ve (500, 350):
+    // sigue mostrando el centro del documento.
+    state().zoomBy(2);
+    const { x, y, scale } = state().view;
+    expect((500 - x) / scale).toBeCloseTo(500);
+    expect((350 - y) / scale).toBeCloseTo(500);
+  });
+
+  it("los elementos nuevos aparecen en el centro de lo que se ve", () => {
+    state().setStageSize({ width: 1000, height: 600 });
+    state().setInsets({ top: 100, right: 0, bottom: 0, left: 0 });
+    // Ajustado: el centro de lo que se ve es el centro del documento.
+    expect(documentPointAtViewCenter(state())).toEqual({ x: 500, y: 500 });
   });
 
   it("panBy no deja perder el documento", () => {
