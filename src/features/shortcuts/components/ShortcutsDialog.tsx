@@ -1,9 +1,15 @@
 import { useUiStore } from "../../../app/uiStore";
 import { Dialog } from "../../../components/ui/Dialog";
+import { useEditorStore } from "../../../editor/store/editorStore";
 import { MOD_KEY, SHORTCUT_LABELS as KEYS } from "../constants/shortcutLabels";
 import styles from "./ShortcutsDialog.module.css";
 
-const GROUPS: { title: string; items: [action: string, keys: string][] }[] = [
+interface ShortcutGroup {
+  title: string;
+  items: [action: string, keys: string][];
+}
+
+const GROUPS: ShortcutGroup[] = [
   {
     title: "General",
     items: [
@@ -41,10 +47,18 @@ const GROUPS: { title: string; items: [action: string, keys: string][] }[] = [
   },
 ];
 
+/** Solo aparece con un video abierto. */
+const VIDEO_GROUP: ShortcutGroup = {
+  title: "Video",
+  items: [["Reproducir / pausar", KEYS.togglePlayback]],
+};
+
 /** Lista de atajos de teclado (se abre con "?" o desde el menú ⋮). */
 const ShortcutsDialog = () => {
   const isOpen = useUiStore((state) => state.dialog === "shortcuts");
   const closeDialog = useUiStore((state) => state.closeDialog);
+  const hasVideo = useEditorStore((state) => state.photo.video !== null);
+  const groups = hasVideo ? [...GROUPS, VIDEO_GROUP] : GROUPS;
 
   return (
     <Dialog
@@ -53,7 +67,7 @@ const ShortcutsDialog = () => {
       title="Atajos de teclado"
     >
       <div className={styles.groups}>
-        {GROUPS.map(({ title, items }) => (
+        {groups.map(({ title, items }) => (
           <section key={title} aria-label={title}>
             <h3 className={styles.groupTitle}>{title}</h3>
             <dl className={styles.list}>

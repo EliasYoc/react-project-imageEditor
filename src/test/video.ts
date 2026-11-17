@@ -27,8 +27,9 @@ export type FakeVideo = Omit<HTMLVideoElement, MediaState> & {
 /**
  * Un `<video>` de jsdom, que no reproduce ni decodifica nada, con lo que le
  * falta para los tests: medidas, duración, posición y estado que se pueden
- * cambiar a mano, y `play`, `pause` y `load` simulados (lanzan los mismos
- * eventos que un video de verdad).
+ * cambiar a mano, y `play`, `pause` y `load` simulados. Reproducir, pausar,
+ * saltar a otro momento y silenciar lanzan los mismos eventos que un video de
+ * verdad.
  */
 export const createFakeVideo = ({
   width = 640,
@@ -43,9 +44,15 @@ export const createFakeVideo = ({
     duration,
     readyState,
     currentTime: 0,
+    muted: false,
     paused: true,
     ended: false,
     seeking: false,
+  };
+  // Lo que un video de verdad avisa con un evento al cambiar.
+  const events: Record<string, string[]> = {
+    currentTime: ["seeking", "seeked"],
+    muted: ["volumechange"],
   };
   for (const key of Object.keys(state)) {
     Object.defineProperty(video, key, {
@@ -53,6 +60,9 @@ export const createFakeVideo = ({
       get: () => state[key],
       set: (value: number | boolean) => {
         state[key] = value;
+        for (const type of events[key] ?? []) {
+          video.dispatchEvent(new Event(type));
+        }
       },
     });
   }

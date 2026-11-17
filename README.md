@@ -45,7 +45,7 @@ src/
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, desenfoque, estabilizador, presets
     elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
-  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, view.
+  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, video, view.
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
                 subcarpetas que tienen algo; los tests de la función quedan en su raíz
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
@@ -82,7 +82,7 @@ Tres de los pinceles de sellos tienen algo propio:
 - **Neón** es un halo del color del trazo con un núcleo blanco encima. El halo de un sello teñiría el núcleo de los anteriores, así que después de cada halo se repasa el núcleo de los últimos sellos. Se hace sello a sello: el trazo queda igual pintado en vivo, por partes, que repintado de una vez.
 - **Desenfoque** no pinta con color: su forma es una máscara, y su opacidad, la intensidad.
   - **Qué desenfoca:** la foto, la capa de color y lo ya pintado, resaltador incluido. Los textos y las imágenes añadidas quedan nítidos (son otra capa). El borrador lo quita, y se puede seguir pintando encima.
-  - **Cómo:** la pintura y el resaltador se desenfocan **en el sitio** al soltar el trazo (`paint.ts`). El fondo no es un raster de trazos, así que guarda una **máscara** y una copia desenfocada de sí mismo, y se muestra esa copia solo donde hay máscara (`editor/stage/backgroundBlur.ts`). Al cambiar el fondo se rehace la copia; los trazos no se repintan.
+  - **Cómo:** la pintura y el resaltador se desenfocan **en el sitio** al soltar el trazo (`paint.ts`). El fondo no es un raster de trazos, así que guarda una **máscara** y una copia desenfocada de sí mismo, y se muestra esa copia solo donde hay máscara (`editor/stage/backgroundBlur.ts`). Al cambiar el fondo se rehace la copia; los trazos no se repintan. Con un video de fondo, eso pasa en cada fotograma (ver [Video](#video)).
   - **Por qué es barato** (`blur.ts`): se desenfoca una **copia reducida** (hasta que el radio queda en 4 px) con el filtro `Blur` de Konva y se dibuja ampliada. El radio es un 2 % del lado corto, así que cuesta casi lo mismo en un lienzo pequeño que al exportar una foto de 12 MP, y se ve igual. Mientras se arrastra no se desenfoca nada: los sellos nuevos **revelan** una copia de todo lo visible que se desenfocó una vez, al empezar el trazo.
   - **Medido** en Edge, en un lienzo de 2048 × 2048: 0,4 ms por movimiento del puntero (igual que el Aerógrafo), 13 ms una vez al empezar el trazo y 17 ms una vez al soltarlo. No crea ningún canvas hasta que se usa por primera vez.
 
@@ -110,6 +110,8 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |
 | Abrir un video        | En el inicio: botón "Agregar video"                                                   | Igual                               |
+| Reproducir / pausar   | K, o el botón de la barra de reproducción (encima de las herramientas)                | Botón de la barra de reproducción   |
+| Ir a otro momento     | Arrastrar la barra de tiempo, o con el foco en ella: flechas, Inicio y Fin            | Arrastrar la barra de tiempo        |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
 
@@ -138,6 +140,11 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
   - el navegador tiene que tener **WebCodecs** (Edge, Chrome, Safari 16.4 o posterior y Firefox de escritorio): sin él no se podría exportar, y es mejor saberlo antes de editar.
 - **En el store** va en `photo.video` (el elemento, el archivo, su URL y la duración), fuera del historial como la foto. Al empezar otro documento se suelta: deja de reproducirse y se libera la URL (`editor/store/videoLifecycle.ts`). Al volver al inicio se pausa.
 - **En el lienzo**, la capa de fondo es una imagen de Konva cuyo origen es el `<video>`: pinta su fotograma actual. La capa de color, el resaltador y el desenfoque lo tratan como a una foto.
+- **Seguir los fotogramas** (`editor/stage/videoFrames.ts`): la capa de fondo se repinta con `requestVideoFrameCallback`, que avisa una vez por fotograma del video (no por cada frame de la pantalla) y nada en pausa. Donde no existe se usa `requestAnimationFrame` mientras se reproduce.
+- **Barra de reproducción** (`features/video`), encima de las herramientas y solo con un video abierto: reproducir o pausar (también con **K**; Espacio ya sirve para desplazar la vista), el tiempo, la barra de tiempo y silenciar.
+  - Su estado se lee del propio `<video>` (`useVideoPlayback`, con `useSyncExternalStore`): no hay un store con una copia que pueda quedarse atrás.
+  - La barra de tiempo es un slider de Radix, así que funciona con el dedo, el ratón y el teclado. Al arrastrarla se pide un salto cada vez, y solo el último destino (`createSeeker`): cada salto tarda en decodificarse.
+- **Desenfoque sobre un video:** el fondo cambia en cada fotograma, así que su copia desenfocada se rehace en cada uno (solo si hay trazos de desenfoque, y solo mientras se reproduce). Empezar un trazo de desenfoque **pausa** el video: el trazo en curso muestra una copia de un instante.
 - **Exportar** guarda, de momento, una imagen del fotograma que se ve.
 
 ## Fondo (color y degradado)
@@ -192,6 +199,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Qué prueban:**
   - el inicio: los lienzos en blanco, abrir, soltar o pegar una foto y la confirmación antes de descartar;
   - el video: abrirlo y ver su primer fotograma, dibujar encima, la confirmación antes de descartarlo y el aviso si el archivo no se puede abrir;
+  - su reproducción: que el lienzo sigue los fotogramas, pausar con el botón y con K, la barra de tiempo, silenciar y el desenfoque, que sigue al video;
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;

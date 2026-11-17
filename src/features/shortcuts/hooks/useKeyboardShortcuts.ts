@@ -6,8 +6,10 @@ import { uiStore } from "../../../app/uiStore";
 import {
   selectCurrentBrush,
   selectSelectedText,
+  selectVideo,
 } from "../../../editor/store/selectors";
 import { BOLD_WEIGHT, NORMAL_WEIGHT, isBold } from "../../text";
+import { togglePlayback } from "../../video";
 import { isTypingTarget } from "../../../lib/isTypingTarget";
 import {
   getShortcutAction,
@@ -54,6 +56,11 @@ const run = (action: ShortcutAction) => {
       return uiStore.getState().openDialog("shortcuts");
     case "toggleBars":
       return uiStore.getState().toggleBars();
+    case "togglePlayback": {
+      // Sin un video abierto, la tecla no hace nada.
+      const video = selectVideo(editor);
+      return video ? togglePlayback(video.element) : undefined;
+    }
     case "brushSize": {
       const { size } = selectCurrentBrush(editor);
       const scaled = Math.round(size * action.factor);

@@ -7,6 +7,7 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
+import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
 import { getShortcutAction } from "./utils/getShortcutAction";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 
@@ -102,6 +103,20 @@ describe("getShortcutAction", () => {
     expect(getShortcutAction(key("o"), "home")).toBeNull();
   });
 
+  it("K reproduce o pausa el video, en los dos modos", () => {
+    for (const mode of ["draw", "text"] as const) {
+      expect(getShortcutAction(key("k"), mode)).toEqual({
+        type: "togglePlayback",
+      });
+      expect(getShortcutAction(key("K"), mode)).toEqual({
+        type: "togglePlayback",
+      });
+    }
+    expect(getShortcutAction(key("k", { ctrlKey: true }), "draw")).toBeNull();
+    expect(getShortcutAction(key("k", { shiftKey: true }), "draw")).toBeNull();
+    expect(getShortcutAction(key("k"), "home")).toBeNull();
+  });
+
   it("no hace nada en la pantalla de inicio ni con Alt", () => {
     expect(getShortcutAction(key("z", { ctrlKey: true }), "home")).toBeNull();
     expect(
@@ -112,6 +127,7 @@ describe("getShortcutAction", () => {
 
 describe("useKeyboardShortcuts", () => {
   beforeEach(() => {
+    mockObjectUrls();
     editorStore.setState({ ...createInitialState(), mode: "draw" });
   });
   afterEach(() => {
@@ -166,6 +182,32 @@ describe("useKeyboardShortcuts", () => {
     expect(uiStore.getState().areBarsHidden).toBe(true);
     press(window, { key: "O" });
     expect(uiStore.getState().areBarsHidden).toBe(false);
+  });
+
+  it("K reproduce y pausa el video abierto", () => {
+    renderHook(() => useKeyboardShortcuts());
+    const video = createFakeVideoSource();
+    editorStore.setState({
+      photo: {
+        source: null,
+        preview: null,
+        mimeType: null,
+        fileName: "clip",
+        video,
+      },
+    });
+
+    const event = press(window, { key: "k" });
+    expect(event.defaultPrevented).toBe(true);
+    expect(video.element.paused).toBe(false);
+    press(window, { key: "K" });
+    expect(video.element.paused).toBe(true);
+  });
+
+  it("sin un video abierto, K no hace nada", () => {
+    renderHook(() => useKeyboardShortcuts());
+    expect(() => press(window, { key: "k" })).not.toThrow();
+    expect(editorStore.getState().log).toHaveLength(0);
   });
 
   it("acerca la vista con Ctrl + =", () => {

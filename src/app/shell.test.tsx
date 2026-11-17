@@ -266,6 +266,29 @@ describe("atajos globales", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("la lista incluye el atajo del video solo con un video abierto", () => {
+    const { unmount } = render(<Shell />);
+    fireEvent.keyDown(document.body, { key: "?", shiftKey: true });
+    expect(screen.queryByText("Reproducir / pausar")).toBeNull();
+    unmount();
+
+    uiStore.setState({ dialog: null });
+    editorStore.setState({
+      photo: {
+        source: null,
+        preview: null,
+        mimeType: null,
+        fileName: "clip",
+        video: createFakeVideoSource(),
+      },
+    });
+    render(<Shell />);
+    fireEvent.keyDown(document.body, { key: "?", shiftKey: true });
+    const group = screen.getByRole("region", { name: "Video" });
+    expect(within(group).getByText("Reproducir / pausar")).toBeInTheDocument();
+    expect(within(group).getByText("K")).toBeInTheDocument();
+  });
+
   it("la opción del menú solo aparece con teclado y ratón", async () => {
     const user = userEvent.setup();
     const { unmount } = render(<Shell />);

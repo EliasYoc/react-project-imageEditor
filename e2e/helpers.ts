@@ -285,6 +285,19 @@ export async function openMenuItem(page: Page, name: string) {
   await page.getByRole("menuitem", { name }).click();
 }
 
+/** Elige un pincel de la biblioteca (con un pincel activo, no un borrador). */
+export async function chooseBrush(page: Page, name: string) {
+  // El pincel activo se vuelve a pulsar para abrir la biblioteca.
+  await page.getByRole("button", { name: /^Pincel: / }).click();
+  const library = page.getByRole("dialog", { name: "Pinceles" });
+  await library.getByRole("button", { name, exact: true }).click();
+  await library.getByRole("button", { name: "Cerrar" }).click();
+  await expect(library).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: `Pincel: ${name}` })
+  ).toHaveAttribute("aria-pressed", "true");
+}
+
 /** Empieza un lienzo en blanco desde el inicio y espera a que se vea. */
 export async function openBlankCanvas(page: Page, preset = "Cuadrado") {
   await page.goto("/");

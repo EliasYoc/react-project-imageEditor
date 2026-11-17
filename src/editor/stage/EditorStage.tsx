@@ -28,13 +28,18 @@ import { PaintRaster } from "../engine/PaintRaster";
 import { blurLayers, type BlurSource } from "../engine/brushes/blur";
 import { paintFill } from "../engine/fill/paintFill";
 import { editorStore, useEditorStore } from "../store/editorStore";
-import { selectBackgroundImage, selectStrokeLayers } from "../store/selectors";
+import {
+  selectBackgroundImage,
+  selectStrokeLayers,
+  selectVideo,
+} from "../store/selectors";
 import { createBackgroundBlur } from "./backgroundBlur";
 import styles from "./EditorStage.module.css";
 import ElementsLayer from "./ElementsLayer";
 import type { LiveBlur } from "./strokeSession";
 import TextEditorOverlay from "./TextEditorOverlay";
 import { useStageInput } from "./useStageInput";
+import { onVideoFrame } from "./videoFrames";
 import { useViewStore, viewStore } from "./viewStore";
 
 /**
@@ -70,6 +75,7 @@ const EditorStage = () => {
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
   const background = useEditorStore(selectBackgroundImage);
+  const video = useEditorStore(selectVideo);
   const backdrop = useEditorStore((state) => state.backdrop);
   const isDrawing = useEditorStore((state) => state.mode === "draw");
   const isEditingElements = useEditorStore((state) => state.mode === "text");
@@ -148,6 +154,9 @@ const EditorStage = () => {
       // Todo lo que se ve bajo los textos, desenfocado: fondo, resaltador
       // (multiplicado, como en pantalla) y pintura.
       snapshot() {
+        // Esta copia es de un instante: con un video en marcha, el trazo
+        // mostraría un fotograma congelado. Se pausa al empezar a desenfocar.
+        selectVideo(editorStore.getState())?.element.pause();
         const { highlight } = selectStrokeLayers(editorStore.getState());
         const sources = getBackground();
         if (backgroundBlur.view) sources.push({ image: backgroundBlur.view });
@@ -247,6 +256,20 @@ const EditorStage = () => {
       showBackgroundBlur();
     },
     [backgroundBlur, showBackgroundBlur, backdrop, background]
+  );
+
+  useEffect(
+    function followVideoFrames() {
+      if (!video) return;
+      // Fuera de React, como los trazos: en cada fotograma nuevo se repinta
+      // la capa de fondo (Konva vuelve a leer el `<video>`) y, si hay trazos
+      // de desenfoque, se rehace la copia desenfocada del fondo.
+      return onVideoFrame(video.element, () => {
+        backgroundBlur.invalidateBackground();
+        backgroundLayerRef.current?.batchDraw();
+      });
+    },
+    [video, backgroundBlur]
   );
 
   useStageInput({
