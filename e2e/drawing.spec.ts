@@ -217,9 +217,6 @@ test.describe("Dibujo", () => {
     isMobile,
   }) => {
     await openBlankCanvas(page);
-    const viewMenu = page.getByRole("button", {
-      name: "Más opciones de la vista",
-    });
     const undo = page.getByRole("button", { name: "Deshacer" });
     const tools = page.getByRole("group", { name: "Herramientas de dibujo" });
     const stage = await stageRect(page);
@@ -228,15 +225,15 @@ test.describe("Dibujo", () => {
     await expect(undo).toBeVisible();
     if (!isMobile) await expectColorAt(page, top, isDark);
 
-    await viewMenu.click();
-    await page.getByRole("menuitem", { name: "Ocultar las barras" }).click();
+    // El botón del ojo, junto al menú de la vista.
+    await page.getByRole("button", { name: "Ocultar las barras" }).click();
     await expect(undo).toBeHidden();
     await expect(tools).toBeHidden();
     // En escritorio el lienzo cuadrado manda el alto: ahora llega arriba.
     if (!isMobile) await expectColorAt(page, top, isWhite);
 
-    await viewMenu.click();
-    await page.getByRole("menuitem", { name: "Mostrar las barras" }).click();
+    // Sigue a la vista con las barras ocultas.
+    await page.getByRole("button", { name: "Mostrar las barras" }).click();
     await expect(undo).toBeVisible();
     await expect(tools).toBeVisible();
   });

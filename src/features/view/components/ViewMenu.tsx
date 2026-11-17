@@ -10,9 +10,11 @@ import { SHORTCUT_LABELS } from "../../shortcuts";
 import styles from "./ViewMenu.module.css";
 
 /**
- * Opciones de la vista, en un menú en la esquina de abajo a la derecha:
- * el nivel de zoom, acercar, alejar, ajustar a la pantalla y ocultar o
- * mostrar las barras (cabecera y barra inferior).
+ * Controles de la vista, en la esquina de abajo a la derecha:
+ * - un botón para ocultar o mostrar las barras (cabecera y barra inferior);
+ *   sigue a la vista con las barras ocultas, para volver a mostrarlas;
+ * - el menú "…" con el nivel de zoom, acercar, alejar y ajustar a la
+ *   pantalla.
  *
  * Acercar y alejar dejan el menú abierto: se pueden pulsar varias veces
  * viendo cómo cambia el porcentaje. El 100 % es el tamaño real: 1 píxel de
@@ -59,16 +61,17 @@ const ViewMenu = () => {
       shortcut: shortcut(SHORTCUT_LABELS.fit),
       onSelect: fitToScreen,
     },
-    {
-      label: areBarsHidden ? "Mostrar las barras" : "Ocultar las barras",
-      icon: areBarsHidden ? Eye : EyeOff,
-      shortcut: shortcut(SHORTCUT_LABELS.toggleBars),
-      onSelect: toggleBars,
-    },
   ];
 
   return (
     <div className={styles.controls}>
+      <IconButton
+        icon={areBarsHidden ? Eye : EyeOff}
+        aria-label={areBarsHidden ? "Mostrar las barras" : "Ocultar las barras"}
+        shortcut={SHORTCUT_LABELS.toggleBars}
+        tooltipSide="top"
+        onClick={toggleBars}
+      />
       <Menu
         trigger={
           <IconButton icon={Ellipsis} aria-label="Más opciones de la vista" />

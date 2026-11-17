@@ -51,9 +51,6 @@ describe("ViewMenu", () => {
     expect(
       screen.getByRole("menuitem", { name: "Ajustar a la pantalla" })
     ).toHaveTextContent(SHORTCUT_LABELS.fit);
-    expect(
-      screen.getByRole("menuitem", { name: "Ocultar las barras" })
-    ).toHaveTextContent("O");
   });
 
   it("en pantallas táctiles no muestra atajos", async () => {
@@ -108,18 +105,18 @@ describe("ViewMenu", () => {
     const header = container.querySelector("header");
     expect(header).not.toHaveAttribute("inert");
 
-    await openMenu(user);
+    // Un botón al lado del menú (no una opción del menú).
     await user.click(
-      screen.getByRole("menuitem", { name: "Ocultar las barras" })
+      screen.getByRole("button", { name: "Ocultar las barras" })
     );
     expect(uiStore.getState().areBarsHidden).toBe(true);
     // Oculta: fuera del orden de Tab y de los lectores de pantalla.
     expect(header).toHaveAttribute("inert");
     expect(header).toHaveAttribute("data-hidden");
 
-    await openMenu(user);
+    // Sigue a la vista con las barras ocultas, para volver a mostrarlas.
     await user.click(
-      screen.getByRole("menuitem", { name: "Mostrar las barras" })
+      screen.getByRole("button", { name: "Mostrar las barras" })
     );
     expect(uiStore.getState().areBarsHidden).toBe(false);
     expect(header).not.toHaveAttribute("inert");
