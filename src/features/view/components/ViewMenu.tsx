@@ -5,6 +5,8 @@ import { Menu, type MenuItem } from "../../../components/ui/Menu";
 import { zoomLimits } from "../../../editor/engine/viewport";
 import { ZOOM_STEP, useViewStore } from "../../../editor/stage/viewStore";
 import { useEditorStore } from "../../../editor/store/editorStore";
+import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { SHORTCUT_LABELS } from "../../shortcuts";
 import styles from "./ViewMenu.module.css";
 
 /**
@@ -25,6 +27,9 @@ const ViewMenu = () => {
   const canvasSize = useEditorStore((state) => state.canvasSize);
   const areBarsHidden = useUiStore((state) => state.areBarsHidden);
   const toggleBars = useUiStore((state) => state.toggleBars);
+  // Los atajos solo tienen sentido con teclado y ratón (no en el móvil).
+  const hasKeyboard = useMediaQuery(HOVER_QUERY);
+  const shortcut = (label: string) => (hasKeyboard ? label : undefined);
 
   const limits = zoomLimits(stageSize, canvasSize, insets);
   // Margen pequeño: la escala límite puede no coincidir exactamente.
@@ -36,6 +41,7 @@ const ViewMenu = () => {
       label: "Acercar",
       icon: ZoomIn,
       keepOpen: true,
+      shortcut: shortcut(SHORTCUT_LABELS.zoomIn),
       disabled: !canZoomIn,
       onSelect: () => zoomBy(ZOOM_STEP),
     },
@@ -43,13 +49,22 @@ const ViewMenu = () => {
       label: "Alejar",
       icon: ZoomOut,
       keepOpen: true,
+      shortcut: shortcut(SHORTCUT_LABELS.zoomOut),
       disabled: !canZoomOut,
       onSelect: () => zoomBy(1 / ZOOM_STEP),
     },
-    { label: "Ajustar a la pantalla", icon: Scan, onSelect: fitToScreen },
-    areBarsHidden
-      ? { label: "Mostrar las barras", icon: Eye, onSelect: toggleBars }
-      : { label: "Ocultar las barras", icon: EyeOff, onSelect: toggleBars },
+    {
+      label: "Ajustar a la pantalla",
+      icon: Scan,
+      shortcut: shortcut(SHORTCUT_LABELS.fit),
+      onSelect: fitToScreen,
+    },
+    {
+      label: areBarsHidden ? "Mostrar las barras" : "Ocultar las barras",
+      icon: areBarsHidden ? Eye : EyeOff,
+      shortcut: shortcut(SHORTCUT_LABELS.toggleBars),
+      onSelect: toggleBars,
+    },
   ];
 
   return (

@@ -52,6 +52,8 @@ const run = (action: ShortcutAction) => {
     case "showShortcuts":
       if (uiStore.getState().dialog) return;
       return uiStore.getState().openDialog("shortcuts");
+    case "toggleBars":
+      return uiStore.getState().toggleBars();
     case "brushSize": {
       const { size } = selectCurrentBrush(editor);
       const scaled = Math.round(size * action.factor);

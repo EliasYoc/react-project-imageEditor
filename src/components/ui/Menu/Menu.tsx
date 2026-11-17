@@ -13,6 +13,8 @@ export interface MenuItem {
   disabled?: boolean;
   /** El menú sigue abierto al elegirla (p. ej. acercar varias veces). */
   keepOpen?: boolean;
+  /** Atajo de teclado, a la derecha (p. ej. "Ctrl+0"). */
+  shortcut?: string;
 }
 
 export interface MenuProps {
@@ -70,6 +72,13 @@ export function Menu({
             >
               {item.icon && <item.icon aria-hidden="true" />}
               {item.label}
+              {item.shortcut && (
+                // Solo a la vista: el nombre de la opción no lo incluye
+                // (los atajos están en la lista de atajos, tecla ?).
+                <span className={styles.shortcut} aria-hidden="true">
+                  {item.shortcut}
+                </span>
+              )}
             </DropdownMenu.Item>
           ))}
         </DropdownMenu.Content>

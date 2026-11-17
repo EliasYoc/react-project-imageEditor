@@ -38,6 +38,15 @@
   flex-shrink: 0;
 }
 
+/* Atajo de teclado de la opción, a la derecha. */
+.shortcut {
+  margin-left: auto;
+  padding-left: var(--space-4);
+  color: var(--color-text);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Radix marca la opción con foco (teclado o ratón) con data-highlighted. */
 .item[data-highlighted] {
   background: var(--color-surface-active);

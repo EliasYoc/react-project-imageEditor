@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { uiStore } from "../../app/uiStore";
 import { TooltipProvider } from "../../components/ui/Tooltip";
 import { NO_INSETS } from "../../editor/engine/viewport";
@@ -9,10 +9,14 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
+import { mockMediaQueries } from "../../test/media";
 import { EditorHeader } from "../editor-header";
+import { SHORTCUT_LABELS } from "../shortcuts";
 import ViewMenu from "./components/ViewMenu";
 
 const view = () => viewStore.getState();
+
+afterEach(() => mockMediaQueries(() => false));
 
 const openMenu = async (user: ReturnType<typeof userEvent.setup>) => {
   screen.getByRole("button", { name: "Más opciones de la vista" }).focus();
@@ -32,6 +36,35 @@ beforeEach(() => {
 });
 
 describe("ViewMenu", () => {
+  it("con teclado y ratón, cada opción muestra su atajo", async () => {
+    mockMediaQueries((query) => query.includes("hover"));
+    const user = userEvent.setup();
+    // Con ratón, los botones muestran tooltips.
+    render(
+      <TooltipProvider>
+        <ViewMenu />
+      </TooltipProvider>
+    );
+    await openMenu(user);
+    const zoomIn = screen.getByRole("menuitem", { name: "Acercar" });
+    expect(zoomIn).toHaveTextContent(SHORTCUT_LABELS.zoomIn);
+    expect(
+      screen.getByRole("menuitem", { name: "Ajustar a la pantalla" })
+    ).toHaveTextContent(SHORTCUT_LABELS.fit);
+    expect(
+      screen.getByRole("menuitem", { name: "Ocultar las barras" })
+    ).toHaveTextContent("O");
+  });
+
+  it("en pantallas táctiles no muestra atajos", async () => {
+    const user = userEvent.setup();
+    render(<ViewMenu />);
+    await openMenu(user);
+    expect(screen.getByRole("menuitem", { name: "Acercar" })).toHaveTextContent(
+      /^Acercar$/
+    );
+  });
+
   it("muestra el zoom y acerca sin cerrarse", async () => {
     const user = userEvent.setup();
     render(<ViewMenu />);
