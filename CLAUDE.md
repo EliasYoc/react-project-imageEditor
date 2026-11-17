@@ -52,6 +52,10 @@ Si ninguna lo cubre:
 - **Un commit por tarea.** Si el dueño pide varias tareas a la vez (p. ej. una lista numerada), cada una va en su propio commit y en ese orden, **aunque toquen los mismos archivos**. Así se pueden revisar y revertir por separado.
   - **Cuándo hacer el commit:** al terminar una tarea y comprobarla (`npm run check`, y los e2e si cambia algo que prueban), **antes de empezar la siguiente**.
   - **Qué va en él:** el código de la tarea, sus tests y su documentación (README, comentarios). Si al hacerla aparece un arreglo que no tiene que ver con ella, va en un commit aparte.
+  - **Qué tests, y cuántos** (para no gastar de más el límite de uso de Claude):
+    - **Siempre** se ejecutan los que ya existen: `npm run check` y los e2e de lo que cambia.
+    - **Con la tarea, pocos tests nuevos:** los de la lógica con riesgo (cálculos, el store, lo que pueda perder datos) y uno o dos e2e del camino principal.
+    - **El resto de casos** (bordes, variantes de móvil, mensajes de error…) se apuntan en `TESTS-PENDIENTES.md`, con la tarea a la que pertenecen, para escribirlos cuando el dueño lo pida. Al escribir uno, se quita de la lista.
   - **Cambios que el dueño pida después** sobre una tarea ya hecha van en un commit nuevo; no se reescribe un commit que ya existe (nada de `--amend` ni de rebase) salvo que él lo pida.
 
 ## 5. Pendientes
