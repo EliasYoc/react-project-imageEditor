@@ -227,6 +227,38 @@ test.describe("Reproducción del video", () => {
     await expectColorAt(page, belowEdge, isBluish);
   });
 
+  test("no se cae si currentTime avanza entre dos lecturas (como en el móvil)", async ({
+    page,
+  }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    // En muchos móviles, con el video en marcha, cada lectura de
+    // `currentTime` da un tiempo un poco mayor. Leerlo en `getSnapshot`
+    // hacía que React repintara sin fin y la app se cayera al reproducir.
+    await page.addInitScript(() => {
+      const native = Object.getOwnPropertyDescriptor(
+        HTMLMediaElement.prototype,
+        "currentTime"
+      )!;
+      Object.defineProperty(HTMLMediaElement.prototype, "currentTime", {
+        configurable: true,
+        get(this: HTMLMediaElement) {
+          const time = native.get!.call(this) as number;
+          return this.paused ? time : time + (performance.now() % 1) / 1000;
+        },
+        set(this: HTMLMediaElement, value: number) {
+          native.set!.call(this, value);
+        },
+      });
+    });
+    await openVideo(page);
+    const bar = playbackBar(page);
+    await bar.getByRole("button", { name: "Reproducir" }).click();
+    await expect(bar.getByRole("button", { name: "Pausar" })).toBeVisible();
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.5);
+    expect(errors).toEqual([]);
+  });
+
   test("una foto no tiene barra de reproducción", async ({ page }) => {
     await openPhoto(page);
     await expect(playbackBar(page)).toHaveCount(0);

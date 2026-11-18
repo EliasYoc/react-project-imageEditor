@@ -38,27 +38,40 @@ const read = (video: HTMLVideoElement): Playback => ({
  *
  * Además de sus eventos se escucha cada fotograma nuevo, para que la barra de
  * tiempo avance suave (`timeupdate` solo salta unas 4 veces por segundo).
+ *
+ * El estado se lee del `<video>` SOLO cuando avisa (evento o fotograma), no
+ * en `getSnapshot`. En muchos móviles `currentTime` avanza entre dos lecturas
+ * seguidas mientras el video se reproduce. React vuelve a llamar a
+ * `getSnapshot` tras pintar para comprobar que nada cambió: si cada llamada
+ * diera un tiempo nuevo, volvería a pintar sin fin y la app se caería
+ * ("Maximum update depth exceeded").
  */
 const createPlaybackSource = (video: HTMLVideoElement) => {
   let snapshot = read(video);
+  /** Lee el video; mientras no cambie nada se queda el mismo objeto (React
+   * compara por referencia para saber si tiene que volver a pintar). */
+  const refresh = () => {
+    const next = read(video);
+    if (KEYS.some((key) => !Object.is(next[key], snapshot[key]))) {
+      snapshot = next;
+    }
+  };
   return {
     subscribe: (notify: () => void) => {
-      for (const type of EVENTS) video.addEventListener(type, notify);
-      const stopFrames = onVideoFrame(video, notify);
+      const onChange = () => {
+        refresh();
+        notify();
+      };
+      // Pudo cambiar algo entre crear la fuente y suscribirse.
+      onChange();
+      for (const type of EVENTS) video.addEventListener(type, onChange);
+      const stopFrames = onVideoFrame(video, onChange);
       return () => {
-        for (const type of EVENTS) video.removeEventListener(type, notify);
+        for (const type of EVENTS) video.removeEventListener(type, onChange);
         stopFrames();
       };
     },
-    // Mientras no cambie nada devuelve el mismo objeto: React compara por
-    // referencia para saber si tiene que volver a pintar.
-    getSnapshot: () => {
-      const next = read(video);
-      if (KEYS.some((key) => !Object.is(next[key], snapshot[key]))) {
-        snapshot = next;
-      }
-      return snapshot;
-    },
+    getSnapshot: () => snapshot,
   };
 };
 
