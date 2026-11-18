@@ -39,11 +39,6 @@ import styles from "./EditorHeader.module.css";
  */
 const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const hasContent = useEditorStore((state) => state.log.length > 0);
-  // Lo que hay de fondo y los diálogos de borrar dicen que se queda: un video,
-  // una foto o nada (un lienzo en blanco).
-  const background = useEditorStore((state) =>
-    state.photo.video ? "el video" : state.photo.source ? "la foto" : null
-  );
   const canUndo = useEditorStore(selectCanUndo);
   const canRedo = useEditorStore(selectCanRedo);
   const isExporting = useEditorStore(
@@ -175,7 +170,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         open={isClearOpen}
         onOpenChange={setIsClearOpen}
         title="¿Borrar el dibujo?"
-        description={`Se quitan los trazos, los textos y las imágenes (${background ? `${background} y el fondo se quedan` : "el fondo se queda"}). Puedes recuperarlo con Deshacer.`}
+        description="Se borrará lo que hayas hecho con las barras de dibujo y de texto. Podrás recuperarlo con Deshacer."
         confirmLabel="Borrar"
         destructive
         onConfirm={clearLog}
@@ -184,7 +179,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         open={isResetOpen}
         onOpenChange={setIsResetOpen}
         title="¿Borrar todo definitivamente?"
-        description={`Se quitan los trazos, los textos y las imágenes, y el fondo de color o degradado vuelve a «Ninguno»${background ? ` (${background} se queda)` : ""}. No se puede deshacer.`}
+        description="Se borrará toda la edición, también el fondo de color. No podrás recuperar nada."
         confirmLabel="Borrar todo"
         destructive
         onConfirm={resetDrawing}

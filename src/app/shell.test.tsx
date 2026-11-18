@@ -119,6 +119,9 @@ describe("cabecera", () => {
     const confirm = screen.getByRole("alertdialog", {
       name: "¿Borrar el dibujo?",
     });
+    expect(confirm).toHaveAccessibleDescription(
+      "Se borrará lo que hayas hecho con las barras de dibujo y de texto. Podrás recuperarlo con Deshacer."
+    );
     await user.click(within(confirm).getByRole("button", { name: "Borrar" }));
     expect(state().log).toHaveLength(0);
     state().undo();
@@ -143,9 +146,8 @@ describe("cabecera", () => {
     const confirm = screen.getByRole("alertdialog", {
       name: "¿Borrar todo definitivamente?",
     });
-    // En un lienzo en blanco no hay foto ni video que "se quede".
     expect(confirm).toHaveAccessibleDescription(
-      "Se quitan los trazos, los textos y las imágenes, y el fondo de color o degradado vuelve a «Ninguno». No se puede deshacer."
+      "Se borrará toda la edición, también el fondo de color. No podrás recuperar nada."
     );
     await user.click(
       within(confirm).getByRole("button", { name: "Borrar todo" })
@@ -165,48 +167,6 @@ describe("cabecera", () => {
     expect(
       screen.getByRole("menuitem", { name: "Borrar todo definitivamente" })
     ).toHaveAttribute("aria-disabled", "true");
-  });
-
-  it("al borrar el dibujo dice qué se queda: el video, la foto o solo el fondo", async () => {
-    const user = userEvent.setup();
-    const openClearDialog = async () => {
-      screen.getByRole("button", { name: "Más opciones" }).focus();
-      await user.keyboard("{Enter}");
-      await user.click(
-        screen.getByRole("menuitem", { name: "Borrar el dibujo" })
-      );
-      return screen.getByRole("alertdialog", { name: "¿Borrar el dibujo?" });
-    };
-    addStroke();
-    // Un lienzo en blanco: no hay foto ni video que mencionar.
-    const blank = renderHeader();
-    expect(await openClearDialog()).toHaveAccessibleDescription(
-      "Se quitan los trazos, los textos y las imágenes (el fondo se queda). Puedes recuperarlo con Deshacer."
-    );
-    blank.unmount();
-
-    editorStore.setState({
-      photo: { ...state().photo, source: document.createElement("canvas") },
-    });
-    const photo = renderHeader();
-    expect(await openClearDialog()).toHaveAccessibleDescription(
-      "Se quitan los trazos, los textos y las imágenes (la foto y el fondo se quedan). Puedes recuperarlo con Deshacer."
-    );
-    photo.unmount();
-
-    editorStore.setState({
-      photo: {
-        source: null,
-        preview: null,
-        mimeType: null,
-        fileName: "clip",
-        video: createFakeVideoSource(),
-      },
-    });
-    renderHeader();
-    expect(await openClearDialog()).toHaveAccessibleDescription(
-      "Se quitan los trazos, los textos y las imágenes (el video y el fondo se quedan). Puedes recuperarlo con Deshacer."
-    );
   });
 
   it("volver al inicio desde el menú conserva el dibujo", async () => {
