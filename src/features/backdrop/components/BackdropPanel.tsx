@@ -193,6 +193,16 @@ const BackdropPanel = () => {
 
           {selectedStop && (
             <div className={styles.stopEditor}>
+              {/* Justo debajo de la barra de paradas, que es lo que quita. */}
+              <Button
+                size="sm"
+                disabled={gradient.stops.length <= MIN_STOPS}
+                onClick={() =>
+                  setGradient(removeStop(gradient, selectedStop.id))
+                }
+              >
+                Quitar parada
+              </Button>
               <ColorPicker
                 color={selectedStop.color}
                 alpha
@@ -203,15 +213,6 @@ const BackdropPanel = () => {
                   )
                 }
               />
-              <Button
-                size="sm"
-                disabled={gradient.stops.length <= MIN_STOPS}
-                onClick={() =>
-                  setGradient(removeStop(gradient, selectedStop.id))
-                }
-              >
-                Quitar parada
-              </Button>
             </div>
           )}
 

@@ -144,6 +144,18 @@ describe("BackdropPanel", () => {
     expect(screen.queryByRole("slider", { name: "Ángulo" })).toBeNull();
   });
 
+  it("«Quitar parada» va justo debajo de la barra de paradas, antes del color", async () => {
+    render(<BackdropPanel />);
+    await userEvent.click(screen.getByRole("radio", { name: "Degradado" }));
+    const stop = screen.getAllByRole("slider", { name: /parada/i })[0];
+    const remove = screen.getByRole("button", { name: "Quitar parada" });
+    const colorField = screen.getByRole("slider", { name: /matiz|hue/i });
+    const before = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(stop, remove)).toBe(true);
+    expect(before(remove, colorField)).toBe(true);
+  });
+
   it("el modo de fusión solo aparece con una foto", async () => {
     const { unmount } = render(<BackdropPanel />);
     await userEvent.click(screen.getByRole("radio", { name: "Color" }));
