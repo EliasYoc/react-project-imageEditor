@@ -6,8 +6,10 @@ import { uiStore } from "../../../app/uiStore";
 import {
   selectCurrentBrush,
   selectSelectedText,
+  selectVideo,
 } from "../../../editor/store/selectors";
 import { BOLD_WEIGHT, NORMAL_WEIGHT, isBold } from "../../text";
+import { togglePlayback } from "../../video";
 import { isTypingTarget } from "../../../lib/isTypingTarget";
 import {
   getShortcutAction,
@@ -54,6 +56,11 @@ const run = (action: ShortcutAction) => {
       return uiStore.getState().openDialog("shortcuts");
     case "toggleBars":
       return uiStore.getState().toggleBars();
+    case "togglePlayback": {
+      // Sin un video abierto, la tecla no hace nada.
+      const video = selectVideo(editor);
+      return video ? togglePlayback(video.element) : undefined;
+    }
     case "brushSize": {
       const { size } = selectCurrentBrush(editor);
       const scaled = Math.round(size * action.factor);
@@ -76,6 +83,7 @@ const isInsideOverlay = (target: EventTarget | null) =>
 
 /**
  * Atajos de teclado del editor (ver `getShortcutAction`). No actúan:
+ * - mientras se abre o se exporta algo;
  * - mientras se escribe en un texto o en un campo (ahí Ctrl + Z deshace lo
  *   escrito);
  * - si un componente ya usó la tecla (p. ej. Supr en una parada del
@@ -93,7 +101,11 @@ export function useKeyboardShortcuts() {
       ) {
         return;
       }
-      const action = getShortcutAction(event, editorStore.getState().mode);
+      const { mode, status } = editorStore.getState();
+      // Mientras se abre o se exporta algo no se toca el documento: un video
+      // tarda en exportarse, y deshacer a medias no cambiaría lo que sale.
+      if (status !== "idle") return;
+      const action = getShortcutAction(event, mode);
       if (!action) return;
       const actsOnSelection =
         action.type === "deleteElement" || action.type === "deselect";

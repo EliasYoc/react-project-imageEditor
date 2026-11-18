@@ -49,6 +49,7 @@ export const openImageFile = async (
     preview,
     mimeType: file.type,
     fileName: baseName(file.name),
+    video: null,
     size: { width: preview.width, height: preview.height },
   };
 };

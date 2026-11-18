@@ -10,6 +10,7 @@ import { EditorHeader } from "../features/editor-header";
 import { defaultExportName } from "../features/export";
 import { ShortcutsDialog, useKeyboardShortcuts } from "../features/shortcuts";
 import { mockMediaQueries } from "../test/media";
+import { createFakeVideoSource, mockObjectUrls } from "../test/video";
 import { uiStore } from "./uiStore";
 
 const exportImage = vi.hoisted(() =>
@@ -38,6 +39,7 @@ const renderHeader = () =>
   );
 
 beforeEach(() => {
+  mockObjectUrls();
   editorStore.setState({ ...createInitialState(), mode: "draw" });
   toastStore.setState({ toasts: [] });
   exportImage.mockClear();
@@ -123,6 +125,38 @@ describe("cabecera", () => {
     expect(state().log).toHaveLength(1);
   });
 
+  it("al borrar el dibujo dice qué se queda: la foto o el video", async () => {
+    const user = userEvent.setup();
+    const openClearDialog = async () => {
+      screen.getByRole("button", { name: "Más opciones" }).focus();
+      await user.keyboard("{Enter}");
+      await user.click(
+        screen.getByRole("menuitem", { name: "Borrar el dibujo" })
+      );
+      return screen.getByRole("alertdialog", { name: "¿Borrar el dibujo?" });
+    };
+    addStroke();
+    const { unmount } = renderHeader();
+    expect(await openClearDialog()).toHaveAccessibleDescription(
+      "Se quitan los trazos, los textos y las imágenes (la foto y el fondo se quedan). Puedes recuperarlo con Deshacer."
+    );
+    unmount();
+
+    editorStore.setState({
+      photo: {
+        source: null,
+        preview: null,
+        mimeType: null,
+        fileName: "clip",
+        video: createFakeVideoSource(),
+      },
+    });
+    renderHeader();
+    expect(await openClearDialog()).toHaveAccessibleDescription(
+      "Se quitan los trazos, los textos y las imágenes (el video y el fondo se quedan). Puedes recuperarlo con Deshacer."
+    );
+  });
+
   it("volver al inicio desde el menú conserva el dibujo", async () => {
     const user = userEvent.setup();
     addStroke();
@@ -188,6 +222,7 @@ describe("cabecera", () => {
       preview: null,
       mimeType: "image/jpeg",
       fileName: "playa",
+      video: null,
       size: { width: 10, height: 10 },
     });
     renderHeader();
@@ -229,6 +264,29 @@ describe("atajos globales", () => {
     expect(within(dialog).getByText("Exportar")).toBeInTheDocument();
     await user.keyboard("{Escape}");
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("la lista incluye el atajo del video solo con un video abierto", () => {
+    const { unmount } = render(<Shell />);
+    fireEvent.keyDown(document.body, { key: "?", shiftKey: true });
+    expect(screen.queryByText("Reproducir / pausar")).toBeNull();
+    unmount();
+
+    uiStore.setState({ dialog: null });
+    editorStore.setState({
+      photo: {
+        source: null,
+        preview: null,
+        mimeType: null,
+        fileName: "clip",
+        video: createFakeVideoSource(),
+      },
+    });
+    render(<Shell />);
+    fireEvent.keyDown(document.body, { key: "?", shiftKey: true });
+    const group = screen.getByRole("region", { name: "Video" });
+    expect(within(group).getByText("Reproducir / pausar")).toBeInTheDocument();
+    expect(within(group).getByText("K")).toBeInTheDocument();
   });
 
   it("la opción del menú solo aparece con teclado y ratón", async () => {

@@ -57,15 +57,20 @@ const tabOf = (fill: Fill | null): Tab =>
   fill === null ? "none" : fill.kind === "color" ? "color" : "gradient";
 
 /**
- * Capa de color o degradado. Sin foto es el fondo del lienzo; con foto se
- * pone encima como un filtro (opacidad y modo de fusión), sin reemplazarla.
+ * Capa de color o degradado. Sin foto ni video es el fondo del lienzo; con
+ * uno de ellos se pone encima como un filtro (opacidad y modo de fusión), sin
+ * reemplazarlo.
  *
  * Todo se aplica en vivo (el lienzo se ve detrás de la hoja) y cada ajuste es
  * un paso del historial: para volver atrás, se deshace.
  */
 const BackdropPanel = () => {
   const backdrop = useEditorStore((state) => state.backdrop);
-  const hasPhoto = useEditorStore((state) => state.photo.source !== null);
+  // Lo que hay de fondo: una foto o un video (null en un lienzo en blanco).
+  const backgroundName = useEditorStore((state) =>
+    state.photo.video ? "video" : state.photo.source ? "foto" : null
+  );
+  const hasBackground = backgroundName !== null;
   const canvasSize = useEditorStore((state) => state.canvasSize);
   const setBackdrop = useEditorStore((state) => state.setBackdrop);
   const blendId = useId();
@@ -107,6 +112,12 @@ const BackdropPanel = () => {
   };
 
   const tab = tabOf(fill);
+  const layerTitle =
+    backgroundName === "video"
+      ? "Sobre el video"
+      : backgroundName === "foto"
+        ? "Sobre la foto"
+        : "Capa";
 
   return (
     <div className={styles.panel}>
@@ -119,9 +130,12 @@ const BackdropPanel = () => {
 
       {tab === "none" && (
         <p className={styles.hint}>
-          {hasPhoto
-            ? "La foto se ve tal cual. Elige un color o un degradado para ponerlo encima como un filtro."
-            : "El lienzo es blanco. Elige un color o un degradado de fondo."}
+          {backgroundName === "video" &&
+            "El video se ve tal cual. Elige un color o un degradado para ponerlo encima como un filtro."}
+          {backgroundName === "foto" &&
+            "La foto se ve tal cual. Elige un color o un degradado para ponerlo encima como un filtro."}
+          {!backgroundName &&
+            "El lienzo es blanco. Elige un color o un degradado de fondo."}
         </p>
       )}
 
@@ -221,13 +235,8 @@ const BackdropPanel = () => {
       )}
 
       {fill && (
-        <section
-          className={styles.section}
-          aria-label={hasPhoto ? "Sobre la foto" : "Capa"}
-        >
-          <h3 className={styles.title}>
-            {hasPhoto ? "Sobre la foto" : "Capa"}
-          </h3>
+        <section className={styles.section} aria-label={layerTitle}>
+          <h3 className={styles.title}>{layerTitle}</h3>
           <Slider
             label="Opacidad"
             min={5}
@@ -236,7 +245,7 @@ const BackdropPanel = () => {
             valueText={`${Math.round(backdrop.opacity * 100)} %`}
             onChange={(value) => update({ opacity: value / 100 }, "opacity")}
           />
-          {hasPhoto && (
+          {hasBackground && (
             <div className={styles.field}>
               <label htmlFor={blendId}>Modo de fusión</label>
               <select

@@ -45,13 +45,13 @@ src/
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, desenfoque, estabilizador, presets
     elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
-  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, view.
+  features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, video, view.
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
                 subcarpetas que tienen algo; los tests de la función quedan en su raíz
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
-e2e/            Tests de punta a punta (Playwright) y sus imágenes de prueba (fixtures/)
+e2e/            Tests de punta a punta (Playwright) y sus archivos de prueba (fixtures/)
 ```
 
 ## Cómo funciona el lienzo
@@ -82,7 +82,7 @@ Tres de los pinceles de sellos tienen algo propio:
 - **Neón** es un halo del color del trazo con un núcleo blanco encima. El halo de un sello teñiría el núcleo de los anteriores, así que después de cada halo se repasa el núcleo de los últimos sellos. Se hace sello a sello: el trazo queda igual pintado en vivo, por partes, que repintado de una vez.
 - **Desenfoque** no pinta con color: su forma es una máscara, y su opacidad, la intensidad.
   - **Qué desenfoca:** la foto, la capa de color y lo ya pintado, resaltador incluido. Los textos y las imágenes añadidas quedan nítidos (son otra capa). El borrador lo quita, y se puede seguir pintando encima.
-  - **Cómo:** la pintura y el resaltador se desenfocan **en el sitio** al soltar el trazo (`paint.ts`). El fondo no es un raster de trazos, así que guarda una **máscara** y una copia desenfocada de sí mismo, y se muestra esa copia solo donde hay máscara (`editor/stage/backgroundBlur.ts`). Al cambiar el fondo se rehace la copia; los trazos no se repintan.
+  - **Cómo:** la pintura y el resaltador se desenfocan **en el sitio** al soltar el trazo (`paint.ts`). El fondo no es un raster de trazos, así que guarda una **máscara** y una copia desenfocada de sí mismo, y se muestra esa copia solo donde hay máscara (`editor/stage/backgroundBlur.ts`). Al cambiar el fondo se rehace la copia; los trazos no se repintan. Con un video de fondo, eso pasa en cada fotograma (ver [Video](#video)).
   - **Por qué es barato** (`blur.ts`): se desenfoca una **copia reducida** (hasta que el radio queda en 4 px) con el filtro `Blur` de Konva y se dibuja ampliada. El radio es un 2 % del lado corto, así que cuesta casi lo mismo en un lienzo pequeño que al exportar una foto de 12 MP, y se ve igual. Mientras se arrastra no se desenfoca nada: los sellos nuevos **revelan** una copia de todo lo visible que se desenfocó una vez, al empezar el trazo.
   - **Medido** en Edge, en un lienzo de 2048 × 2048: 0,4 ms por movimiento del puntero (igual que el Aerógrafo), 13 ms una vez al empezar el trazo y 17 ms una vez al soltarlo. No crea ningún canvas hasta que se usa por primera vez.
 
@@ -109,25 +109,55 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Cerrar un panel       | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo     |
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |
+| Abrir un video        | En el inicio: botón "Agregar video"                                                   | Igual                               |
+| Reproducir / pausar   | K, o el botón de la barra de reproducción (encima de las herramientas)                | Botón de la barra de reproducción   |
+| Ir a otro momento     | Arrastrar la barra de tiempo, o con el foco en ella: flechas, Inicio y Fin            | Arrastrar la barra de tiempo        |
 
-El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema.
+El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema. Con un video abierto, Exportar guarda el video en MP4 (ver [Video](#video)).
 
 ## Inicio y avisos
 
 - **Pantalla de inicio** (`features/home/components/HomeScreen.tsx`):
   - **Seguir editando**, si ya hay un documento;
   - **Abrir una foto**, con el botón, arrastrándola a la ventana o pegándola;
+  - **Agregar video**, con el botón (ver [Video](#video));
   - **Lienzo en blanco** en cuatro tamaños: Pantalla, Cuadrado 2048², Historia 1080×1920 y Horizontal 1920×1080.
-- **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo, se pide confirmación antes.
+- **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo (un dibujo, una foto, un video o un fondo), se pide confirmación antes.
 - **Soltar un archivo** sobre la app nunca hace que el navegador lo abra (y se salga del editor).
 - **Avisos** (`components/ui/Toast`, Radix Toast):
   - `toast.success(…)` y `toast.error(…)` desde cualquier parte;
-  - se usan al descargar la imagen y cuando falla exportar o abrir una imagen.
+  - se usan al descargar la imagen y cuando falla exportar o abrir una imagen o un video.
 - **Diálogos globales:** los que se abren desde un botón y un atajo (exportar y la lista de atajos) viven en `app/uiStore.ts`.
+
+## Video
+
+Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se escribe y se ponen fondos encima, y esos cambios se ven durante todo el video.
+
+- **Abrirlo** (`features/home/utils/openVideoFile.ts`): el archivo se lee con un `<video>` que no está en la página, desde una URL de objeto. Así no se carga entero en memoria. Queda en pausa en su primer fotograma.
+- **Límites**, comprobados al abrir (con un aviso que dice el motivo):
+  - hasta **2 minutos**: el video exportado se arma en memoria, unos 47 MB por minuto en Full HD;
+  - el documento mide lo que el video, hasta **1920 px** de lado mayor (Full HD) y con los lados pares, que es lo que admite el códec H.264. Ese es también el tamaño al exportar;
+  - el navegador tiene que tener **WebCodecs** (Edge, Chrome, Safari 16.4 o posterior y Firefox de escritorio): sin él no se podría exportar, y es mejor saberlo antes de editar.
+- **En el store** va en `photo.video` (el elemento, el archivo, su URL y la duración), fuera del historial como la foto. Al empezar otro documento se suelta: deja de reproducirse y se libera la URL (`editor/store/videoLifecycle.ts`). Al volver al inicio se pausa.
+- **En el lienzo**, la capa de fondo es una imagen de Konva cuyo origen es el `<video>`: pinta su fotograma actual. La capa de color, el resaltador y el desenfoque lo tratan como a una foto.
+- **Seguir los fotogramas** (`editor/stage/videoFrames.ts`): la capa de fondo se repinta con `requestVideoFrameCallback`, que avisa una vez por fotograma del video (no por cada frame de la pantalla) y nada en pausa. Donde no existe se usa `requestAnimationFrame` mientras se reproduce.
+- **Barra de reproducción** (`features/video`), encima de las herramientas y solo con un video abierto: reproducir o pausar (también con **K**; Espacio ya sirve para desplazar la vista), el tiempo, la barra de tiempo y silenciar.
+  - Su estado se lee del propio `<video>` (`useVideoPlayback`, con `useSyncExternalStore`): no hay un store con una copia que pueda quedarse atrás.
+  - La barra de tiempo es un slider de Radix, así que funciona con el dedo, el ratón y el teclado. Al arrastrarla se pide un salto cada vez, y solo el último destino (`createSeeker`): cada salto tarda en decodificarse.
+- **Desenfoque sobre un video:** el fondo cambia en cada fotograma, así que su copia desenfocada se rehace en cada uno (solo si hay trazos de desenfoque, y solo mientras se reproduce). Empezar un trazo de desenfoque **pausa** el video: el trazo en curso muestra una copia de un instante.
+- **Exportar** (menú ⋮ → "Exportar", o Ctrl/⌘ + S) guarda el video en **MP4**, del tamaño del documento, con el dibujo encima durante todo el video y con su sonido.
+  - **Cómo** (`features/export/utils/exportVideo.ts` y `encodeVideo.ts`): con [mediabunny](https://mediabunny.dev), que lee el archivo original, decodifica y vuelve a codificar con **WebCodecs** (el codificador del propio navegador, normalmente por hardware) y escribe el MP4. Va tan rápido como el equipo pueda, no a la velocidad del video, y pasa por todos los fotogramas con sus tiempos originales.
+  - **Cada fotograma** se compone como una imagen exportada (`documentCompositor.ts`): lo fijo (trazos, textos, imágenes, capa de color) se pinta una sola vez, y por fotograma solo se repite lo que depende del fondo (la capa de color encima, su desenfoque y el resaltador multiplicado).
+  - **Sonido:** se copia tal cual cuando el MP4 admite su códec (AAC, el de casi todos los teléfonos); si no se pudiera conservar, el video sale sin sonido y se avisa.
+  - **Giro:** los videos de teléfono suelen guardarse tumbados, con una nota de "girar 90°". Se ven y se exportan derechos, y el MP4 no lleva esa nota.
+  - **El diálogo** se queda abierto con el avance y un botón para **cancelar**; mientras tanto no se cierra con Escape ni tocando fuera, la pantalla no se apaga (`navigator.wakeLock`) y los atajos de teclado no actúan.
+  - **En el móvil** se abre la hoja de "Compartir", que exige un toque reciente. Si la exportación tardó más, el diálogo muestra "El video está listo" y un botón **Compartir o guardar**.
+  - **Medido** en Edge (escritorio), un Full HD de 10 s: 2,7 s en exportarse; con un trazo de desenfoque, 3,7 s. Reproducir con desenfoque no produce tareas largas (más de 50 ms).
+  - **Peso:** mediabunny va en su propio archivo de JavaScript (~111 kB con gzip), que solo se descarga al exportar un video. El diálogo de exportar un video (~2 kB) también va aparte.
 
 ## Fondo (color y degradado)
 
-- La **capa de color** (`backdrop` en el store) es parte del documento y del historial: se puede deshacer. Sin foto es el fondo del lienzo; con foto va **encima como un filtro**, con opacidad y modo de fusión, sin reemplazarla.
+- La **capa de color** (`backdrop` en el store) es parte del documento y del historial: se puede deshacer. Sin foto ni video es el fondo del lienzo; con uno de ellos va **encima como un filtro**, con opacidad y modo de fusión, sin reemplazarlo.
 - Los degradados (lineal, radial y cónico) usan la **geometría de CSS** (`editor/engine/fill/`): el mismo ángulo y centro se ven igual que en `linear-gradient`, `radial-gradient` y `conic-gradient`. `paintFill` los pinta a cualquier resolución (lienzo, exportación, vistas previas).
 - El editor (botón **Fondo** de la cabecera) aplica los cambios en vivo: paradas que se arrastran o se mueven con el teclado, dial de ángulo, centro arrastrable y presets.
 
@@ -141,7 +171,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 
 - **El editor se carga bajo demanda** (`src/app/EditorShell.tsx`).
   - **Qué lleva:** todo lo que usa Konva (y el reconciliador de react-konva), en su propio archivo.
-  - **El inicio** solo descarga el JS principal (~114 KB gzip; el motor de pinceles va con el editor) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
+  - **El inicio** solo descarga el JS principal (~115 KB gzip; el motor de pinceles va con el editor) y, cuando el navegador está libre, **precarga el editor** en segundo plano.
   - **Con una red lenta**, si se entra antes de que llegue, se ve "Cargando el editor" un momento.
 - **Caché:** los archivos de `/assets` llevan hash y Vercel los sirve con caché de un año (`headers` en `vercel.json`).
 - **Medido en Edge** con el build de producción y la red limitada a 150 ms / 1,6 Mbps:
@@ -158,7 +188,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
 
 - **Plugin:** `vite-plugin-pwa` (configuración en `vite.config.js`) genera el `manifest.webmanifest` y el service worker (`sw.js`, con Workbox). El navegador ofrece instalar la app con su icono (`public/pwa-*.png`, `maskable-512x512.png`, `favicon.svg`).
 - **Sin conexión:**
-  - toda la app (también el editor, que se carga aparte) queda en caché al instalarse el service worker, unos 840 KB;
+  - toda la app (también el editor y el codificador de video, que se cargan aparte) queda en caché al instalarse el service worker, unos 1,3 MB (de ellos, unos 440 KB son el codificador de video). Así también se puede exportar un video sin conexión;
   - las **fuentes** se guardan la primera vez que se usan, o al abrir la lista de fuentes, y desde ahí también funcionan sin conexión.
 - **Actualizaciones** (`features/update`): una versión nueva se descarga en segundo plano y se aplica **sin cerrar las pestañas**. El dibujo vive en memoria y recargar lo perdería, así que:
   - si no hay nada que perder (inicio sin documento), la app se recarga sola con la versión nueva; si se está eligiendo una foto, espera a que termine;
@@ -176,6 +206,9 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 
 - **Qué prueban:**
   - el inicio: los lienzos en blanco, abrir, soltar o pegar una foto y la confirmación antes de descartar;
+  - el video: abrirlo y ver su primer fotograma, dibujar encima, la confirmación antes de descartarlo y el aviso si el archivo no se puede abrir;
+  - su reproducción: que el lienzo sigue los fotogramas, pausar con el botón y con K, la barra de tiempo, silenciar y el desenfoque, que sigue al video;
+  - exportar el video: que el MP4 se reproduce, su tamaño, su duración, su sonido y el dibujo en dos momentos distintos; en el móvil, también el paso "El video está listo";
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
@@ -186,6 +219,9 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Dos pantallas:** escritorio (1280 × 800, ratón y teclado) y móvil (390 × 844, táctil). En el móvil los trazos y el pellizco son toques reales, y la hoja de compartir se cambia por una falsa que guarda el archivo.
 - **Navegador:** el **Microsoft Edge** del equipo (`channel: "msedge"`), así que no hace falta `npx playwright install`.
 - **Cómo se comprueba el lienzo:** leyendo los **píxeles** de capturas de pantalla y de la imagen exportada. Se decodifican en el propio navegador, sin librerías de imágenes.
+- **Archivos de prueba** (`e2e/fixtures/`):
+  - `foto.png`: 400 × 300, negra a la izquierda y blanca a la derecha;
+  - `video.mp4`: 320 × 240, 2 segundos, H.264 con sonido AAC (un tono). También es negro a la izquierda y blanco a la derecha, y su franja de arriba es roja el primer segundo y azul el segundo: así un test sabe en qué momento del video está. Se generó una vez en Edge, dibujando en un canvas y codificándolo con mediabunny.
 - **Si un test falla:** Playwright guarda una traza (capturas, DOM y red de cada paso) en `test-results/`. Se abre con `npx playwright show-trace <ruta>/trace.zip`. El informe HTML queda en `playwright-report/`.
 
 ## CI (GitHub Actions)
@@ -203,8 +239,8 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
   - **Si al repetirlo pasa, era "flaky":** un fallo intermitente que conviene investigar.
 - **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
 - **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
-  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`) y el del **editor** (el resto);
-  - falla si pasan de **120 kB** y **140 kB**: hoy son unos 114 y 132;
+  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga con un video abierto: el diálogo de exportarlo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`) y el del **editor** (el resto);
+  - falla si pasan de **120 kB**, **119 kB** y **140 kB**: hoy son unos 115, 113 y 138;
   - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
 - **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
 - **Coste:** gratis en repos públicos. En privados, el plan gratuito incluye unos 2.000 minutos al mes, y cada ejecución tarda unos 5. Un push nuevo a la misma PR cancela la ejecución anterior.
@@ -225,8 +261,9 @@ Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.r
 - **`Panel`**: en el móvil es una **hoja inferior modal** (se cierra con ✕, Escape, tocando fuera o deslizándola hacia abajo); en escritorio (≥ 900 px) es un **panel lateral no modal**: el lienzo sigue a la vista y se puede dibujar o elegir otro texto con él abierto. Al cerrarse, el foco vuelve al botón que lo abrió (`useReturnFocus`).
 - **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`ChoiceMenu`** (un menú para elegir una opción entre varias, con la elegida marcada: la figura del pincel Formas), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
 - **`Tooltip`**: solo con ratón o teclado, con el atajo de cada botón. No aparece cuando un panel devuelve el foco a su botón.
+- Con un video: **`Slider`** de Radix en la barra de tiempo y **`Progress`** en el avance de la exportación.
 - Los atajos de teclado no actúan sobre la selección (Supr, Escape) si el foco está dentro de un panel o un menú.
 
 ## Stack
 
-React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier
+React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · mediabunny (video) · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier

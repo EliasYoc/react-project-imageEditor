@@ -28,21 +28,27 @@ import { PaintRaster } from "../engine/PaintRaster";
 import { blurLayers, type BlurSource } from "../engine/brushes/blur";
 import { paintFill } from "../engine/fill/paintFill";
 import { editorStore, useEditorStore } from "../store/editorStore";
-import { selectStrokeLayers } from "../store/selectors";
+import {
+  selectBackgroundImage,
+  selectStrokeLayers,
+  selectVideo,
+} from "../store/selectors";
 import { createBackgroundBlur } from "./backgroundBlur";
 import styles from "./EditorStage.module.css";
 import ElementsLayer from "./ElementsLayer";
 import type { LiveBlur } from "./strokeSession";
 import TextEditorOverlay from "./TextEditorOverlay";
 import { useStageInput } from "./useStageInput";
+import { onVideoFrame } from "./videoFrames";
 import { useViewStore, viewStore } from "./viewStore";
 
 /**
  * Lienzo del editor con Konva.
  *
  * Tres capas (cada Layer de Konva es su propio <canvas>):
- * - fondo: la foto o un rectángulo blanco, la capa de color o degradado y,
- *   donde pasó el pincel de desenfoque, ese mismo fondo desenfocado;
+ * - fondo: la foto, el video (Konva pinta el fotograma actual del `<video>`)
+ *   o un rectángulo blanco, la capa de color o degradado y, donde pasó el
+ *   pincel de desenfoque, ese mismo fondo desenfocado;
  * - resaltador: sus trazos, en un raster aparte cuyo <canvas> se MULTIPLICA
  *   con el fondo (`mix-blend-mode`): tiñe la foto como un rotulador real;
  * - pintura: los trazos terminados (raster en caché) y el trazo en curso.
@@ -68,7 +74,8 @@ const EditorStage = () => {
   const cursorRef = useRef<KonvaGroup>(null);
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
-  const preview = useEditorStore((state) => state.photo.preview);
+  const background = useEditorStore(selectBackgroundImage);
+  const video = useEditorStore(selectVideo);
   const backdrop = useEditorStore((state) => state.backdrop);
   const isDrawing = useEditorStore((state) => state.mode === "draw");
   const isEditingElements = useEditorStore((state) => state.mode === "text");
@@ -99,15 +106,15 @@ const EditorStage = () => {
   // El fondo tal como se ve (lo mismo que pinta la capa de fondo, abajo): es
   // lo que desenfoca el pincel de desenfoque.
   const getBackground = useCallback((): BlurSource[] => {
-    const { photo, backdrop } = editorStore.getState();
-    const sources: BlurSource[] = [
-      photo.preview ? { image: photo.preview } : { color: "white" },
-    ];
+    const state = editorStore.getState();
+    const { backdrop } = state;
+    const image = selectBackgroundImage(state);
+    const sources: BlurSource[] = [image ? { image } : { color: "white" }];
     if (backdrop.fill) {
       sources.push({
         image: fillCanvas,
         opacity: backdrop.opacity,
-        blend: photo.preview ? backdrop.blend : "source-over",
+        blend: image ? backdrop.blend : "source-over",
       });
     }
     return sources;
@@ -147,6 +154,9 @@ const EditorStage = () => {
       // Todo lo que se ve bajo los textos, desenfocado: fondo, resaltador
       // (multiplicado, como en pantalla) y pintura.
       snapshot() {
+        // Esta copia es de un instante: con un video en marcha, el trazo
+        // mostraría un fotograma congelado. Se pausa al empezar a desenfocar.
+        selectVideo(editorStore.getState())?.element.pause();
         const { highlight } = selectStrokeLayers(editorStore.getState());
         const sources = getBackground();
         if (backgroundBlur.view) sources.push({ image: backgroundBlur.view });
@@ -245,7 +255,21 @@ const EditorStage = () => {
       backgroundBlur.invalidateBackground();
       showBackgroundBlur();
     },
-    [backgroundBlur, showBackgroundBlur, backdrop, preview]
+    [backgroundBlur, showBackgroundBlur, backdrop, background]
+  );
+
+  useEffect(
+    function followVideoFrames() {
+      if (!video) return;
+      // Fuera de React, como los trazos: en cada fotograma nuevo se repinta
+      // la capa de fondo (Konva vuelve a leer el `<video>`) y, si hay trazos
+      // de desenfoque, se rehace la copia desenfocada del fondo.
+      return onVideoFrame(video.element, () => {
+        backgroundBlur.invalidateBackground();
+        backgroundLayerRef.current?.batchDraw();
+      });
+    },
+    [video, backgroundBlur]
   );
 
   useStageInput({
@@ -290,9 +314,9 @@ const EditorStage = () => {
         onPointerDown={onStagePointerDown}
       >
         <Layer ref={backgroundLayerRef} {...documentTransform}>
-          {preview ? (
+          {background ? (
             <KonvaImage
-              image={preview}
+              image={background}
               width={canvasSize.width}
               height={canvasSize.height}
             />
@@ -303,15 +327,17 @@ const EditorStage = () => {
               fill="white"
             />
           )}
-          {/* Sin foto es el fondo del lienzo; con foto, un filtro encima
-              (el modo de fusión solo tiene sentido sobre la foto). */}
+          {/* Sin foto ni video es el fondo del lienzo; con uno de ellos, un
+              filtro encima (el modo de fusión solo tiene sentido sobre él). */}
           <KonvaImage
             image={fillCanvas}
             width={canvasSize.width}
             height={canvasSize.height}
             visible={Boolean(backdrop.fill)}
             opacity={backdrop.opacity}
-            globalCompositeOperation={preview ? backdrop.blend : "source-over"}
+            globalCompositeOperation={
+              background ? backdrop.blend : "source-over"
+            }
           />
           {/* El fondo desenfocado, solo donde pasó el pincel de desenfoque
               (ver backgroundBlur.ts). Su imagen se pone desde fuera de React. */}

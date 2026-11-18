@@ -15,15 +15,17 @@ const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",
   "image/webp": "webp",
+  "video/mp4": "mp4",
 };
 
 /**
  * Añade la extensión correcta según el tipo MIME, salvo que el nombre ya
- * termine en una extensión de imagen conocida.
+ * termine en una extensión conocida (de imagen o de video).
  */
 export const getDownloadFileName = (name: string, mimeType: string) => {
-  const fileName = name.trim() || "imagen";
-  if (/\.(png|jpe?g|webp)$/i.test(fileName)) return fileName;
+  const isVideo = mimeType.startsWith("video/");
+  const fileName = name.trim() || (isVideo ? "video" : "imagen");
+  if (/\.(png|jpe?g|webp|mp4)$/i.test(fileName)) return fileName;
   return `${fileName}.${EXTENSION_BY_MIME_TYPE[mimeType] || "png"}`;
 };
 

@@ -29,6 +29,7 @@ import {
   type StrokeEntry,
   type TextElement,
 } from "../model/types";
+import { watchVideo } from "./videoLifecycle";
 
 /** Lo que guarda cada paso del historial: el log y la capa de color. */
 export interface DocumentSnapshot {
@@ -40,7 +41,10 @@ export interface EditorState {
   mode: Mode;
   status: Status;
   canvasSize: Size;
-  /** La foto abierta (no está en el historial: abrir otra empieza de cero). */
+  /**
+   * La foto o el video abiertos (no están en el historial: abrir otro
+   * empieza de cero).
+   */
   photo: Photo;
   /** Capa de color o degradado (fondo, o filtro sobre la foto). */
   backdrop: Backdrop;
@@ -73,7 +77,10 @@ export type ElementPatch =
 export interface EditorActions {
   setMode: (mode: Mode) => void;
   setStatus: (status: Status) => void;
-  /** Abre una imagen nueva: cambia el tamaño del lienzo y empieza de cero. */
+  /**
+   * Abre una imagen o un video nuevos: cambia el tamaño del lienzo y empieza
+   * de cero.
+   */
   loadPhoto: (payload: Photo & { size: Size }) => void;
   /**
    * Documento en blanco de `size`: sin foto, sin capa de color, sin dibujo
@@ -193,6 +200,7 @@ const EMPTY_PHOTO: Photo = {
   preview: null,
   mimeType: null,
   fileName: null,
+  video: null,
 };
 
 /**
@@ -225,11 +233,8 @@ export const createInitialState = (): EditorState => ({
   brush: createInitialBrushState(),
 });
 
-/**
- * Crea un store independiente. La app usa uno solo (`editorStore`); los tests
- * crean uno nuevo por caso para empezar siempre desde el estado inicial.
- */
-export const createEditorStore = (initialState?: Partial<EditorState>) =>
+/** El store con su estado y sus acciones (ver `createEditorStore`). */
+const createStateStore = (initialState?: Partial<EditorState>) =>
   createStore<EditorStore>()(
     devtools(
       (set, get) => {
@@ -534,6 +539,17 @@ export const createEditorStore = (initialState?: Partial<EditorState>) =>
       { name: "editor", enabled: import.meta.env.DEV }
     )
   );
+
+/**
+ * Crea un store independiente. La app usa uno solo (`editorStore`); los tests
+ * crean uno nuevo por caso para empezar siempre desde el estado inicial.
+ */
+export const createEditorStore = (initialState?: Partial<EditorState>) => {
+  const store = createStateStore(initialState);
+  // El video del documento se suelta al cambiar de documento.
+  watchVideo(store);
+  return store;
+};
 
 /** Store único de la aplicación. Fuera de React: `editorStore.getState()`. */
 export const editorStore = createEditorStore();

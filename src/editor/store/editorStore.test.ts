@@ -30,6 +30,7 @@ const emptyPhoto = {
   preview: null,
   mimeType: null,
   fileName: null,
+  video: null,
 };
 
 const red: Backdrop = {
@@ -99,6 +100,7 @@ describe("foto y capa de color", () => {
       preview: null,
       mimeType: "image/jpeg",
       fileName: "playa",
+      video: null,
       size: { width: 800, height: 600 },
     });
     state().addStroke(stroke());
@@ -126,6 +128,7 @@ describe("foto y capa de color", () => {
       preview: null,
       mimeType: "image/png",
       fileName: null,
+      video: null,
       size: { width: 10, height: 10 },
     });
     expect(selectHasDocumentContent(state())).toBe(true);

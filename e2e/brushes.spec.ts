@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
+  chooseBrush,
   documentRect,
   drag,
   exportImage,
@@ -15,19 +16,6 @@ import {
   type Pixels,
   type Point,
 } from "./helpers";
-
-/** Elige un pincel de la biblioteca (con un pincel activo, no un borrador). */
-async function chooseBrush(page: Page, name: string) {
-  // El pincel activo se vuelve a pulsar para abrir la biblioteca.
-  await page.getByRole("button", { name: /^Pincel: / }).click();
-  const library = page.getByRole("dialog", { name: "Pinceles" });
-  await library.getByRole("button", { name, exact: true }).click();
-  await library.getByRole("button", { name: "Cerrar" }).click();
-  await expect(library).toBeHidden();
-  await expect(
-    page.getByRole("button", { name: `Pincel: ${name}` })
-  ).toHaveAttribute("aria-pressed", "true");
-}
 
 /**
  * Arrastra y aparta el ratón del lienzo: en escritorio, el círculo que marca

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { downloadBlob } from "./helper";
-import { saveImage } from "./saveImage";
+import { saveImage, sharesFile } from "./saveImage";
 
 vi.mock("./helper", () => ({ downloadBlob: vi.fn() }));
 
@@ -63,5 +63,15 @@ describe("saveImage", () => {
   it("si no se pueden compartir archivos, descarga", async () => {
     setDevice({ touch: true, canShare: false });
     expect(await saveImage(blob, "a.png")).toBe("downloaded");
+  });
+
+  it("sharesFile dice de antemano si se abrirá la hoja de compartir", () => {
+    const video = new Blob(["x"], { type: "video/mp4" });
+    setDevice({ touch: true });
+    expect(sharesFile(video, "a.mp4")).toBe(true);
+    setDevice({ touch: true, canShare: false });
+    expect(sharesFile(video, "a.mp4")).toBe(false);
+    setDevice({ touch: false });
+    expect(sharesFile(video, "a.mp4")).toBe(false);
   });
 });
