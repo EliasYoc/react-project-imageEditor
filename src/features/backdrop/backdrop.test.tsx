@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { gradientToCss, stopsToCss } from "../../editor/engine/fill/css";
@@ -154,6 +154,26 @@ describe("BackdropPanel", () => {
       Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
     expect(before(stop, remove)).toBe(true);
     expect(before(remove, colorField)).toBe(true);
+  });
+
+  it("la vista previa del degradado tiene la forma del lienzo (vertical, cuadrado u horizontal)", async () => {
+    render(<BackdropPanel />);
+    await userEvent.click(screen.getByRole("radio", { name: "Degradado" }));
+    const preview = () =>
+      screen.getByLabelText(/Centro del degradado|Vista previa/);
+    const withCanvas = (width: number, height: number) =>
+      act(() => editorStore.setState({ canvasSize: { width, height } }));
+
+    withCanvas(1080, 1920);
+    expect(preview().style.aspectRatio).toBe("1080 / 1920");
+    expect(preview()).toHaveAttribute("data-portrait");
+
+    withCanvas(1080, 1080);
+    expect(preview()).not.toHaveAttribute("data-portrait");
+
+    withCanvas(1920, 1080);
+    expect(preview().style.aspectRatio).toBe("1920 / 1080");
+    expect(preview()).not.toHaveAttribute("data-portrait");
   });
 
   it("el modo de fusión solo aparece con una foto", async () => {

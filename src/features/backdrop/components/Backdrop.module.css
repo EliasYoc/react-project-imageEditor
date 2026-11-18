@@ -27,15 +27,24 @@
   gap: var(--space-3);
 }
 
-/* Vista previa con las proporciones del documento (más alta que ancha o al revés). */
+/*
+ * Vista previa con las proporciones del documento: su lado mayor mide 180 px.
+ * Solo se fija un lado y el otro sale de `aspect-ratio`; con los dos fijados
+ * (o con un max-height) la forma dejaría de ser la del lienzo.
+ */
 .preview {
   position: relative;
-  max-width: 60%;
-  max-height: 180px;
   width: 180px;
+  max-width: 60%;
   border-radius: var(--radius-sm);
   border: 1px solid rgba(255, 255, 255, 0.15);
   touch-action: none;
+}
+
+/* Más alta que ancha (p. ej. Historia): se fija el alto y el ancho sale solo. */
+.preview[data-portrait] {
+  width: auto;
+  height: 180px;
 }
 
 .preview[data-movable] {

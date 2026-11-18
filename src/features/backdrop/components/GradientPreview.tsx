@@ -81,6 +81,7 @@ const GradientPreview = ({
           : "Vista previa del degradado"
       }
       data-movable={hasCenter || undefined}
+      data-portrait={documentSize.height > documentSize.width || undefined}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={() => (isDraggingRef.current = false)}
