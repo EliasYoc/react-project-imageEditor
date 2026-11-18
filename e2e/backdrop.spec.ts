@@ -2,10 +2,13 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   colorDistance,
   documentRect,
+  drag,
   expectColorAt,
   isColorful,
+  isDark,
   isWhite,
   openBlankCanvas,
+  openMenuItem,
   pointIn,
   screenColor,
 } from "./helpers";
@@ -58,5 +61,32 @@ test.describe("Fondo", () => {
 
     await chooseBackdrop(page, "Ninguno");
     await expectColorAt(page, center, isWhite);
+  });
+
+  test("«Borrar todo definitivamente» quita el dibujo y el color, y no se puede deshacer", async ({
+    page,
+    isMobile,
+  }) => {
+    await openBlankCanvas(page);
+    const doc = await documentRect(page);
+    const center = pointIn(doc, 0.5, 0.5);
+    await chooseBackdrop(page, "Color", "Color #ff3b60");
+    await drag(
+      page,
+      [pointIn(doc, 0.3, 0.5), pointIn(doc, 0.7, 0.5)],
+      isMobile
+    );
+    if (!isMobile) await page.mouse.move(2, 2);
+    await expectColorAt(page, center, isDark);
+
+    await openMenuItem(page, "Borrar todo definitivamente");
+    await page
+      .getByRole("alertdialog", { name: "¿Borrar todo definitivamente?" })
+      .getByRole("button", { name: "Borrar todo" })
+      .click();
+    // Ni el trazo ni el color: el lienzo vuelve a ser blanco.
+    await expectColorAt(page, center, isWhite);
+    await expect(page.getByRole("button", { name: "Deshacer" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Rehacer" })).toBeDisabled();
   });
 });

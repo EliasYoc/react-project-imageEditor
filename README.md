@@ -106,6 +106,8 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón)               | Tocar el slider del borde izquierdo |
 | Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                                | Menú ⋮ → "Exportar"                 |
 | Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                                   | Igual                               |
+| Borrar el dibujo      | Menú ⋮ → "Borrar el dibujo" (se puede deshacer)                                       | Igual                               |
+| Borrar todo           | Menú ⋮ → "Borrar todo definitivamente" (también el color de fondo; no se deshace)     | Igual                               |
 | Cerrar un panel       | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo     |
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |

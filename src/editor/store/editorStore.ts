@@ -99,6 +99,11 @@ export interface EditorActions {
   redo: () => void;
   /** Borra todo el dibujo. Se puede deshacer. */
   clearLog: () => void;
+  /**
+   * Borra el dibujo, vuelve la capa de color o degradado a "Ninguno" y vacía
+   * el historial: NO se puede deshacer. La foto o el video se quedan.
+   */
+  resetDrawing: () => void;
 
   /** Texto nuevo (vacío) con su esquina en `position`; lo selecciona. */
   addText: (position: Point, fontSize: number) => string;
@@ -359,6 +364,9 @@ const createStateStore = (initialState?: Partial<EditorState>) =>
               false,
               "clearLog"
             ),
+
+          resetDrawing: () =>
+            set({ ...createDocumentReset() }, false, "resetDrawing"),
 
           addText: (position, fontSize) => {
             const id = createId();

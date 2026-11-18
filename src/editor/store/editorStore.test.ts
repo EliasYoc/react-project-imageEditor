@@ -225,6 +225,32 @@ describe("historial", () => {
     expect(state().log).toEqual(before);
   });
 
+  it("resetDrawing borra el dibujo y el color, vacía el historial y no se puede deshacer", () => {
+    addText();
+    state().addStroke(stroke());
+    state().setBackdrop(red);
+    state().undo(); // también hay algo en `future`
+    state().resetDrawing();
+
+    expect(state().log).toEqual([]);
+    expect(state().backdrop.fill).toBeNull();
+    expect(state().selectedElementId).toBeNull();
+    expect(selectCanUndo(state())).toBe(false);
+    expect(state().future).toEqual([]);
+    state().undo();
+    expect(state().log).toEqual([]);
+    expect(state().backdrop.fill).toBeNull();
+  });
+
+  it("resetDrawing no toca la foto ni el tamaño del lienzo", () => {
+    const photo = { ...state().photo, fileName: "foto" };
+    store.setState({ photo, canvasSize: { width: 300, height: 200 } });
+    state().addStroke(stroke());
+    state().resetDrawing();
+    expect(state().photo).toEqual(photo);
+    expect(state().canvasSize).toEqual({ width: 300, height: 200 });
+  });
+
   it("clearLog sin nada que borrar no crea un paso del historial", () => {
     state().clearLog();
     expect(selectCanUndo(state())).toBe(false);
