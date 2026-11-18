@@ -9,6 +9,7 @@ import {
 import { selectSelectedText } from "../../editor/store/selectors";
 import { getShortcutAction } from "../shortcuts";
 import FontPicker from "./components/FontPicker";
+import TextToolbar from "./components/TextToolbar";
 import TextStylePanel from "./components/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
 
@@ -180,5 +181,27 @@ describe("atajo de negrita", () => {
     };
     expect(getShortcutAction(key, "text")).toEqual({ type: "toggleBold" });
     expect(getShortcutAction(key, "draw")).toBeNull();
+  });
+});
+
+describe("TextToolbar", () => {
+  it("«Insertar una imagen» está en el menú «Más opciones» y abre el selector de archivos", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<TextToolbar />);
+    expect(
+      screen.queryByRole("button", { name: "Insertar una imagen" })
+    ).toBeNull();
+
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    const openPicker = vi.spyOn(input, "click");
+
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(
+      screen.getByRole("menuitem", { name: "Insertar una imagen" })
+    );
+    expect(openPicker).toHaveBeenCalledOnce();
   });
 });

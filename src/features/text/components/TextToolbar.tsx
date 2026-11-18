@@ -1,7 +1,14 @@
-import { PaintRoller, Trash2, Type } from "lucide-react";
+import {
+  EllipsisVertical,
+  ImagePlus,
+  PaintRoller,
+  Trash2,
+  Type,
+} from "lucide-react";
 import { useState } from "react";
 import { Button, IconButton } from "../../../components/ui/Button";
 import { ColorControl } from "../../../components/ui/ColorControl";
+import { Menu, type MenuItem } from "../../../components/ui/Menu";
 import { Panel } from "../../../components/ui/Panel";
 import { Tooltip } from "../../../components/ui/Tooltip";
 import { getFont } from "../../../editor/elements/fonts";
@@ -14,7 +21,7 @@ import {
   selectSelectedElement,
   selectSelectedText,
 } from "../../../editor/store/selectors";
-import { IncludeImageButton } from "../../images";
+import { useInsertImage } from "../../images";
 import { SHORTCUT_LABELS } from "../../shortcuts";
 import FontPicker from "./FontPicker";
 import TextStylePanel from "./TextStylePanel";
@@ -40,8 +47,9 @@ const addTextAtViewCenter = () => {
 type Sheet = "font" | "style";
 
 /**
- * Barra del modo Texto: añadir texto, insertar imagen, fuente, estilo, color
- * y eliminar. Fuente, estilo y color se aplican al texto seleccionado.
+ * Barra del modo Texto: añadir texto, fuente, estilo, color, eliminar y el
+ * menú "Más opciones" (por ahora, insertar una imagen). Fuente, estilo y color
+ * se aplican al texto seleccionado.
  */
 const TextToolbar = () => {
   const selectedText = useEditorStore(selectSelectedText);
@@ -51,8 +59,14 @@ const TextToolbar = () => {
   // Panel abierto: el de fuentes o el de estilo (uno a la vez).
   const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
 
+  const { pickImage, fileInput } = useInsertImage();
+
   const font = getFont(selectedText?.fontId ?? "normal");
   const closeSheet = (open: boolean) => !open && setOpenSheet(null);
+
+  const moreOptions: MenuItem[] = [
+    { label: "Insertar una imagen", icon: ImagePlus, onSelect: pickImage },
+  ];
 
   return (
     <>
@@ -61,7 +75,6 @@ const TextToolbar = () => {
         aria-label="Agregar texto"
         onClick={addTextAtViewCenter}
       />
-      <IncludeImageButton />
       <Tooltip label="Fuente y grosor">
         <Button
           size="sm"
@@ -101,6 +114,14 @@ const TextToolbar = () => {
         disabled={!selectedElement}
         onClick={() => selectedElement && removeElement(selectedElement.id)}
       />
+      <Menu
+        side="top"
+        trigger={
+          <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
+        }
+        items={moreOptions}
+      />
+      {fileInput}
       <Panel
         open={openSheet === "font" && selectedText !== null}
         onOpenChange={closeSheet}
