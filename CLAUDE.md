@@ -80,7 +80,7 @@ El objetivo de un refactor es que el código quede **organizado y fácil de ente
 
 - **Antes de empezar, propón.** Explica qué cambiarías y por qué, con sus ventajas e inconvenientes, y espera la respuesta del dueño.
 - **Si una biblioteca lo resuelve mejor**, sugiérela en esa propuesta: que mejore el rendimiento, simplifique el código o resuelva algo que JavaScript o TypeScript no resuelven bien. Instalarla sigue las reglas 2 y 3: di qué aporta, su peso, su mantenimiento y su licencia, y no la instales sin permiso.
-- **Legible antes que corto.** Si un código más largo se entiende mejor que uno corto y difícil de leer, usa el largo: nombres claros, pasos separados y comentarios donde ayuden.
+- **Legible antes que corto.** Si un código más largo se entiende mejor que uno corto y difícil de leer, usa el largo (ver la regla 9).
 - **Al terminar, evalúa el resultado.** Di si el cambio fue una buena opción o no, qué mejoró, qué no y qué harías después: tus conclusiones, con sinceridad.
 
 ### Modelo para un refactor
@@ -102,3 +102,16 @@ El modelo de la conversación lo elige el dueño (`/model`). Cuando pida un camb
 - **Grande** (una feature que cruza varias partes de la app): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
 
 Si el modelo actual ya es el adecuado, basta con decirlo y seguir. Si no lo es, Claude espera a que el dueño cambie de modelo o le diga que siga con el actual.
+
+## 9. Código nuevo: buenas prácticas
+
+Estas pautas valen al escribir código nuevo y al tocar el existente. En un refactor se siguen junto con la regla 7.
+
+- **Un dato, un solo sitio.** Si un texto, un tamaño o una condición aparece en dos lugares, déjalo en uno (una constante o una tabla en `constants/`, un selector en `selectors.ts`) y úsalo desde ahí. Con `Record<Tipo, …>` el compilador avisa si falta un caso.
+- **No guardes lo que se puede calcular.** Si un valor sale de otro (por ejemplo, la pestaña a partir del relleno), calcúlalo al usarlo en vez de guardarlo en otro estado que haya que mantener igual.
+- **Comprobar en la entrada, no en cada paso.** Valida lo que viene de fuera (archivos, medidas, datos guardados) una sola vez, donde entra. Después, confía en los tipos. Los errores que ve el usuario llevan un mensaje claro; los demás se dejan fallar a la vista, no se tragan en silencio.
+- **Nombres que se explican solos.** Funciones con verbo (`openImageFile`), booleanos con `is`/`has`/`can`, y sin abreviaturas raras. Si hace falta un comentario para entender un nombre, cambia el nombre.
+- **Comentarios solo donde el código es difícil de entender.** Explican el porqué (un límite, un navegador, una decisión), no lo que ya dice el código. Se escriben en español.
+- **Funciones pequeñas y con una sola tarea.** Si una función hace varias cosas seguidas, sepárala en pasos con nombre. Sin código muerto, sin `console.log` de depuración y sin `any` (si hace falta uno, explica por qué en un comentario).
+- **Lo que se puede romper se prueba.** Cálculos, el store y todo lo que pueda perder datos llevan test (ver la regla 4 sobre cuántos). Lo demás se apunta en `TESTS-PENDIENTES.md`.
+- **Al terminar, di qué dudas quedan.** Si dejas una decisión a medias, una medida sin verificar o un atajo, lo cuentas en el resumen en vez de darlo por cerrado.
