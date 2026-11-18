@@ -14,16 +14,18 @@ const MODES: readonly SegmentedItem<EditorMode>[] = [
 ];
 
 /**
- * Cambia entre los modos "Dibujar" y "Texto". En el móvil va abajo, al
- * alcance del pulgar; en escritorio, en el centro de la cabecera.
+ * Cambia entre los modos "Dibujar" y "Texto", en el centro de la cabecera.
+ * Con `iconOnly` (el móvil) solo muestra los iconos: el nombre queda para el
+ * lector de pantalla.
  */
-const ModeSwitcher = () => {
+const ModeSwitcher = ({ iconOnly = false }: { iconOnly?: boolean }) => {
   const mode = useEditorStore((state) => state.mode);
   const setMode = useEditorStore((state) => state.setMode);
   return (
     <Segmented
       label="Modo"
       size="sm"
+      iconOnly={iconOnly}
       value={mode === "home" ? null : mode}
       onChange={setMode}
       items={MODES}
