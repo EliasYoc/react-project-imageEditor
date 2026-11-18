@@ -145,9 +145,11 @@
   gap: var(--space-2);
 }
 
+/* Sin borde: el degradado llena el botón entero (bajo un borde transparente se
+   repetía y se veía un marco). */
 .preset {
   aspect-ratio: 1;
-  border: 2px solid transparent;
+  border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
