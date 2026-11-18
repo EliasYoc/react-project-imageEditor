@@ -92,3 +92,13 @@ El modelo de la conversación lo elige el dueño (`/model`). Antes de empezar un
 - **Grande o de arquitectura** (el store, el motor de pinceles, una versión mayor de TypeScript): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
 
 Un refactor no cambia lo que hace la app: lo vigilan los tests que ya existen y normalmente no necesita tests nuevos.
+
+## 8. Modelo y esfuerzo para cualquier tarea
+
+El modelo de la conversación lo elige el dueño (`/model`). Cuando pida un cambio (arreglar un error, una feature, un ajuste), Claude le recomienda **antes de empezar** qué modelo y qué esfuerzo convienen, con una frase de por qué. Para los refactors se sigue la regla 7.
+
+- **Pequeño** (un texto, un estilo, un error ya localizado): **Sonnet** con esfuerzo _medium_.
+- **Mediano** (una feature acotada, un error que hay que investigar): **Sonnet** con esfuerzo _high_, u **Opus** si toca código delicado (el lienzo, los pinceles, la exportación, el video).
+- **Grande** (una feature que cruza varias partes de la app): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
+
+Si el modelo actual ya es el adecuado, basta con decirlo y seguir. Si no lo es, Claude espera a que el dueño cambie de modelo o le diga que siga con el actual.
