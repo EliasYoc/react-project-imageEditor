@@ -32,4 +32,12 @@ describe("getDownloadFileName", () => {
   it("usa png y un nombre por defecto en casos raros", () => {
     expect(getDownloadFileName("  ", "image/gif")).toBe("imagen.png");
   });
+
+  it("un video sale con la extensión mp4", () => {
+    expect(getDownloadFileName("fiesta-editado", "video/mp4")).toBe(
+      "fiesta-editado.mp4"
+    );
+    expect(getDownloadFileName("fiesta.MP4", "video/mp4")).toBe("fiesta.MP4");
+    expect(getDownloadFileName(" ", "video/mp4")).toBe("video.mp4");
+  });
 });

@@ -52,6 +52,11 @@ Si ninguna lo cubre:
 - **Un commit por tarea.** Si el dueño pide varias tareas a la vez (p. ej. una lista numerada), cada una va en su propio commit y en ese orden, **aunque toquen los mismos archivos**. Así se pueden revisar y revertir por separado.
   - **Cuándo hacer el commit:** al terminar una tarea y comprobarla (`npm run check`, y los e2e si cambia algo que prueban), **antes de empezar la siguiente**.
   - **Qué va en él:** el código de la tarea, sus tests y su documentación (README, comentarios). Si al hacerla aparece un arreglo que no tiene que ver con ella, va en un commit aparte.
+  - **Qué tests, y cuántos** (para no gastar de más el límite de uso de Claude):
+    - **Siempre** se ejecutan los que ya existen: `npm run check` y los e2e de lo que cambia.
+    - **Con la tarea, pocos tests nuevos:** los de la lógica con riesgo (cálculos, el store, lo que pueda perder datos) y uno o dos e2e del camino principal.
+    - **El resto de casos** (bordes, variantes de móvil, mensajes de error…) se apuntan en `TESTS-PENDIENTES.md`, con la tarea a la que pertenecen, para escribirlos cuando el dueño lo pida. Al escribir uno, se quita de la lista.
+    - **Quién los escribe:** si son varios (una feature grande, o los de `TESTS-PENDIENTES.md`), se encargan a un subagente con **Sonnet**, que gasta menos; Claude le explica qué probar y revisa lo que escribe. Dos o tres tests los escribe Claude directamente: explicárselos a un subagente costaría más.
   - **Cambios que el dueño pida después** sobre una tarea ya hecha van en un commit nuevo; no se reescribe un commit que ya existe (nada de `--amend` ni de rebase) salvo que él lo pida.
 
 ## 5. Pendientes
@@ -68,3 +73,22 @@ Si ninguna lo cubre:
 - **Los tests de la feature** van en su raíz; un test unitario va junto al archivo que prueba.
 - **Cada feature tiene un `index.ts`** que reexporta solo lo que usa el resto de la app. Desde fuera de la feature se importa siempre ese `index.ts`, nunca un archivo interno. Dentro de la feature, los archivos se importan entre sí con rutas relativas, sin pasar por su propio `index.ts`.
 - El `index.ts` solo reexporta; no pongas código en él (en `vite.config.js` está marcado sin efectos secundarios para que no arrastre el editor al bundle del inicio).
+
+## 7. Refactor
+
+El objetivo de un refactor es que el código quede **organizado y fácil de entender para un desarrollador**.
+
+- **Antes de empezar, propón.** Explica qué cambiarías y por qué, con sus ventajas e inconvenientes, y espera la respuesta del dueño.
+- **Si una biblioteca lo resuelve mejor**, sugiérela en esa propuesta: que mejore el rendimiento, simplifique el código o resuelva algo que JavaScript o TypeScript no resuelven bien. Instalarla sigue las reglas 2 y 3: di qué aporta, su peso, su mantenimiento y su licencia, y no la instales sin permiso.
+- **Legible antes que corto.** Si un código más largo se entiende mejor que uno corto y difícil de leer, usa el largo: nombres claros, pasos separados y comentarios donde ayuden.
+- **Al terminar, evalúa el resultado.** Di si el cambio fue una buena opción o no, qué mejoró, qué no y qué harías después: tus conclusiones, con sinceridad.
+
+### Modelo para un refactor
+
+El modelo de la conversación lo elige el dueño (`/model`). Antes de empezar un refactor, Claude le recuerda cuál conviene:
+
+- **Pequeño o mecánico** (renombrar, mover archivos, sacar una función repetida, ordenar imports): **Sonnet** con esfuerzo _medium_.
+- **Mediano** (reorganizar una feature, cambiar cómo se comunica un componente con el store): **Sonnet** con esfuerzo _high_, u **Opus** si toca código delicado (el lienzo, los pinceles, la exportación).
+- **Grande o de arquitectura** (el store, el motor de pinceles, una versión mayor de TypeScript): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
+
+Un refactor no cambia lo que hace la app: lo vigilan los tests que ya existen y normalmente no necesita tests nuevos.

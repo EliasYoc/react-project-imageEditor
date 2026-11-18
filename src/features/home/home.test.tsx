@@ -6,12 +6,21 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
+import { Toaster, toastStore } from "../../components/ui/Toast";
+import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
 import HomeScreen from "./components/HomeScreen";
+import { VideoOpenError } from "./utils/openVideoFile";
 
 const openImageFile = vi.hoisted(() => vi.fn());
 vi.mock("./utils/openImageFile", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./utils/openImageFile")>()),
   openImageFile,
+}));
+
+const openVideoFile = vi.hoisted(() => vi.fn());
+vi.mock("./utils/openVideoFile", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./utils/openVideoFile")>()),
+  openVideoFile,
 }));
 
 const state = () => editorStore.getState();
@@ -21,6 +30,7 @@ const photoFrom = (name: string) => ({
   preview: document.createElement("canvas"),
   mimeType: "image/png",
   fileName: name,
+  video: null,
   size: { width: 640, height: 480 },
 });
 
@@ -35,9 +45,34 @@ const addStroke = () =>
   });
 
 const image = new File(["x"], "playa.png", { type: "image/png" });
+const clip = new File(["x"], "fiesta.mp4", { type: "video/mp4" });
+
+const videoFrom = (name: string) => ({
+  source: null,
+  preview: null,
+  mimeType: null,
+  fileName: name,
+  video: createFakeVideoSource(),
+  size: { width: 1280, height: 720 },
+});
+
+/** Elige un archivo en el selector (oculto) que abre "Agregar video". */
+const chooseVideo = (file: File) => {
+  const input = document.querySelector<HTMLInputElement>(
+    'input[accept="video/*"]'
+  );
+  if (!input) throw new Error("No está el selector de video");
+  fireEvent.change(input, { target: { files: [file] } });
+};
 
 beforeEach(() => {
+  mockObjectUrls();
   editorStore.setState(createInitialState());
+  toastStore.setState({ toasts: [] });
+  openVideoFile.mockReset();
+  openVideoFile.mockImplementation(async (file: File) =>
+    videoFrom(file.name.replace(/\..*$/, ""))
+  );
   openImageFile.mockReset();
   openImageFile.mockImplementation(async (file: File) =>
     photoFrom(file.name.replace(/\..*$/, ""))
@@ -133,5 +168,51 @@ describe("pantalla de inicio", () => {
     expect(openImageFile).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Descartar y abrir" }));
     await waitFor(() => expect(openImageFile).toHaveBeenCalledWith(image));
+  });
+
+  it("Agregar video abre el video elegido como fondo del documento", async () => {
+    render(<HomeScreen />);
+    expect(
+      screen.getByRole("button", { name: "Agregar video" })
+    ).toBeInTheDocument();
+
+    chooseVideo(clip);
+    await waitFor(() => expect(state().mode).toBe("draw"));
+    expect(openVideoFile).toHaveBeenCalledWith(clip);
+    expect(openImageFile).not.toHaveBeenCalled();
+    expect(state().photo.fileName).toBe("fiesta");
+    expect(state().photo.video).not.toBeNull();
+    expect(state().canvasSize).toEqual({ width: 1280, height: 720 });
+    expect(state().status).toBe("idle");
+  });
+
+  it("si el video no se puede abrir, avisa del motivo y se queda en el inicio", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    openVideoFile.mockRejectedValueOnce(new VideoOpenError("tooLong"));
+    render(
+      <>
+        <HomeScreen />
+        <Toaster />
+      </>
+    );
+    chooseVideo(clip);
+    expect(
+      await screen.findByText("El video dura más de 2 minutos")
+    ).toBeInTheDocument();
+    expect(state().mode).toBe("home");
+    expect(state().photo.video).toBeNull();
+    expect(state().status).toBe("idle");
+  });
+
+  it("con un documento abierto, Agregar video pide confirmación antes de elegir el archivo", async () => {
+    const user = userEvent.setup();
+    addStroke();
+    render(<HomeScreen />);
+    await user.click(screen.getByRole("button", { name: "Agregar video" }));
+    expect(
+      screen.getByRole("alertdialog", { name: "¿Empezar de nuevo?" })
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(state().log).toHaveLength(1);
   });
 });

@@ -59,3 +59,25 @@ describe("carga del editor bajo demanda", () => {
     ).toBeNull();
   });
 });
+
+describe("indicador de carga", () => {
+  it("tapa la pantalla al abrir y al exportar una imagen, pero no al exportar un video", async () => {
+    const { App, editorStore } = await loadApp();
+    render(<App />);
+    const labels = {
+      loading: "Abriendo la imagen",
+      loadingVideo: "Abriendo el video",
+      exporting: "Exportando la imagen",
+    } as const;
+    for (const [status, label] of Object.entries(labels)) {
+      act(() =>
+        editorStore.setState({ status: status as keyof typeof labels })
+      );
+      expect(screen.getByRole("status", { name: label })).toBeInTheDocument();
+    }
+
+    // El avance de un video se ve en su diálogo, no con la pantalla tapada.
+    act(() => editorStore.setState({ status: "exportingVideo" }));
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+});

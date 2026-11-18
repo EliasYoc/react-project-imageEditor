@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from "react";
+import { Suspense, lazy, useState, type FormEvent } from "react";
 import { Button } from "../../../components/ui/Button";
 import {
   Dialog,
@@ -10,18 +10,41 @@ import { useEditorStore } from "../../../editor/store/editorStore";
 import { exportImage } from "../utils/exportImage";
 import styles from "./ExportDialog.module.css";
 import { defaultExportName, exportExtension } from "../utils/exportName";
+import FileNameField from "./FileNameField";
 
-interface ExportDialogProps {
+/**
+ * El diálogo de exportar un video va en su propio archivo de JavaScript: solo
+ * se descarga con un video abierto (el editor no lo carga para una foto).
+ */
+const VideoExportDialog = lazy(() => import("./VideoExportDialog"));
+
+export interface ExportDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+/**
+ * Exportar el documento: una imagen o, si el fondo es un video, ese video
+ * con el dibujo encima (`VideoExportDialog`).
+ */
+const ExportDialog = (props: ExportDialogProps) => {
+  const isVideo = useEditorStore((state) => state.photo.video !== null);
+  return isVideo ? (
+    // Se pide al abrir el video, no al pulsar Exportar: para entonces ya está.
+    <Suspense fallback={null}>
+      <VideoExportDialog {...props} />
+    </Suspense>
+  ) : (
+    <ImageExportDialog {...props} />
+  );
+};
 
 /**
  * Pide el nombre del archivo (ya relleno) y exporta. La imagen sale con el
  * formato de la foto original (o PNG si no hay foto); en el móvil se abre la
  * hoja de compartir.
  */
-const ExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
+const ImageExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
   const hasPhoto = useEditorStore((state) => state.photo.source !== null);
   const { width, height } = useEditorStore((state) => state.canvasSize);
   return (
@@ -48,7 +71,6 @@ const ExportForm = ({ onDone }: { onDone: () => void }) => {
   const suggested = () => defaultExportName({ hasPhoto, fileName });
   const setStatus = useEditorStore((state) => state.setStatus);
   const [name, setName] = useState(suggested);
-  const inputId = useId();
   const extension = exportExtension(hasPhoto ? mimeType : null);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -72,23 +94,7 @@ const ExportForm = ({ onDone }: { onDone: () => void }) => {
 
   return (
     <form className={styles.form} onSubmit={onSubmit}>
-      <label htmlFor={inputId} className={styles.label}>
-        Nombre del archivo
-      </label>
-      <div className={styles.field}>
-        <input
-          id={inputId}
-          className={styles.input}
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          onFocus={(event) => event.currentTarget.select()}
-          autoComplete="off"
-          spellCheck={false}
-        />
-        <span className={styles.extension} aria-hidden="true">
-          .{extension}
-        </span>
-      </div>
+      <FileNameField value={name} onChange={setName} extension={extension} />
       <DialogActions>
         <DialogClose asChild>
           <Button size="sm">Cancelar</Button>

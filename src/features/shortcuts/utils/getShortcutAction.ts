@@ -14,7 +14,8 @@ export type ShortcutAction =
   | { type: "deselect" }
   | { type: "export" }
   | { type: "showShortcuts" }
-  | { type: "toggleBars" };
+  | { type: "toggleBars" }
+  | { type: "togglePlayback" };
 
 type KeyInfo = Pick<
   KeyboardEvent,
@@ -32,6 +33,8 @@ export const BRUSH_SIZE_STEP = 1.25;
  * - Ctrl/⌘ + S: exportar · ?: lista de atajos
  * - Ctrl/⌘ + 0: ajustar · Ctrl/⌘ + = / −: acercar / alejar
  * - O: ocultar / mostrar las barras (de "Ocultar"; en los dos modos)
+ * - K: reproducir / pausar el video (en los dos modos). No es Espacio, como
+ *   en otros reproductores, porque aquí Espacio + arrastrar desplaza la vista.
  * - B / E: último pincel / último borrador (modo Dibujar)
  * - [ / ]: pincel más pequeño / más grande (modo Dibujar). Se usa la tecla
  *   física (`code`): en un teclado español los corchetes necesitan AltGr.
@@ -61,6 +64,7 @@ export const getShortcutAction = (
 
   if (key === "?") return { type: "showShortcuts" };
   if (lowerKey === "o" && !shiftKey) return { type: "toggleBars" };
+  if (lowerKey === "k" && !shiftKey) return { type: "togglePlayback" };
 
   if (mode === "text") {
     if (key === "Delete" || key === "Backspace")

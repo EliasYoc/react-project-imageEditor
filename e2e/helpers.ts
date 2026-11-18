@@ -32,6 +32,20 @@ export const PHOTO = {
 } as const;
 
 /**
+ * Video de prueba: 320 × 240, 2 segundos a 30 fotogramas por segundo, con
+ * H.264 y sonido AAC (un tono de 440 Hz). Como la foto, es negro a la
+ * izquierda y blanco a la derecha; además, la franja de arriba (1/6 del alto)
+ * es roja durante el primer segundo y azul durante el segundo: así se sabe en
+ * qué momento del video se está.
+ */
+export const VIDEO = {
+  path: "e2e/fixtures/video.mp4",
+  width: 320,
+  height: 240,
+  duration: 2,
+} as const;
+
+/**
  * Decodifica un PNG en el navegador (createImageBitmap + canvas): así se leen
  * píxeles sin instalar un decodificador de PNG para Node. `region` limita los
  * datos que vuelven del navegador (una imagen grande serían millones).
@@ -101,6 +115,8 @@ export const expectColorAt = (
 
 export const isWhite = ({ r, g, b }: Rgba) => r > 240 && g > 240 && b > 240;
 export const isDark = ({ r, g, b }: Rgba) => r < 60 && g < 60 && b < 60;
+export const isRed = ({ r, g, b }: Rgba) => r > 180 && g < 90 && b < 90;
+export const isBlue = ({ r, g, b }: Rgba) => b > 180 && r < 90 && g < 90;
 /** Tiene color (no es gris): el canal más alto y el más bajo se separan. */
 export const isColorful = ({ r, g, b }: Rgba) =>
   Math.max(r, g, b) - Math.min(r, g, b) > 60;
@@ -269,6 +285,19 @@ export async function openMenuItem(page: Page, name: string) {
   await page.getByRole("menuitem", { name }).click();
 }
 
+/** Elige un pincel de la biblioteca (con un pincel activo, no un borrador). */
+export async function chooseBrush(page: Page, name: string) {
+  // El pincel activo se vuelve a pulsar para abrir la biblioteca.
+  await page.getByRole("button", { name: /^Pincel: / }).click();
+  const library = page.getByRole("dialog", { name: "Pinceles" });
+  await library.getByRole("button", { name, exact: true }).click();
+  await library.getByRole("button", { name: "Cerrar" }).click();
+  await expect(library).toBeHidden();
+  await expect(
+    page.getByRole("button", { name: `Pincel: ${name}` })
+  ).toHaveAttribute("aria-pressed", "true");
+}
+
 /** Empieza un lienzo en blanco desde el inicio y espera a que se vea. */
 export async function openBlankCanvas(page: Page, preset = "Cuadrado") {
   await page.goto("/");
@@ -288,6 +317,46 @@ export async function openPhoto(page: Page) {
   await expect(
     page.getByRole("button", { name: "Más opciones", exact: true })
   ).toBeVisible();
+}
+
+/** Abre el video de prueba con el botón "Agregar video". */
+export async function openVideo(page: Page) {
+  await page.goto("/");
+  const chooser = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Agregar video" }).click();
+  await (await chooser).setFiles(VIDEO.path);
+  await expect(
+    page.getByRole("button", { name: "Más opciones", exact: true })
+  ).toBeVisible();
+}
+
+/**
+ * Dónde se ve el video de prueba ajustado. Su centro es el del ajuste y su
+ * proporción se conoce: basta medir el ancho de su mitad derecha, que es
+ * blanca (a la izquierda es negro, como el fondo de la app).
+ */
+export async function videoRect(page: Page): Promise<Rect> {
+  const stage = await stageRect(page);
+  const center = await fittedCenter(page);
+  // Unos píxeles a la derecha del centro: justo en él cambia de negro a blanco.
+  const from = center.x + 4;
+  await expectColorAt(page, { x: from, y: center.y }, isWhite);
+  const row = await screenPixels(page, {
+    x: from,
+    y: center.y,
+    width: Math.floor(stage.x + stage.width - from),
+    height: 1,
+  });
+  let end = 0;
+  while (end < row.width - 1 && isWhite(row.at(end + 1, 0))) end++;
+  const halfWidth = from + end - center.x;
+  const halfHeight = (halfWidth * VIDEO.height) / VIDEO.width;
+  return {
+    x: center.x - halfWidth,
+    y: center.y - halfHeight,
+    width: halfWidth * 2,
+    height: halfHeight * 2,
+  };
 }
 
 /** Espera a que el lienzo muestre el documento (blanco en el centro). */
@@ -401,6 +470,113 @@ export async function exportImage(
   expect(type).toBe("image/png");
   return { name, bytes: new Uint8Array(bytes) };
 }
+
+/**
+ * Exporta el video con el diálogo y devuelve el archivo, como `exportImage`.
+ * En el móvil, si la exportación tardó más de lo que dura el último toque, el
+ * diálogo pide otro ("Compartir o guardar") antes de abrir la hoja.
+ */
+export async function exportVideo(page: Page, isMobile: boolean) {
+  await openMenuItem(page, "Exportar");
+  const dialog = page.getByRole("dialog", { name: "Exportar video" });
+  const submit = dialog.getByRole("button", { name: "Exportar" });
+  if (!isMobile) {
+    const download = page.waitForEvent("download");
+    await submit.click();
+    const file = await download;
+    return { name: file.suggestedFilename(), bytes: await downloadBytes(file) };
+  }
+  await submit.click();
+  const ready = dialog.getByRole("button", { name: "Compartir o guardar" });
+  const hasShared = () => page.evaluate(() => Boolean(window.__shared));
+  await expect
+    .poll(async () => (await hasShared()) || (await ready.isVisible()), {
+      timeout: 30_000,
+    })
+    .toBe(true);
+  if (!(await hasShared())) await ready.click();
+  const shared = await page.waitForFunction(() => window.__shared);
+  const { name, type, bytes } = (await shared.jsonValue()) as SharedFile;
+  expect(type).toBe("video/mp4");
+  return { name, bytes: new Uint8Array(bytes) };
+}
+
+/** Lo que se lee de un video exportado (ver `readVideo`). */
+export interface VideoContents {
+  width: number;
+  height: number;
+  /** Duración, en segundos. */
+  duration: number;
+  /** Los colores de `points` en cada momento de `times` (`colors[t][p]`). */
+  colors: Rgba[][];
+  /** Duración del sonido, en segundos (0 si no tiene). */
+  soundSeconds: number;
+}
+
+/**
+ * Abre un video en el navegador (un `<video>` con sus bytes) y lee sus
+ * medidas, su duración, los colores de algunos puntos en algunos momentos y
+ * si tiene sonido. Falla si el navegador no lo puede reproducir.
+ */
+export const readVideo = (
+  page: Page,
+  bytes: Uint8Array,
+  { times, points }: { times: number[]; points: Point[] }
+): Promise<VideoContents> =>
+  page.evaluate(
+    async ({ bytes, times, points }) => {
+      const blob = new Blob([new Uint8Array(bytes)], { type: "video/mp4" });
+      const url = URL.createObjectURL(blob);
+      const video = document.createElement("video");
+      video.muted = true;
+      video.preload = "auto";
+      video.src = url;
+      await new Promise((resolve, reject) => {
+        video.onloadeddata = resolve;
+        video.onerror = () =>
+          reject(new Error("El navegador no puede reproducir el video"));
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) throw new Error("Sin contexto 2D");
+
+      const colors = [];
+      for (const time of times) {
+        const seeked = new Promise((resolve) =>
+          video.addEventListener("seeked", resolve, { once: true })
+        );
+        video.currentTime = time;
+        await seeked;
+        ctx.drawImage(video, 0, 0);
+        colors.push(
+          points.map(({ x, y }) => {
+            const [r, g, b, a] = ctx.getImageData(x, y, 1, 1).data;
+            return { r, g, b, a };
+          })
+        );
+      }
+
+      let soundSeconds = 0;
+      try {
+        const context = new OfflineAudioContext(1, 1, 48_000);
+        const sound = await context.decodeAudioData(await blob.arrayBuffer());
+        soundSeconds = sound.duration;
+      } catch {
+        // Sin pista de sonido.
+      }
+      URL.revokeObjectURL(url);
+      return {
+        width: video.videoWidth,
+        height: video.videoHeight,
+        duration: video.duration,
+        colors,
+        soundSeconds,
+      };
+    },
+    { bytes: Array.from(bytes), times, points }
+  );
 
 /** Ancho y alto de un PNG, leídos de su cabecera (el bloque IHDR). */
 export function pngSize(bytes: Uint8Array) {

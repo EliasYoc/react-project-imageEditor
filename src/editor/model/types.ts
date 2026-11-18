@@ -9,7 +9,12 @@
 import type { FontId } from "../elements/fonts";
 
 export type Mode = "home" | "draw" | "text";
-export type Status = "idle" | "loading" | "exporting";
+/**
+ * Qué está haciendo la app. `exportingVideo` va aparte de `exporting` porque
+ * tarda: no se tapa la pantalla, el avance se ve en el diálogo de exportar.
+ */
+export type Status =
+  "idle" | "loading" | "loadingVideo" | "exporting" | "exportingVideo";
 
 export interface Rgba {
   r: number;
@@ -209,7 +214,25 @@ export const isTextElement = (
 
 // ---------------------------------------------------------------- fondo
 
-/** La foto abierta (null en un lienzo en blanco). */
+/** Un video abierto como fondo del documento. */
+export interface VideoSource {
+  /**
+   * El `<video>` que se reproduce: el lienzo pinta su fotograma actual. No
+   * está en el DOM; su estado (pausa, posición, sonido) se lee de él mismo.
+   */
+  element: HTMLVideoElement;
+  /** El archivo original: al exportar se vuelve a leer fotograma a fotograma. */
+  file: File;
+  /** URL de objeto del archivo; se libera al cerrar el documento. */
+  url: string;
+  /** Duración en segundos. */
+  duration: number;
+}
+
+/**
+ * El fondo abierto desde un archivo: una foto o un video (todo null en un
+ * lienzo en blanco). Un video no tiene `source` ni `preview`: va en `video`.
+ */
 export interface Photo {
   /** Imagen a resolución completa: es la que se usa al exportar. */
   source: HTMLImageElement | HTMLCanvasElement | null;
@@ -219,6 +242,8 @@ export interface Photo {
   mimeType: string | null;
   /** Nombre del archivo original, sin extensión (para sugerir al exportar). */
   fileName: string | null;
+  /** El video, si el fondo es un video. */
+  video: VideoSource | null;
 }
 
 // ---------------------------------------------------------------- capa de color
