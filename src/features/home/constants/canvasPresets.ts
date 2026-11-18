@@ -32,7 +32,6 @@ export const CANVAS_SECTIONS: readonly CanvasSection[] = [
     title: "Lienzo en blanco",
     presets: [
       { id: "screen", label: "Pantalla", size: screenCanvasSize },
-      { id: "square", label: "Cuadrado", size: fixed(2048, 2048) },
       { id: "story", label: "Historia", size: fixed(1080, 1920) },
       { id: "landscape", label: "Horizontal", size: fixed(1920, 1080) },
     ],
@@ -51,8 +50,8 @@ export const CANVAS_SECTIONS: readonly CanvasSection[] = [
     title: "Facebook",
     network: "Facebook",
     presets: [
-      { id: "facebook-post", label: "Publicación", size: fixed(1200, 630) },
-      { id: "facebook-cover", label: "Portada", size: fixed(820, 312) },
+      { id: "facebook-link", label: "Enlace", size: fixed(1200, 630) },
+      { id: "facebook-cover", label: "Portada", size: fixed(851, 315) },
     ],
   },
   {
@@ -86,7 +85,7 @@ export const CANVAS_SECTIONS: readonly CanvasSection[] = [
     network: "YouTube",
     presets: [
       { id: "youtube-thumbnail", label: "Miniatura", size: fixed(1280, 720) },
-      { id: "youtube-banner", label: "Banner", size: fixed(2560, 1440) },
+      { id: "youtube-banner", label: "Banner", size: fixed(2048, 1152) },
     ],
   },
 ];

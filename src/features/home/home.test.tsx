@@ -124,7 +124,7 @@ describe("pantalla de inicio", () => {
     addStroke();
     render(<HomeScreen />);
     await user.click(
-      screen.getByRole("button", { name: "Cuadrado, 2048 × 2048 píxeles" })
+      screen.getByRole("button", { name: "Publicación de Instagram, 1080 × 1080 píxeles" })
     );
     const dialog = screen.getByRole("alertdialog", {
       name: "¿Empezar de nuevo?",
@@ -137,11 +137,11 @@ describe("pantalla de inicio", () => {
     expect(state().mode).toBe("home");
 
     await user.click(
-      screen.getByRole("button", { name: "Cuadrado, 2048 × 2048 píxeles" })
+      screen.getByRole("button", { name: "Publicación de Instagram, 1080 × 1080 píxeles" })
     );
     await user.click(screen.getByRole("button", { name: "Descartar y abrir" }));
     expect(state().log).toHaveLength(0);
-    expect(state().canvasSize).toEqual({ width: 2048, height: 2048 });
+    expect(state().canvasSize).toEqual({ width: 1080, height: 1080 });
   });
 
   it("soltar una imagen sobre la ventana la abre (y avisa mientras se arrastra)", async () => {
