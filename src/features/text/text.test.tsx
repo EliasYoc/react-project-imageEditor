@@ -133,6 +133,20 @@ describe("TextStylePanel", () => {
     expect(editorStore.getState().past.length).toBe(pastBefore + 1);
   });
 
+  it("degradado: «Quitar parada» va justo debajo de la barra de paradas, antes del color", () => {
+    editorStore.getState().editElement(text().id, {
+      gradient: DEFAULT_TEXT_GRADIENT,
+    });
+    render(<TextStylePanel text={text()} />);
+    const stop = screen.getAllByRole("slider", { name: /parada/i })[0];
+    const remove = screen.getByRole("button", { name: "Quitar parada" });
+    const color = screen.getByRole("button", { name: "Color de la parada" });
+    const before = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(stop, remove)).toBe(true);
+    expect(before(remove, color)).toBe(true);
+  });
+
   it("degradado: un preset reemplaza las paradas", async () => {
     editorStore.getState().editElement(text().id, {
       gradient: DEFAULT_TEXT_GRADIENT,

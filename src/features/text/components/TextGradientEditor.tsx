@@ -81,6 +81,14 @@ const TextGradientEditor = ({
 
       {selectedStop && (
         <div className={styles.stopRow}>
+          {/* Justo debajo de la barra de paradas, que es lo que quita. */}
+          <Button
+            size="sm"
+            disabled={gradient.stops.length <= MIN_STOPS}
+            onClick={() => onChange(removeStop(gradient, selectedStop.id))}
+          >
+            Quitar parada
+          </Button>
           <ColorField
             label="Color de la parada"
             color={selectedStop.color}
@@ -93,13 +101,6 @@ const TextGradientEditor = ({
               )
             }
           />
-          <Button
-            size="sm"
-            disabled={gradient.stops.length <= MIN_STOPS}
-            onClick={() => onChange(removeStop(gradient, selectedStop.id))}
-          >
-            Quitar parada
-          </Button>
         </div>
       )}
 

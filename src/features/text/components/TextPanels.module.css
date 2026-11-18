@@ -115,12 +115,16 @@
   -webkit-background-clip: text;
 }
 
+/* El botón de quitar la parada, centrado bajo la barra, y su color debajo. */
 .stopRow {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: var(--space-2);
+}
+
+.stopRow > button {
+  align-self: center;
 }
 
 .presets {
