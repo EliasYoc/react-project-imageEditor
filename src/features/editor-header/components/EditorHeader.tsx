@@ -1,12 +1,12 @@
 import {
   Download,
   EllipsisVertical,
+  House,
   Keyboard,
   Layers,
   Redo2,
   Trash2,
   Undo2,
-  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useUiStore } from "../../../app/uiStore";
@@ -67,7 +67,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
     },
     {
       label: "Volver al inicio",
-      icon: X,
+      icon: House,
       onSelect: () => setMode("home"),
     },
     ...(hasKeyboard
