@@ -1,4 +1,4 @@
-import { useId, type CSSProperties } from "react";
+import { Slider as RadixSlider } from "radix-ui";
 import { classNames } from "../../../lib/classNames";
 import styles from "./Slider.module.css";
 
@@ -19,9 +19,9 @@ export interface SliderProps {
 }
 
 /**
- * Slider horizontal sobre un `<input type="range">` nativo: funciona con
- * ratón, dedo y teclado (flechas, Inicio/Fin, RePág/AvPág) y lo anuncian los
- * lectores de pantalla sin código extra. Se sustituye por Radix en la Fase 6.
+ * Slider horizontal de Radix: funciona con ratón, dedo y teclado (flechas,
+ * Inicio/Fin, RePág/AvPág) y lo anuncian los lectores de pantalla. Radix solo
+ * pone la lógica; el aspecto es el de `Slider.module.css`.
  */
 export function Slider({
   label,
@@ -33,30 +33,27 @@ export function Slider({
   valueText,
   className,
 }: SliderProps) {
-  const id = useId();
-  const fill = max > min ? ((value - min) / (max - min)) * 100 : 0;
-
   return (
     <div className={classNames(styles.field, className)}>
-      <label htmlFor={id} className={styles.label}>
-        {label}
-      </label>
-      <output htmlFor={id} className={styles.value}>
-        {valueText ?? value}
-      </output>
-      <input
-        id={id}
-        type="range"
-        className={styles.range}
+      <span className={styles.label}>{label}</span>
+      <output className={styles.value}>{valueText ?? value}</output>
+      <RadixSlider.Root
+        className={styles.root}
         min={min}
         max={max}
         step={step}
-        value={value}
-        aria-valuetext={valueText}
-        // La parte rellena de la pista (el navegador no la pinta igual en todos).
-        style={{ "--fill": `${fill}%` } as CSSProperties}
-        onChange={(event) => onChange(Number(event.target.value))}
-      />
+        value={[value]}
+        onValueChange={([next]) => onChange(next)}
+      >
+        <RadixSlider.Track className={styles.track}>
+          <RadixSlider.Range className={styles.range} />
+        </RadixSlider.Track>
+        <RadixSlider.Thumb
+          className={styles.thumb}
+          aria-label={label}
+          aria-valuetext={valueText}
+        />
+      </RadixSlider.Root>
     </div>
   );
 }

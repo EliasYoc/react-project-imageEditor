@@ -256,7 +256,7 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
 - Todo el CSS son **CSS Modules** (`*.module.css`) y tokens; no hay CSS en JS.
 - Iconos de **lucide-react** (cada uno se importa por separado). Si falta uno, se crea con `createLucideIcon` y el mismo trazo (ver `features/drawing/constants/brushIcons.ts`).
 - Para botones usa `Button` o `IconButton` de `components/ui/Button`: son `<button>` reales, accesibles con teclado. `IconButton` exige `aria-label` y acepta `shortcut` para su tooltip.
-- Para valores numéricos usa `Slider` (un `<input type="range">` nativo con etiqueta y valor) y, en el borde del lienzo, `VerticalSlider` (barra al estilo de iOS, sin pulgar visible).
+- Para valores numéricos usa `Slider` (Radix, con etiqueta y valor y el aspecto de siempre: pista de 6 px y pulgar blanco) y, en el borde del lienzo, `VerticalSlider` (barra al estilo de iOS, sin pulgar visible).
 
 ## Interfaz (Radix UI)
 

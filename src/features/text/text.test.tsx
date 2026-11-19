@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TextElement } from "../../editor/model/types";
@@ -68,12 +68,13 @@ describe("TextStylePanel", () => {
     rerender(<TextStylePanel text={text()} />);
 
     const pastBefore = editorStore.getState().past.length;
-    const slider = screen.getByRole("slider", { name: "Grosor" });
-    for (const value of ["10", "15", "20"]) {
-      fireEvent.change(slider, { target: { value } });
+    const widthBefore = text().stroke.width;
+    screen.getByRole("slider", { name: "Grosor" }).focus();
+    for (let step = 0; step < 3; step++) {
+      await userEvent.keyboard("{ArrowRight}");
       rerender(<TextStylePanel text={text()} />);
     }
-    expect(text().stroke.width).toBe(0.2);
+    expect(text().stroke.width).toBeCloseTo(widthBefore + 0.03);
     expect(editorStore.getState().past.length).toBe(pastBefore + 1);
   });
 
@@ -83,10 +84,9 @@ describe("TextStylePanel", () => {
       screen.getByRole("checkbox", { name: "Caja de fondo" })
     );
     rerender(<TextStylePanel text={text()} />);
-    fireEvent.change(screen.getByRole("slider", { name: "Margen" }), {
-      target: { value: "40" },
-    });
-    expect(text().background).toMatchObject({ isEnabled: true, padding: 0.4 });
+    screen.getByRole("slider", { name: "Margen" }).focus();
+    await userEvent.keyboard("{End}");
+    expect(text().background).toMatchObject({ isEnabled: true, padding: 0.8 });
   });
 
   it("degradado: activarlo, cambiar la forma y recuperarlo al reactivarlo", async () => {
