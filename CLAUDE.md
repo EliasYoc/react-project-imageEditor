@@ -24,6 +24,7 @@ Antes de escribir código propio en JavaScript o TypeScript para resolver algo, 
 | Selectores de color                                                                                      | `react-colorful`        |
 | Lienzo, nodos, transformaciones y exportación de elementos                                               | `konva` + `react-konva` |
 | Trazos de tinta                                                                                          | `perfect-freehand`      |
+| Abrir, leer y exportar video (decodificar y codificar con WebCodecs)                                     | `mediabunny`            |
 | Estado global                                                                                            | `zustand`               |
 | Fuentes                                                                                                  | `@fontsource/*`         |
 
