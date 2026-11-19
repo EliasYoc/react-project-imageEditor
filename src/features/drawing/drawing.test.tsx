@@ -6,8 +6,8 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
-import BrushLibrary from "./components/BrushLibrary";
-import ModeSwitcher from "./components/ModeSwitcher";
+import BrushLibrary from "./components/BrushLibrary/BrushLibrary";
+import ModeSwitcher from "./components/ModeSwitcher/ModeSwitcher";
 import {
   PREVIEW_SIZE,
   previewPoints,

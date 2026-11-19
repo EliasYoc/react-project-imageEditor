@@ -8,9 +8,9 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
-import AngleDial from "./components/AngleDial";
-import BackdropPanel from "./components/BackdropPanel";
-import GradientStopsBar from "./components/GradientStopsBar";
+import AngleDial from "./components/AngleDial/AngleDial";
+import BackdropPanel from "./components/BackdropPanel/BackdropPanel";
+import GradientStopsBar from "./components/GradientStopsBar/GradientStopsBar";
 import { normalizeAngle, pointerAngle } from "./utils/angle";
 
 const gradient = (): Gradient => ({

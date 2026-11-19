@@ -1,0 +1,7 @@
+/* Fondo claro: los colores oscuros y el resaltador se ven como en el papel. */
+.preview {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  background: #f4f4f4;
+}

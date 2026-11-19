@@ -69,6 +69,7 @@ Si ninguna lo cubre:
 ## 6. Estructura de `src/features`
 
 - **Cada feature agrupa su código por tipo** en subcarpetas: `components/` (con sus `.module.css`), `hooks/`, `utils/`, `constants/` y, si algún día hace falta, `stores/`.
+- **Si una feature tiene varios componentes, cada uno va en su propia carpeta** dentro de `components/` (`components/TextToolbar/TextToolbar.tsx`), con su `.module.css` y, si algún día los tiene, sus archivos propios. Esa carpeta no lleva `index.ts` (ver más abajo). Cada `.module.css` es de un solo componente: no compartas un CSS entre varios. Si una feature tiene un solo componente, queda suelto en `components/`.
 - **Nunca crees subcarpetas vacías:** una subcarpeta existe solo si tiene algún archivo.
 - **Los tests de la feature** van en su raíz; un test unitario va junto al archivo que prueba.
 - **Cada feature tiene un `index.ts`** que reexporta solo lo que usa el resto de la app. Desde fuera de la feature se importa siempre ese `index.ts`, nunca un archivo interno. Dentro de la feature, los archivos se importan entre sí con rutas relativas, sin pasar por su propio `index.ts`.

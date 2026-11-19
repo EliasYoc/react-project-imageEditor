@@ -1,0 +1,7 @@
+/* Fuente actual en la barra inferior, escrita en su tipo. */
+.fontButton {
+  width: 96px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

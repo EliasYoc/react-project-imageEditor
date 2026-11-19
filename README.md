@@ -47,7 +47,8 @@ src/
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, video, view.
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
-                subcarpetas que tienen algo; los tests de la función quedan en su raíz
+                subcarpetas que tienen algo; con varios componentes, cada uno va en su carpeta con su CSS; los tests
+                de la función quedan en su raíz
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras

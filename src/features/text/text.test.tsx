@@ -8,9 +8,9 @@ import {
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
 import { getShortcutAction } from "../shortcuts";
-import FontPicker from "./components/FontPicker";
-import TextToolbar from "./components/TextToolbar";
-import TextStylePanel from "./components/TextStylePanel";
+import FontPicker from "./components/FontPicker/FontPicker";
+import TextToolbar from "./components/TextToolbar/TextToolbar";
+import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
 
 // Las fuentes no se descargan en los tests.

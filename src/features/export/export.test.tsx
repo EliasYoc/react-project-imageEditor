@@ -8,7 +8,7 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
-import ExportDialog from "./components/ExportDialog";
+import ExportDialog from "./components/ExportDialog/ExportDialog";
 import type { EncodeVideoResult } from "./utils/encodeVideo";
 import { defaultExportName } from "./utils/exportName";
 import type { ExportVideoOptions } from "./utils/exportVideo";
