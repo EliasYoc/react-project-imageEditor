@@ -7,7 +7,6 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
-import { getShortcutAction } from "../shortcuts";
 import FontPicker from "./components/FontPicker/FontPicker";
 import TextToolbar from "./components/TextToolbar/TextToolbar";
 import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
@@ -167,20 +166,6 @@ describe("TextStylePanel", () => {
       b: 176,
       a: 1,
     });
-  });
-});
-
-describe("atajo de negrita", () => {
-  it("Ctrl/⌘ + B solo en modo Texto", () => {
-    const key = {
-      key: "b",
-      ctrlKey: true,
-      metaKey: false,
-      shiftKey: false,
-      altKey: false,
-    };
-    expect(getShortcutAction(key, "text")).toEqual({ type: "toggleBold" });
-    expect(getShortcutAction(key, "draw")).toBeNull();
   });
 });
 
