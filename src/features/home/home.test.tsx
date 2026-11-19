@@ -124,7 +124,9 @@ describe("pantalla de inicio", () => {
     addStroke();
     render(<HomeScreen />);
     await user.click(
-      screen.getByRole("button", { name: "Publicación de Instagram, 1080 × 1080 píxeles" })
+      screen.getByRole("button", {
+        name: "Publicación de Instagram, 1080 × 1080 píxeles",
+      })
     );
     const dialog = screen.getByRole("alertdialog", {
       name: "¿Empezar de nuevo?",
@@ -137,7 +139,9 @@ describe("pantalla de inicio", () => {
     expect(state().mode).toBe("home");
 
     await user.click(
-      screen.getByRole("button", { name: "Publicación de Instagram, 1080 × 1080 píxeles" })
+      screen.getByRole("button", {
+        name: "Publicación de Instagram, 1080 × 1080 píxeles",
+      })
     );
     await user.click(screen.getByRole("button", { name: "Descartar y abrir" }));
     expect(state().log).toHaveLength(0);

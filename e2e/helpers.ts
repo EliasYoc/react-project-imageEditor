@@ -299,7 +299,10 @@ export async function chooseBrush(page: Page, name: string) {
 }
 
 /** Empieza un lienzo en blanco desde el inicio y espera a que se vea. */
-export async function openBlankCanvas(page: Page, preset = "Publicación de Instagram") {
+export async function openBlankCanvas(
+  page: Page,
+  preset = "Publicación de Instagram"
+) {
   await page.goto("/");
   await page.getByRole("button", { name: new RegExp(`^${preset},`) }).click();
   await expect(
