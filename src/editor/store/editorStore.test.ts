@@ -1,7 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_TEXT_STYLE, createStroke } from "../model/factories";
 import type { Backdrop, StrokeEntry, TextElement } from "../model/types";
-import { MAX_HISTORY, createEditorStore } from "./editorStore";
+import {
+  MAX_HISTORY,
+  createEditorStore,
+  type EditorStore,
+} from "./editorStore";
 import {
   selectBrushColor,
   selectBrushShape,
@@ -516,5 +520,42 @@ describe("selectores", () => {
     addImage();
     expect(selectSelectedElement(state())).not.toBeNull();
     expect(selectSelectedText(state())).toBeNull();
+  });
+});
+
+describe("Redux DevTools", () => {
+  interface DevtoolsConnectOptions {
+    stateSanitizer: (state: EditorStore) => object;
+    features: Record<string, boolean>;
+  }
+  const devtoolsWindow = window as unknown as {
+    __REDUX_DEVTOOLS_EXTENSION__?: object;
+  };
+
+  afterEach(() => {
+    delete devtoolsWindow.__REDUX_DEVTOOLS_EXTENSION__;
+  });
+
+  it("recibe los trazos sin sus puntos, el historial sin sus versiones y sin viajar en el tiempo", () => {
+    const connect = vi.fn<(options: DevtoolsConnectOptions) => object>(() => ({
+      init: vi.fn(),
+      send: vi.fn(),
+      subscribe: vi.fn(),
+    }));
+    devtoolsWindow.__REDUX_DEVTOOLS_EXTENSION__ = { connect };
+    store = createEditorStore();
+    state().addStroke(stroke());
+    state().addStroke(stroke());
+    state().undo();
+
+    const [options] = connect.mock.calls[0];
+    expect(options.stateSanitizer(state())).toMatchObject({
+      log: [{ whatTask: "stroke", points: 1 }],
+      past: 1,
+      future: 1,
+    });
+    expect(options.features.jump).toBeFalsy();
+    // El store sigue teniendo los puntos: el resumen es solo para DevTools.
+    expect(selectStrokes(state())[0].points).toHaveLength(1);
   });
 });

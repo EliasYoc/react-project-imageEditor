@@ -12,6 +12,7 @@ import {
 } from "../model/factories";
 import {
   isEditorElement,
+  isStroke,
   isTextElement,
   type Backdrop,
   type BrushPresetId,
@@ -237,6 +238,34 @@ export const createInitialState = (): EditorState => ({
   lastMergeKey: null,
   brush: createInitialBrushState(),
 });
+
+/**
+ * Lo que ve Redux DevTools: el estado sin los puntos de los trazos ni las
+ * versiones del historial, solo cuántos hay. La extensión serializa el estado
+ * en cada cambio; con muchos trazos eso hacía lenta la app y avisaba de que el
+ * estado era demasiado grande.
+ */
+const summarizeStateForDevtools = (state: EditorStore) => ({
+  ...state,
+  log: state.log.map((entry) =>
+    isStroke(entry) ? { ...entry, points: entry.points.length } : entry
+  ),
+  past: state.past.length,
+  future: state.future.length,
+});
+
+/**
+ * Botones de Redux DevTools que se dejan. Se quitan los que devuelven al store
+ * un estado guardado en DevTools (saltar, saltarse o reordenar acciones,
+ * importar, conservar al recargar): solo tiene el resumen, sin los puntos.
+ */
+const DEVTOOLS_FEATURES = {
+  pause: true,
+  lock: true,
+  export: true,
+  dispatch: true,
+  test: true,
+};
 
 /** El store con su estado y sus acciones (ver `createEditorStore`). */
 const createStateStore = (initialState?: Partial<EditorState>) =>
@@ -544,7 +573,12 @@ const createStateStore = (initialState?: Partial<EditorState>) =>
             ),
         };
       },
-      { name: "editor", enabled: import.meta.env.DEV }
+      {
+        name: "editor",
+        enabled: import.meta.env.DEV,
+        stateSanitizer: summarizeStateForDevtools,
+        features: DEVTOOLS_FEATURES,
+      }
     )
   );
 
