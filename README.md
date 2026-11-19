@@ -47,7 +47,8 @@ src/
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, video, view.
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
-                subcarpetas que tienen algo; los tests de la función quedan en su raíz
+                subcarpetas que tienen algo; con varios componentes, cada uno va en su carpeta con su CSS; los tests
+                de la función quedan en su raíz
   components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
@@ -106,6 +107,8 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón)               | Tocar el slider del borde izquierdo |
 | Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                                | Menú ⋮ → "Exportar"                 |
 | Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                                   | Igual                               |
+| Borrar el dibujo      | Menú ⋮ → "Borrar el dibujo" (se puede deshacer)                                       | Igual                               |
+| Borrar todo           | Menú ⋮ → "Borrar todo definitivamente" (también el color de fondo; no se deshace)     | Igual                               |
 | Cerrar un panel       | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo     |
 | Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
 | Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |
@@ -121,7 +124,8 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
   - **Seguir editando**, si ya hay un documento;
   - **Abrir una foto**, con el botón, arrastrándola a la ventana o pegándola;
   - **Agregar video**, con el botón (ver [Video](#video));
-  - **Lienzo en blanco** en cuatro tamaños: Pantalla, Cuadrado 2048², Historia 1080×1920 y Horizontal 1920×1080.
+  - **Lienzo en blanco** en tres tamaños: Pantalla, Historia 1080×1920 y Horizontal 1920×1080.
+  - **Lienzos por red social**, una sección cada una (`home/constants/canvasPresets.ts`): Instagram, Facebook, WhatsApp, Telegram, X y YouTube. Ningún tamaño se repite en el inicio (un test lo vigila): las historias y el estado usan «Historia».
 - **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo (un dibujo, una foto, un video o un fondo), se pide confirmación antes.
 - **Soltar un archivo** sobre la app nunca hace que el navegador lo abra (y se salga del editor).
 - **Avisos** (`components/ui/Toast`, Radix Toast):

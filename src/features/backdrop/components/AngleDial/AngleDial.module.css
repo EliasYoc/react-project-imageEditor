@@ -1,0 +1,37 @@
+/* Dial del ángulo. */
+.dial {
+  position: relative;
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  border: 2px solid var(--color-text);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+}
+
+.dial:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.dialHand {
+  position: absolute;
+  left: calc(50% - 2px);
+  top: 8px;
+  width: 4px;
+  height: calc(50% - 8px);
+  border-radius: 2px;
+  background: var(--color-text-strong);
+  transform-origin: 50% 100%;
+}
+
+.dialValue {
+  position: absolute;
+  inset: auto 0 -22px;
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-text-active);
+}

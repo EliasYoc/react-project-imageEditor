@@ -1,0 +1,47 @@
+/* Degradado del texto: muestra con letras, dial, paradas y presets. */
+.gradientRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+}
+
+.gradientSample {
+  font-size: 3.5rem;
+  font-weight: 900;
+  line-height: 1;
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+/* El botón de quitar la parada, centrado bajo la barra, y su color debajo. */
+.stopRow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.stopRow > button {
+  align-self: center;
+}
+
+.presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: var(--space-2);
+}
+
+/* Sin borde: el degradado llena el botón entero. */
+.preset {
+  aspect-ratio: 1;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.preset:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}

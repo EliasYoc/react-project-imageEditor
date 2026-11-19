@@ -29,8 +29,8 @@ import { useUiStore } from "./uiStore";
  * El lienzo es el Stage de Konva con el fondo, la pintura, los textos y las
  * imágenes. Encima, el slider de tamaño (borde izquierdo) y el menú de la
  * vista (derecha), colocados por encima de la barra inferior con su altura
- * (`--footer-height`, 0 con las barras ocultas). El selector de modo va abajo
- * en el móvil (al alcance del pulgar) y en la cabecera en escritorio. Con un
+ * (`--footer-height`, 0 con las barras ocultas). El selector de modo va en la
+ * cabecera: con texto en escritorio y solo con iconos en el móvil. Con un
  * video abierto, la barra de reproducción va encima de las herramientas.
  *
  * Con el editor cerrado (en el inicio) el lienzo se oculta pero sigue
@@ -85,7 +85,7 @@ const EditorShell = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <>
       {isOpen && (
-        <EditorHeader center={isDesktop ? <ModeSwitcher /> : undefined} />
+        <EditorHeader center={<ModeSwitcher iconOnly={!isDesktop} />} />
       )}
 
       <main ref={stageRef} className={styles.stage}>
@@ -121,7 +121,6 @@ const EditorShell = ({ isOpen }: { isOpen: boolean }) => {
             {mode === "draw" && <DrawingTools />}
             {mode === "text" && <TextToolbar />}
           </div>
-          {!isDesktop && <ModeSwitcher />}
         </footer>
       )}
 

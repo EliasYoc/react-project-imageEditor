@@ -6,7 +6,8 @@ import {
   createInitialState,
   editorStore,
 } from "../../editor/store/editorStore";
-import BrushLibrary from "./components/BrushLibrary";
+import BrushLibrary from "./components/BrushLibrary/BrushLibrary";
+import ModeSwitcher from "./components/ModeSwitcher/ModeSwitcher";
 import {
   PREVIEW_SIZE,
   previewPoints,
@@ -227,5 +228,22 @@ describe("vista previa de los pinceles", () => {
       "star"
     );
     expect(stroke.shape).toBe("star");
+  });
+});
+
+describe("selector de modo", () => {
+  it("con iconOnly muestra solo los iconos y conserva el nombre accesible", () => {
+    render(<ModeSwitcher iconOnly />);
+    const group = screen.getByRole("radiogroup", { name: "Modo" });
+    expect(within(group).getByRole("radio", { name: "Dibujar" })).toBeVisible();
+    expect(within(group).getByRole("radio", { name: "Texto" })).toBeVisible();
+    // Sin el texto dentro del botón: solo está el `aria-label`.
+    expect(group.querySelector("span")).toBeNull();
+  });
+
+  it("sin iconOnly muestra el texto de cada modo", () => {
+    render(<ModeSwitcher />);
+    expect(screen.getByText("Dibujar")).toBeInTheDocument();
+    expect(screen.getByText("Texto")).toBeInTheDocument();
   });
 });

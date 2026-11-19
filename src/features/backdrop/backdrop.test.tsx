@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { gradientToCss, stopsToCss } from "../../editor/engine/fill/css";
@@ -8,9 +8,9 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
-import AngleDial from "./components/AngleDial";
-import BackdropPanel from "./components/BackdropPanel";
-import GradientStopsBar from "./components/GradientStopsBar";
+import AngleDial from "./components/AngleDial/AngleDial";
+import BackdropPanel from "./components/BackdropPanel/BackdropPanel";
+import GradientStopsBar from "./components/GradientStopsBar/GradientStopsBar";
 import { normalizeAngle, pointerAngle } from "./utils/angle";
 
 const gradient = (): Gradient => ({
@@ -142,6 +142,38 @@ describe("BackdropPanel", () => {
     const { fill } = editorStore.getState().backdrop;
     expect(fill?.kind === "gradient" && fill.gradient.type).toBe("radial");
     expect(screen.queryByRole("slider", { name: "Ángulo" })).toBeNull();
+  });
+
+  it("«Quitar parada» va justo debajo de la barra de paradas, antes del color", async () => {
+    render(<BackdropPanel />);
+    await userEvent.click(screen.getByRole("radio", { name: "Degradado" }));
+    const stop = screen.getAllByRole("slider", { name: /parada/i })[0];
+    const remove = screen.getByRole("button", { name: "Quitar parada" });
+    const colorField = screen.getByRole("slider", { name: /matiz|hue/i });
+    const before = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(stop, remove)).toBe(true);
+    expect(before(remove, colorField)).toBe(true);
+  });
+
+  it("la vista previa del degradado tiene la forma del lienzo (vertical, cuadrado u horizontal)", async () => {
+    render(<BackdropPanel />);
+    await userEvent.click(screen.getByRole("radio", { name: "Degradado" }));
+    const preview = () =>
+      screen.getByLabelText(/Centro del degradado|Vista previa/);
+    const withCanvas = (width: number, height: number) =>
+      act(() => editorStore.setState({ canvasSize: { width, height } }));
+
+    withCanvas(1080, 1920);
+    expect(preview().style.aspectRatio).toBe("1080 / 1920");
+    expect(preview()).toHaveAttribute("data-portrait");
+
+    withCanvas(1080, 1080);
+    expect(preview()).not.toHaveAttribute("data-portrait");
+
+    withCanvas(1920, 1080);
+    expect(preview().style.aspectRatio).toBe("1920 / 1080");
+    expect(preview()).not.toHaveAttribute("data-portrait");
   });
 
   it("el modo de fusión solo aparece con una foto", async () => {

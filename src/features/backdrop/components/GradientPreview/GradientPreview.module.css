@@ -1,0 +1,38 @@
+/*
+ * Vista previa con las proporciones del documento: su lado mayor mide 180 px.
+ * Solo se fija un lado y el otro sale de `aspect-ratio`; con los dos fijados
+ * (o con un max-height) la forma dejaría de ser la del lienzo.
+ */
+.preview {
+  position: relative;
+  width: 180px;
+  max-width: 60%;
+  border-radius: var(--radius-sm);
+  touch-action: none;
+}
+
+.preview:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Más alta que ancha (p. ej. Historia): se fija el alto y el ancho sale solo. */
+.preview[data-portrait] {
+  width: auto;
+  height: 180px;
+}
+
+.preview[data-movable] {
+  cursor: crosshair;
+}
+
+.centerMarker {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}

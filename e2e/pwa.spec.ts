@@ -79,7 +79,9 @@ test.describe("PWA", () => {
     ).toBeVisible();
 
     // El editor (que se descarga aparte) también está guardado.
-    await page.getByRole("button", { name: /^Cuadrado,/ }).click();
+    await page
+      .getByRole("button", { name: /^Publicación de Instagram,/ })
+      .click();
     await expectDocumentVisible(page);
     const doc = await documentRect(page);
     await drag(page, [pointIn(doc, 0.3, 0.5), pointIn(doc, 0.7, 0.5)], false);
@@ -105,7 +107,9 @@ test.describe("PWA", () => {
     page,
   }) => {
     await installApp(page);
-    await page.getByRole("button", { name: /^Cuadrado,/ }).click();
+    await page
+      .getByRole("button", { name: /^Publicación de Instagram,/ })
+      .click();
     await expectDocumentVisible(page);
     const doc = await documentRect(page);
     const middle = pointIn(doc, 0.5, 0.5);

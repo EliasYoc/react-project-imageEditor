@@ -91,7 +91,9 @@ test.describe("Video", () => {
       page.getByRole("button", { name: "Seguir editando" })
     ).toBeVisible();
 
-    await page.getByRole("button", { name: /^Cuadrado,/ }).click();
+    await page
+      .getByRole("button", { name: /^Publicación de Instagram,/ })
+      .click();
     const confirm = page.getByRole("alertdialog", {
       name: "¿Empezar de nuevo?",
     });
