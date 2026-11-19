@@ -25,14 +25,21 @@ export function ColorPicker({
   alpha = false,
   swatches = [],
 }: ColorPickerProps) {
+  // RgbColorPicker compara, campo a campo, el color que recibe con el último
+  // que emitió, que no lleva `a`. Si lo recibe con `a`, lo toma por un color
+  // nuevo y se reajusta. Al arrastrar con la página ocupada, eso rebotaba
+  // entre dos colores hasta que React cortaba con "Maximum update depth
+  // exceeded".
+  const rgb = { r: color.r, g: color.g, b: color.b };
+
   return (
     <div className={styles.picker}>
       {alpha ? (
         <RgbaColorPicker color={color} onChange={onChange} />
       ) : (
         <RgbColorPicker
-          color={color}
-          onChange={(rgb) => onChange({ ...rgb, a: 1 })}
+          color={rgb}
+          onChange={(nextRgb) => onChange({ ...nextRgb, a: 1 })}
         />
       )}
       <label className={styles.hexField}>
