@@ -43,11 +43,11 @@ test.describe("Exportar", () => {
         page.getByText(`Imagen descargada: ${name}`, { exact: true })
       ).toBeVisible();
     }
-    expect(pngSize(bytes)).toEqual({ width: 2048, height: 2048 });
+    expect(pngSize(bytes)).toEqual({ width: 1080, height: 1080 });
     // El trazo está en el centro, a la resolución del documento.
     const pixels = await readPng(page, bytes, {
-      x: 1024,
-      y: 1024,
+      x: 540,
+      y: 540,
       width: 1,
       height: 1,
     });

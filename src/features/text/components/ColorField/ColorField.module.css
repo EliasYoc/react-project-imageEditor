@@ -1,0 +1,31 @@
+.colorField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.colorButton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.colorButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.swatch {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--color-text);
+  border-radius: 50%;
+}

@@ -119,42 +119,54 @@ describe("cabecera", () => {
     const confirm = screen.getByRole("alertdialog", {
       name: "¿Borrar el dibujo?",
     });
+    expect(confirm).toHaveAccessibleDescription(
+      "Se borrará lo que hayas hecho con las barras de dibujo y de texto. Podrás recuperarlo con Deshacer."
+    );
     await user.click(within(confirm).getByRole("button", { name: "Borrar" }));
     expect(state().log).toHaveLength(0);
     state().undo();
     expect(state().log).toHaveLength(1);
   });
 
-  it("al borrar el dibujo dice qué se queda: la foto o el video", async () => {
+  it("borrar todo definitivamente pide confirmación, quita el color y no se puede deshacer", async () => {
     const user = userEvent.setup();
-    const openClearDialog = async () => {
-      screen.getByRole("button", { name: "Más opciones" }).focus();
-      await user.keyboard("{Enter}");
-      await user.click(
-        screen.getByRole("menuitem", { name: "Borrar el dibujo" })
-      );
-      return screen.getByRole("alertdialog", { name: "¿Borrar el dibujo?" });
-    };
     addStroke();
-    const { unmount } = renderHeader();
-    expect(await openClearDialog()).toHaveAccessibleDescription(
-      "Se quitan los trazos, los textos y las imágenes (la foto y el fondo se quedan). Puedes recuperarlo con Deshacer."
-    );
-    unmount();
-
-    editorStore.setState({
-      photo: {
-        source: null,
-        preview: null,
-        mimeType: null,
-        fileName: "clip",
-        video: createFakeVideoSource(),
-      },
+    state().setBackdrop({
+      fill: { kind: "color", color: { r: 0, g: 0, b: 255, a: 1 } },
+      opacity: 1,
+      blend: "source-over",
     });
     renderHeader();
-    expect(await openClearDialog()).toHaveAccessibleDescription(
-      "Se quitan los trazos, los textos y las imágenes (el video y el fondo se quedan). Puedes recuperarlo con Deshacer."
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(
+      screen.getByRole("menuitem", { name: "Borrar todo definitivamente" })
     );
+
+    const confirm = screen.getByRole("alertdialog", {
+      name: "¿Borrar todo definitivamente?",
+    });
+    expect(confirm).toHaveAccessibleDescription(
+      "Se borrará toda la edición, también el fondo de color. No podrás recuperar nada."
+    );
+    await user.click(
+      within(confirm).getByRole("button", { name: "Borrar todo" })
+    );
+    expect(state().log).toHaveLength(0);
+    expect(state().backdrop.fill).toBeNull();
+    state().undo();
+    expect(state().log).toHaveLength(0);
+    expect(state().backdrop.fill).toBeNull();
+  });
+
+  it("borrar todo definitivamente está deshabilitado si no hay nada que borrar", async () => {
+    const user = userEvent.setup();
+    renderHeader();
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    expect(
+      screen.getByRole("menuitem", { name: "Borrar todo definitivamente" })
+    ).toHaveAttribute("aria-disabled", "true");
   });
 
   it("volver al inicio desde el menú conserva el dibujo", async () => {

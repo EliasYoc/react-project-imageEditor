@@ -283,6 +283,28 @@ describe("color", () => {
     expect(onChange).toHaveBeenLastCalledWith({ r: 0, g: 255, b: 0, a: 1 });
   });
 
+  it("sin transparencia, no se reajusta con el color que él mismo eligió", () => {
+    // Ese reajuste causaba el bucle "Maximum update depth exceeded" al
+    // arrastrar. Se nota en el blanco: no tiene tono, así que el selector
+    // perdía el que había elegido el usuario.
+    const Harness = () => {
+      const [color, setColor] = useState<Rgba>({ r: 0, g: 0, b: 255, a: 1 });
+      return <ColorPicker color={color} onChange={setColor} />;
+    };
+    render(<Harness />);
+    const area = screen.getByRole("slider", { name: "Color" });
+    // react-colorful lee `keyCode` (user-event no lo rellena).
+    for (let step = 0; step < 20; step++) {
+      fireEvent.keyDown(area, { key: "ArrowLeft", keyCode: 37 });
+    }
+
+    expect(screen.getByLabelText("Hex")).toHaveValue("#ffffff");
+    expect(screen.getByRole("slider", { name: "Hue" })).toHaveAttribute(
+      "aria-valuenow",
+      "240"
+    );
+  });
+
   it("el botón de color es un botón real que abre el selector", async () => {
     const user = userEvent.setup();
     render(

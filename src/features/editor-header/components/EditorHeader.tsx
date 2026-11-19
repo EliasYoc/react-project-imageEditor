@@ -1,12 +1,13 @@
 import {
+  BrushCleaning,
   Download,
   EllipsisVertical,
+  House,
   Keyboard,
   Layers,
   Redo2,
   Trash2,
   Undo2,
-  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useUiStore } from "../../../app/uiStore";
@@ -33,11 +34,11 @@ import styles from "./EditorHeader.module.css";
  * - a la derecha, "Actualizar" (solo si hay una versión nueva de la app), el
  *   fondo (siempre a la vista) y el menú ⋮, con Exportar
  *   (también Ctrl/⌘ + S), volver al inicio (el documento se conserva), los
- *   atajos y borrar el dibujo.
+ *   atajos, borrar el dibujo (se puede deshacer) y borrar todo definitivamente
+ *   (también el fondo de color y el historial).
  */
 const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const hasContent = useEditorStore((state) => state.log.length > 0);
-  const hasVideo = useEditorStore((state) => state.photo.video !== null);
   const canUndo = useEditorStore(selectCanUndo);
   const canRedo = useEditorStore(selectCanRedo);
   const isExporting = useEditorStore(
@@ -47,6 +48,15 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
   const undo = useEditorStore((state) => state.undo);
   const redo = useEditorStore((state) => state.redo);
   const clearLog = useEditorStore((state) => state.clearLog);
+  const resetDrawing = useEditorStore((state) => state.resetDrawing);
+  // Algo que borrar para siempre: dibujo, capa de color o historial.
+  const hasAnythingToReset = useEditorStore(
+    (state) =>
+      state.log.length > 0 ||
+      state.backdrop.fill !== null ||
+      state.past.length > 0 ||
+      state.future.length > 0
+  );
 
   const isExportOpen = useUiStore((state) => state.dialog === "export");
   const openDialog = useUiStore((state) => state.openDialog);
@@ -57,6 +67,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
 
   const [isBackdropOpen, setIsBackdropOpen] = useState(false);
   const [isClearOpen, setIsClearOpen] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
 
   const menuItems: MenuItem[] = [
     {
@@ -67,7 +78,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
     },
     {
       label: "Volver al inicio",
-      icon: X,
+      icon: House,
       onSelect: () => setMode("home"),
     },
     ...(hasKeyboard
@@ -85,6 +96,13 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
       danger: true,
       disabled: !hasContent,
       onSelect: () => setIsClearOpen(true),
+    },
+    {
+      label: "Borrar todo definitivamente",
+      icon: BrushCleaning,
+      danger: true,
+      disabled: !hasAnythingToReset,
+      onSelect: () => setIsResetOpen(true),
     },
   ];
 
@@ -152,10 +170,19 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         open={isClearOpen}
         onOpenChange={setIsClearOpen}
         title="¿Borrar el dibujo?"
-        description={`Se quitan los trazos, los textos y las imágenes (${hasVideo ? "el video" : "la foto"} y el fondo se quedan). Puedes recuperarlo con Deshacer.`}
+        description="Se borrará lo que hayas hecho con las barras de dibujo y de texto. Podrás recuperarlo con Deshacer."
         confirmLabel="Borrar"
         destructive
         onConfirm={clearLog}
+      />
+      <ConfirmDialog
+        open={isResetOpen}
+        onOpenChange={setIsResetOpen}
+        title="¿Borrar todo definitivamente?"
+        description="Se borrará toda la edición, también el fondo de color. No podrás recuperar nada."
+        confirmLabel="Borrar todo"
+        destructive
+        onConfirm={resetDrawing}
       />
     </header>
   );

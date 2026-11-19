@@ -8,8 +8,9 @@ import {
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
 import { getShortcutAction } from "../shortcuts";
-import FontPicker from "./components/FontPicker";
-import TextStylePanel from "./components/TextStylePanel";
+import FontPicker from "./components/FontPicker/FontPicker";
+import TextToolbar from "./components/TextToolbar/TextToolbar";
+import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
 
 // Las fuentes no se descargan en los tests.
@@ -133,6 +134,20 @@ describe("TextStylePanel", () => {
     expect(editorStore.getState().past.length).toBe(pastBefore + 1);
   });
 
+  it("degradado: «Quitar parada» va justo debajo de la barra de paradas, antes del color", () => {
+    editorStore.getState().editElement(text().id, {
+      gradient: DEFAULT_TEXT_GRADIENT,
+    });
+    render(<TextStylePanel text={text()} />);
+    const stop = screen.getAllByRole("slider", { name: /parada/i })[0];
+    const remove = screen.getByRole("button", { name: "Quitar parada" });
+    const color = screen.getByRole("button", { name: "Color de la parada" });
+    const before = (a: Element, b: Element) =>
+      Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(before(stop, remove)).toBe(true);
+    expect(before(remove, color)).toBe(true);
+  });
+
   it("degradado: un preset reemplaza las paradas", async () => {
     editorStore.getState().editElement(text().id, {
       gradient: DEFAULT_TEXT_GRADIENT,
@@ -166,5 +181,27 @@ describe("atajo de negrita", () => {
     };
     expect(getShortcutAction(key, "text")).toEqual({ type: "toggleBold" });
     expect(getShortcutAction(key, "draw")).toBeNull();
+  });
+});
+
+describe("TextToolbar", () => {
+  it("«Insertar una imagen» está en el menú «Más opciones» y abre el selector de archivos", async () => {
+    const user = userEvent.setup();
+    const { container } = render(<TextToolbar />);
+    expect(
+      screen.queryByRole("button", { name: "Insertar una imagen" })
+    ).toBeNull();
+
+    const input = container.querySelector<HTMLInputElement>(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    const openPicker = vi.spyOn(input, "click");
+
+    screen.getByRole("button", { name: "Más opciones" }).focus();
+    await user.keyboard("{Enter}");
+    await user.click(
+      screen.getByRole("menuitem", { name: "Insertar una imagen" })
+    );
+    expect(openPicker).toHaveBeenCalledOnce();
   });
 });

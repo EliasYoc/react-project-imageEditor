@@ -73,7 +73,7 @@
   text-align: center;
 }
 
-.blank {
+.canvasSection {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);

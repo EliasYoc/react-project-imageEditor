@@ -12,6 +12,21 @@ body {
   overflow: hidden;
   /* avoiding refres when swipe down */
   overscroll-behavior: none;
+  /* Es una app, no un documento: el lienzo, los botones, el reproductor y el
+     resto de la interfaz no se seleccionan (ni se marcan al arrastrar o al
+     mantener pulsado en el móvil). */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Lo que se escribe sí se selecciona. En Safari, un campo dentro de algo con
+   user-select: none no deja escribir si no se le devuelve explícitamente. */
+input,
+textarea,
+select,
+[contenteditable] {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 code {

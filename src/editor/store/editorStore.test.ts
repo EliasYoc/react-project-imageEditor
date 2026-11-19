@@ -1,7 +1,11 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_TEXT_STYLE, createStroke } from "../model/factories";
 import type { Backdrop, StrokeEntry, TextElement } from "../model/types";
-import { MAX_HISTORY, createEditorStore } from "./editorStore";
+import {
+  MAX_HISTORY,
+  createEditorStore,
+  type EditorStore,
+} from "./editorStore";
 import {
   selectBrushColor,
   selectBrushShape,
@@ -223,6 +227,32 @@ describe("historial", () => {
 
     state().undo();
     expect(state().log).toEqual(before);
+  });
+
+  it("resetDrawing borra el dibujo y el color, vacía el historial y no se puede deshacer", () => {
+    addText();
+    state().addStroke(stroke());
+    state().setBackdrop(red);
+    state().undo(); // también hay algo en `future`
+    state().resetDrawing();
+
+    expect(state().log).toEqual([]);
+    expect(state().backdrop.fill).toBeNull();
+    expect(state().selectedElementId).toBeNull();
+    expect(selectCanUndo(state())).toBe(false);
+    expect(state().future).toEqual([]);
+    state().undo();
+    expect(state().log).toEqual([]);
+    expect(state().backdrop.fill).toBeNull();
+  });
+
+  it("resetDrawing no toca la foto ni el tamaño del lienzo", () => {
+    const photo = { ...state().photo, fileName: "foto" };
+    store.setState({ photo, canvasSize: { width: 300, height: 200 } });
+    state().addStroke(stroke());
+    state().resetDrawing();
+    expect(state().photo).toEqual(photo);
+    expect(state().canvasSize).toEqual({ width: 300, height: 200 });
   });
 
   it("clearLog sin nada que borrar no crea un paso del historial", () => {
@@ -490,5 +520,42 @@ describe("selectores", () => {
     addImage();
     expect(selectSelectedElement(state())).not.toBeNull();
     expect(selectSelectedText(state())).toBeNull();
+  });
+});
+
+describe("Redux DevTools", () => {
+  interface DevtoolsConnectOptions {
+    stateSanitizer: (state: EditorStore) => object;
+    features: Record<string, boolean>;
+  }
+  const devtoolsWindow = window as unknown as {
+    __REDUX_DEVTOOLS_EXTENSION__?: object;
+  };
+
+  afterEach(() => {
+    delete devtoolsWindow.__REDUX_DEVTOOLS_EXTENSION__;
+  });
+
+  it("recibe los trazos sin sus puntos, el historial sin sus versiones y sin viajar en el tiempo", () => {
+    const connect = vi.fn<(options: DevtoolsConnectOptions) => object>(() => ({
+      init: vi.fn(),
+      send: vi.fn(),
+      subscribe: vi.fn(),
+    }));
+    devtoolsWindow.__REDUX_DEVTOOLS_EXTENSION__ = { connect };
+    store = createEditorStore();
+    state().addStroke(stroke());
+    state().addStroke(stroke());
+    state().undo();
+
+    const [options] = connect.mock.calls[0];
+    expect(options.stateSanitizer(state())).toMatchObject({
+      log: [{ whatTask: "stroke", points: 1 }],
+      past: 1,
+      future: 1,
+    });
+    expect(options.features.jump).toBeFalsy();
+    // El store sigue teniendo los puntos: el resumen es solo para DevTools.
+    expect(selectStrokes(state())[0].points).toHaveLength(1);
   });
 });
