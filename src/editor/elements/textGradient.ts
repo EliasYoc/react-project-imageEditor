@@ -98,7 +98,7 @@ export const textEditorPaint = ({
   gradient,
   background,
 }: Pick<TextStyle, "color" | "gradient" | "background">): CSSProperties => {
-  const box = background.enabled ? rgbaToCss(background.color) : null;
+  const box = background.isEnabled ? rgbaToCss(background.color) : null;
   if (!gradient) {
     return { color: rgbaToCss(color), ...(box && { background: box }) };
   }

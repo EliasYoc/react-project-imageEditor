@@ -232,8 +232,8 @@ describe("vista previa de los pinceles", () => {
 });
 
 describe("selector de modo", () => {
-  it("con iconOnly muestra solo los iconos y conserva el nombre accesible", () => {
-    render(<ModeSwitcher iconOnly />);
+  it("con isIconOnly muestra solo los iconos y conserva el nombre accesible", () => {
+    render(<ModeSwitcher isIconOnly />);
     const group = screen.getByRole("radiogroup", { name: "Modo" });
     expect(within(group).getByRole("radio", { name: "Dibujar" })).toBeVisible();
     expect(within(group).getByRole("radio", { name: "Texto" })).toBeVisible();
@@ -241,7 +241,7 @@ describe("selector de modo", () => {
     expect(group.querySelector("span")).toBeNull();
   });
 
-  it("sin iconOnly muestra el texto de cada modo", () => {
+  it("sin isIconOnly muestra el texto de cada modo", () => {
     render(<ModeSwitcher />);
     expect(screen.getByText("Dibujar")).toBeInTheDocument();
     expect(screen.getByText("Texto")).toBeInTheDocument();

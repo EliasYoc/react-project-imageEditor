@@ -36,7 +36,7 @@ const ColorField = ({
       />
       {label}
     </button>
-    {isOpen && <ColorPicker color={color} onChange={onChange} alpha />}
+    {isOpen && <ColorPicker color={color} onChange={onChange} hasAlpha />}
   </div>
 );
 

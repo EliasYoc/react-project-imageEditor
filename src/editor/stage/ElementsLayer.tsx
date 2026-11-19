@@ -55,14 +55,14 @@ const IMAGE_ANCHORS = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
 interface NodeProps<T extends EditorElement> {
   element: T;
-  interactive: boolean;
+  isInteractive: boolean;
   isEditing: boolean;
   handlers: ReturnType<typeof useElementHandlers>;
 }
 
 const TextNode = ({
   element,
-  interactive,
+  isInteractive,
   isEditing,
   handlers,
 }: NodeProps<TextElement>) => {
@@ -84,7 +84,7 @@ const TextNode = ({
       // Al cargar la fuente, el nodo se crea de nuevo y Konva mide bien.
       key={`${element.id}:${fontReady}`}
       {...config.label}
-      draggable={interactive && !isEditing}
+      draggable={isInteractive && !isEditing}
       visible={!isEditing}
       {...handlers.forElement(element)}
     >
@@ -96,7 +96,7 @@ const TextNode = ({
 
 const ImageNode = ({
   element,
-  interactive,
+  isInteractive,
   handlers,
 }: NodeProps<ImageElement>) => {
   const image = useLoadedImage(element.src);
@@ -105,7 +105,7 @@ const ImageNode = ({
     <KonvaImage
       {...imageNodeConfig(element)}
       image={image}
-      draggable={interactive}
+      draggable={isInteractive}
       {...handlers.forElement(element)}
     />
   );
@@ -168,7 +168,7 @@ const useElementHandlers = (
 interface ElementsLayerProps {
   view: View;
   /** Modo Texto: los elementos se pueden seleccionar, mover y transformar. */
-  interactive: boolean;
+  isInteractive: boolean;
   /**
    * Más nodos para la capa sin transformar, encima del marco (el círculo del
    * pincel): así no hace falta otra capa, que es otro <canvas>.
@@ -183,7 +183,11 @@ interface ElementsLayerProps {
  * El Transformer (marco de selección) va en una capa aparte sin
  * transformar: así sus asas miden lo mismo con cualquier zoom.
  */
-const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
+const ElementsLayer = ({
+  view,
+  isInteractive,
+  overlay,
+}: ElementsLayerProps) => {
   const elements = useEditorStore(selectElements);
   const selectedId = useEditorStore((state) => state.selectedElementId);
   const editingId = useEditorStore((state) => state.editingTextId);
@@ -197,7 +201,7 @@ const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
     [elements]
   );
   const selected = elements.find((element) => element.id === selectedId);
-  const showTransformer = interactive && selected && selectedId !== editingId;
+  const showTransformer = isInteractive && selected && selectedId !== editingId;
 
   // Después de cada render: el nodo seleccionado puede haberse creado de nuevo
   // (p. ej. al cargar su fuente), así que se vuelve a enganchar al marco.
@@ -265,14 +269,14 @@ const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
         y={view.y}
         scaleX={view.scale}
         scaleY={view.scale}
-        listening={interactive}
+        listening={isInteractive}
       >
         {ordered.map((element) =>
           element.whatTask === "text" ? (
             <TextNode
               key={element.id}
               element={element}
-              interactive={interactive}
+              isInteractive={isInteractive}
               isEditing={element.id === editingId}
               handlers={handlers}
             />
@@ -280,7 +284,7 @@ const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
             <ImageNode
               key={element.id}
               element={element}
-              interactive={interactive}
+              isInteractive={isInteractive}
               isEditing={false}
               handlers={handlers}
             />
@@ -309,7 +313,7 @@ const ElementsLayer = ({ view, interactive, overlay }: ElementsLayerProps) => {
           />
         ))}
       </Layer>
-      <Layer listening={interactive}>
+      <Layer listening={isInteractive}>
         <Transformer
           ref={transformerRef}
           visible={Boolean(showTransformer)}

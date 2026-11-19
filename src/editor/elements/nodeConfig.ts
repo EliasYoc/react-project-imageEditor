@@ -42,7 +42,7 @@ export const textPadding = ({
   background,
 }: Pick<TextStyle, "fontSize" | "background">) =>
   Math.round(
-    fontSize * (background.enabled ? background.padding : TEXT_PADDING_RATIO)
+    fontSize * (background.isEnabled ? background.padding : TEXT_PADDING_RATIO)
   );
 
 /**
@@ -58,7 +58,7 @@ export const textNodeConfig = (element: TextNodeInput) => {
     label: transformConfig(element),
     tag: {
       listening: false,
-      fill: background.enabled ? rgbaToCss(background.color) : undefined,
+      fill: background.isEnabled ? rgbaToCss(background.color) : undefined,
       cornerRadius: fontSize * background.radius,
     },
     text: {
@@ -75,13 +75,13 @@ export const textNodeConfig = (element: TextNodeInput) => {
       padding: textPadding(element),
       // Contorno POR FUERA: se pinta primero y el relleno tapa su mitad
       // interior (si no, el contorno se come la letra).
-      strokeEnabled: stroke.enabled,
+      strokeEnabled: stroke.isEnabled,
       stroke: rgbaToCss(stroke.color),
       // ×2: la mitad interior del trazo queda tapada por el relleno.
       strokeWidth: fontSize * stroke.width * 2,
       fillAfterStrokeEnabled: true,
       lineJoin: "round" as const,
-      shadowEnabled: shadow.enabled,
+      shadowEnabled: shadow.isEnabled,
       shadowColor: rgbaToCss(shadow.color),
       shadowBlur: fontSize * shadow.blur,
       shadowOffsetX: fontSize * shadow.offset,

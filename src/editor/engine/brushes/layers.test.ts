@@ -8,19 +8,19 @@ const ids = (strokes: readonly { id: string }[]) => strokes.map((s) => s.id);
 describe("strokeLayers", () => {
   it("el resaltador va en su capa, el borrador en todas y el resto en la de pintura", () => {
     expect(strokeLayers({ brush: "highlighter" })).toEqual({
-      paint: false,
-      highlight: true,
-      blur: false,
+      isInPaintLayer: false,
+      isInHighlightLayer: true,
+      isInBlurLayer: false,
     });
     expect(strokeLayers({ brush: "eraserHard" })).toEqual({
-      paint: true,
-      highlight: true,
-      blur: true,
+      isInPaintLayer: true,
+      isInHighlightLayer: true,
+      isInBlurLayer: true,
     });
     expect(strokeLayers({ brush: "eraserSoft" })).toEqual({
-      paint: true,
-      highlight: true,
-      blur: true,
+      isInPaintLayer: true,
+      isInHighlightLayer: true,
+      isInBlurLayer: true,
     });
     for (const brush of [
       "pen",
@@ -34,18 +34,18 @@ describe("strokeLayers", () => {
       "shapes",
     ] as const) {
       expect(strokeLayers({ brush })).toEqual({
-        paint: true,
-        highlight: false,
-        blur: false,
+        isInPaintLayer: true,
+        isInHighlightLayer: false,
+        isInBlurLayer: false,
       });
     }
   });
 
   it("el desenfoque afecta a todas las capas", () => {
     expect(strokeLayers({ brush: "blur" })).toEqual({
-      paint: true,
-      highlight: true,
-      blur: true,
+      isInPaintLayer: true,
+      isInHighlightLayer: true,
+      isInBlurLayer: true,
     });
   });
 });

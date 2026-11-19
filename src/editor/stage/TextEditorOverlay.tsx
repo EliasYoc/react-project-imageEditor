@@ -93,7 +93,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
         textAlign: element.align,
         // Color o degradado, y la caja de fondo, también mientras se escribe.
         ...textEditorPaint(element),
-        ...(element.background.enabled && {
+        ...(element.background.isEnabled && {
           borderRadius: element.fontSize * element.background.radius,
         }),
         // Se quita el escalado del borde: siempre 1 px en pantalla.

@@ -27,7 +27,7 @@ export const inkOutline = (
       thinning: preset.thinning,
       smoothing: preset.smoothing,
       streamline: preset.streamline,
-      simulatePressure: !stroke.hasPressure && preset.simulatePressure,
+      simulatePressure: !stroke.hasPressure && preset.shouldSimulatePressure,
       start: { cap: true, taper: preset.taperStart * stroke.size },
       end: { cap: true, taper: preset.taperEnd * stroke.size },
       last,

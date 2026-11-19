@@ -63,7 +63,7 @@ export interface InkPreset extends BasePreset {
   smoothing: number;
   streamline: number;
   /** Sin presión real, simular la presión con la velocidad. */
-  simulatePressure: boolean;
+  shouldSimulatePressure: boolean;
   /** Longitud de la punta afilada al empezar / terminar, en tamaños de pincel. */
   taperStart: number;
   taperEnd: number;
@@ -121,7 +121,7 @@ export const BRUSH_PRESETS: Record<BrushPresetId, BrushPreset> = {
     thinning: 0.6,
     smoothing: 0.5,
     streamline: 0.3,
-    simulatePressure: true,
+    shouldSimulatePressure: true,
     taperStart: 0,
     taperEnd: 4,
     defaults: { size: 16, opacity: 1, stabilizer: 0.3 },
@@ -135,7 +135,7 @@ export const BRUSH_PRESETS: Record<BrushPresetId, BrushPreset> = {
     thinning: 0,
     smoothing: 0.5,
     streamline: 0.3,
-    simulatePressure: false,
+    shouldSimulatePressure: false,
     taperStart: 0,
     taperEnd: 0,
     defaults: { size: 40, opacity: 1, stabilizer: 0.2 },

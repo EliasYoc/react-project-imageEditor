@@ -64,7 +64,7 @@ describe("TextStylePanel", () => {
     expect(screen.queryByRole("slider", { name: "Grosor" })).toBeNull();
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Contorno" }));
-    expect(text().stroke.enabled).toBe(true);
+    expect(text().stroke.isEnabled).toBe(true);
     rerender(<TextStylePanel text={text()} />);
 
     const pastBefore = editorStore.getState().past.length;
@@ -86,7 +86,7 @@ describe("TextStylePanel", () => {
     fireEvent.change(screen.getByRole("slider", { name: "Margen" }), {
       target: { value: "40" },
     });
-    expect(text().background).toMatchObject({ enabled: true, padding: 0.4 });
+    expect(text().background).toMatchObject({ isEnabled: true, padding: 0.4 });
   });
 
   it("degradado: activarlo, cambiar la forma y recuperarlo al reactivarlo", async () => {

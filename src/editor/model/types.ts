@@ -137,14 +137,14 @@ export type TextAlign = "left" | "center" | "right";
  */
 
 export interface TextStroke {
-  enabled: boolean;
+  isEnabled: boolean;
   color: Rgba;
   /** Grosor del contorno respecto al tamaño de letra. */
   width: number;
 }
 
 export interface TextShadow {
-  enabled: boolean;
+  isEnabled: boolean;
   color: Rgba;
   /** Desenfoque respecto al tamaño de letra. */
   blur: number;
@@ -153,7 +153,7 @@ export interface TextShadow {
 }
 
 export interface TextBackground {
-  enabled: boolean;
+  isEnabled: boolean;
   color: Rgba;
   /** Margen interior respecto al tamaño de letra. */
   padding: number;

@@ -204,7 +204,7 @@ const HomeScreen = () => {
         title="¿Empezar de nuevo?"
         description="Se descartará el documento actual y su historial (no se puede deshacer)."
         confirmLabel="Descartar y abrir"
-        destructive
+        isDestructive
         onConfirm={() => {
           const action = pending;
           setPending(null);

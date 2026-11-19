@@ -31,18 +31,18 @@ export const createDefaultTextStyle = (): Omit<TextStyle, "fontSize"> => ({
   align: "left",
   lineHeight: 1.15,
   stroke: {
-    enabled: false,
+    isEnabled: false,
     color: { r: 255, g: 255, b: 255, a: 1 },
     width: 0.08,
   },
   shadow: {
-    enabled: false,
+    isEnabled: false,
     color: { r: 0, g: 0, b: 0, a: 0.5 },
     blur: 0.1,
     offset: 0.05,
   },
   background: {
-    enabled: false,
+    isEnabled: false,
     color: { r: 0, g: 0, b: 0, a: 0.6 },
     padding: 0.25,
     radius: 0.2,

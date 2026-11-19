@@ -102,7 +102,7 @@ const TextToolbar = () => {
         label="Color del texto"
         color={selectedText?.color ?? NO_COLOR}
         disabled={!selectedText}
-        alpha
+        hasAlpha
         swatches={COLOR_PRESETS}
         // Arrastrar en el selector crea un solo paso del historial.
         onChange={(color) =>

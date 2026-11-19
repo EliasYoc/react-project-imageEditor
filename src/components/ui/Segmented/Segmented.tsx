@@ -19,7 +19,7 @@ export interface SegmentedProps<T extends string> {
   onChange: (value: T) => void;
   items: readonly SegmentedItem<T>[];
   /** Solo iconos: el texto queda como nombre accesible y tooltip. */
-  iconOnly?: boolean;
+  isIconOnly?: boolean;
   size?: "sm" | "md";
   className?: string;
 }
@@ -35,7 +35,7 @@ export function Segmented<T extends string>({
   value,
   onChange,
   items,
-  iconOnly = false,
+  isIconOnly = false,
   size = "md",
   className,
 }: SegmentedProps<T>) {
@@ -55,14 +55,14 @@ export function Segmented<T extends string>({
               key={itemValue}
               value={itemValue}
               disabled={disabled}
-              aria-label={iconOnly ? itemLabel : undefined}
+              aria-label={isIconOnly ? itemLabel : undefined}
               className={styles.item}
             >
               {Icon && <Icon aria-hidden="true" />}
-              {!iconOnly && <span>{itemLabel}</span>}
+              {!isIconOnly && <span>{itemLabel}</span>}
             </ToggleGroup.Item>
           );
-          return iconOnly ? (
+          return isIconOnly ? (
             <Tooltip key={itemValue} label={itemLabel}>
               {item}
             </Tooltip>

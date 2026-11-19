@@ -12,11 +12,11 @@ const strokeEffect = (stroke: Pick<BrushStroke, "brush">) =>
 /** En qué capa(s) se pinta un trazo. */
 export interface StrokeLayers {
   /** Capa de pintura: encima de la foto, tapa lo que hay debajo. */
-  paint: boolean;
+  isInPaintLayer: boolean;
   /** Capa del resaltador: se MULTIPLICA con la foto (la tiñe sin taparla). */
-  highlight: boolean;
+  isInHighlightLayer: boolean;
   /** Máscara del desenfoque del fondo: dónde se ve la foto desenfocada. */
-  blur: boolean;
+  isInBlurLayer: boolean;
 }
 
 /**
@@ -40,15 +40,31 @@ export const strokeLayers = (
   stroke: Pick<BrushStroke, "brush">
 ): StrokeLayers => {
   if (strokeEffect(stroke) === "blur") {
-    return { paint: true, highlight: true, blur: true };
+    return {
+      isInPaintLayer: true,
+      isInHighlightLayer: true,
+      isInBlurLayer: true,
+    };
   }
   switch (strokeBlend(stroke)) {
     case "multiply":
-      return { paint: false, highlight: true, blur: false };
+      return {
+        isInPaintLayer: false,
+        isInHighlightLayer: true,
+        isInBlurLayer: false,
+      };
     case "destination-out":
-      return { paint: true, highlight: true, blur: true };
+      return {
+        isInPaintLayer: true,
+        isInHighlightLayer: true,
+        isInBlurLayer: true,
+      };
     default:
-      return { paint: true, highlight: false, blur: false };
+      return {
+        isInPaintLayer: true,
+        isInHighlightLayer: false,
+        isInBlurLayer: false,
+      };
   }
 };
 
@@ -76,14 +92,18 @@ export const splitStrokeLayers = <T extends Pick<BrushStroke, "brush">>(
   for (const stroke of strokes) {
     const layers = strokeLayers(stroke);
     const isBlur = strokeEffect(stroke) === "blur";
-    const isEraser = !isBlur && layers.paint && layers.highlight;
+    const isEraser =
+      !isBlur && layers.isInPaintLayer && layers.isInHighlightLayer;
 
-    if (layers.paint && (!isBlur || hasPaint)) paint.push(stroke);
-    if (layers.highlight && (highlight.length > 0 || !(isBlur || isEraser))) {
+    if (layers.isInPaintLayer && (!isBlur || hasPaint)) paint.push(stroke);
+    if (
+      layers.isInHighlightLayer &&
+      (highlight.length > 0 || !(isBlur || isEraser))
+    ) {
       highlight.push(stroke);
     }
-    if (layers.blur && (blur.length > 0 || isBlur)) blur.push(stroke);
-    if (layers.paint && !isBlur && !isEraser) hasPaint = true;
+    if (layers.isInBlurLayer && (blur.length > 0 || isBlur)) blur.push(stroke);
+    if (layers.isInPaintLayer && !isBlur && !isEraser) hasPaint = true;
   }
   return { paint, highlight, blur };
 };

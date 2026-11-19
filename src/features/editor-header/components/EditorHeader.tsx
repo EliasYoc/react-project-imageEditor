@@ -93,14 +93,14 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
     {
       label: "Borrar el dibujo",
       icon: Trash2,
-      danger: true,
+      isDanger: true,
       disabled: !hasContent,
       onSelect: () => setIsClearOpen(true),
     },
     {
       label: "Borrar todo definitivamente",
       icon: BrushCleaning,
-      danger: true,
+      isDanger: true,
       disabled: !hasAnythingToReset,
       onSelect: () => setIsResetOpen(true),
     },
@@ -172,7 +172,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         title="¿Borrar el dibujo?"
         description="Se borrará lo que hayas hecho con las barras de dibujo y de texto. Podrás recuperarlo con Deshacer."
         confirmLabel="Borrar"
-        destructive
+        isDestructive
         onConfirm={clearLog}
       />
       <ConfirmDialog
@@ -181,7 +181,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         title="¿Borrar todo definitivamente?"
         description="Se borrará toda la edición, también el fondo de color. No podrás recuperar nada."
         confirmLabel="Borrar todo"
-        destructive
+        isDestructive
         onConfirm={resetDrawing}
       />
     </header>
