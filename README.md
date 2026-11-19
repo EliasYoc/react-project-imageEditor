@@ -17,21 +17,21 @@ Producción: https://editoryoc.vercel.app/
 
 ## Scripts
 
-| Comando                 | Qué hace                                                             |
-| ----------------------- | -------------------------------------------------------------------- |
-| `npm install`           | Instala las dependencias                                             |
-| `npm run dev`           | Servidor de desarrollo en http://localhost:5173                      |
-| `npm run dev -- --host` | Igual, pero accesible desde el móvil en la misma red                 |
-| `npm run build`         | Build de producción en `build/` (la carpeta que publica Vercel)      |
-| `npm run preview`       | Sirve el build de producción para probarlo                           |
-| `npm test`              | Tests con Vitest (modo watch; `npx vitest run` para una sola pasada) |
-| `npm run lint`          | ESLint                                                               |
-| `npm run typecheck`     | Revisa los tipos de TypeScript                                       |
-| `npm run check`         | Lint + tipos + tests (lo que debe pasar antes de abrir una PR)       |
-| `npm run test:e2e`      | Tests de punta a punta con Playwright (ver [Tests e2e](#tests-e2e))  |
-| `npm run test:e2e:ui`   | Igual, en la interfaz de Playwright: paso a paso y con capturas      |
-| `npm run size`          | Presupuesto de tamaño del JS (después de `npm run build`)            |
-| `npm run format`        | Formatea el código con Prettier                                      |
+| Comando                 | Qué hace                                                                 |
+| ----------------------- | ------------------------------------------------------------------------ |
+| `npm install`           | Instala las dependencias                                                 |
+| `npm run dev`           | Servidor de desarrollo en http://localhost:5173                          |
+| `npm run dev -- --host` | Igual, pero accesible desde el móvil en la misma red                     |
+| `npm run build`         | Build de producción en `build/` (la carpeta que publica Vercel)          |
+| `npm run preview`       | Sirve el build de producción para probarlo                               |
+| `npm test`              | Tests con Vitest (modo watch; `npx vitest run` para una sola pasada)     |
+| `npm run lint`          | ESLint                                                                   |
+| `npm run typecheck`     | Revisa los tipos de TypeScript                                           |
+| `npm run check`         | Formato + lint + tipos + tests (lo que debe pasar antes de abrir una PR) |
+| `npm run test:e2e`      | Tests de punta a punta con Playwright (ver [Tests e2e](#tests-e2e))      |
+| `npm run test:e2e:ui`   | Igual, en la interfaz de Playwright: paso a paso y con capturas          |
+| `npm run size`          | Presupuesto de tamaño del JS (después de `npm run build`)                |
+| `npm run format`        | Formatea el código con Prettier                                          |
 
 ## Estructura
 
@@ -232,10 +232,10 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 
 En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.yml` en sus servidores (Ubuntu). En la PR aparecen dos comprobaciones con ✅ o ❌.
 
-| Comprobación                             | Pasos                                                                           | Para repetirlo en local                                                  |
-| ---------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| **Formato, lint, tipos, tests y tamaño** | `npm ci` → formato → `npm run check` → build → presupuesto de tamaño            | `npm run format:check`, `npm run check`, `npm run build && npm run size` |
-| **Tests e2e (Playwright)**               | Solo si la anterior pasa. Los e2e en el Edge del runner, con hasta 2 reintentos | `npm run test:e2e`                                                       |
+| Comprobación                             | Pasos                                                                           | Para repetirlo en local                          |
+| ---------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **Formato, lint, tipos, tests y tamaño** | `npm ci` → `npm run check` → build → presupuesto de tamaño                      | `npm run check`, `npm run build && npm run size` |
+| **Tests e2e (Playwright)**               | Solo si la anterior pasa. Los e2e en el Edge del runner, con hasta 2 reintentos | `npm run test:e2e`                               |
 
 - **Si sale ❌:** en la PR, _Details_ lleva a la ejecución; se abre el paso en rojo para ver su salida. Después se repite el comando en local.
   - **Formato:** `npm run format` lo arregla.
