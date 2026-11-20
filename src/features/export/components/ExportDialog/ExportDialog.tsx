@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { Suspense, lazy, useState, type FormEvent } from "react";
 import { Button } from "../../../../components/ui/Button";
 import {
@@ -80,6 +81,7 @@ const ImageExportDialog = ({ open, onOpenChange }: ExportDialogProps) => (
     open={open}
     onOpenChange={onOpenChange}
     title="Exportar imagen"
+    icon={Download}
     description={useImageDescription()}
   >
     {/* Se monta al abrir: cada vez empieza con el nombre sugerido. */}
@@ -126,6 +128,7 @@ const AnimatedExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
       onOpenChange={changeOpen}
       // Solo «Exportar»: la opción marcada debajo ya dice imagen o video.
       title="Exportar"
+      icon={Download}
       description={
         isVideo
           ? `Se guarda en MP4 a ${videoSize.width} × ${videoSize.height} px, ${ANIMATION_VIDEO_SECONDS} segundos, sin sonido.`

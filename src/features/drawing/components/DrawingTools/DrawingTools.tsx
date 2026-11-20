@@ -68,6 +68,8 @@ const DrawingTools = () => {
         open={isLibraryOpen}
         onOpenChange={setIsLibraryOpen}
         title="Pinceles"
+        // El de la herramienta activa, que es la que abre la biblioteca.
+        icon={BRUSH_ICONS[presetId]}
       >
         <BrushLibrary />
       </Panel>

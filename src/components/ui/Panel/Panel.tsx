@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useRef, type PointerEvent, type ReactNode } from "react";
 import { DESKTOP_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
-import { IconButton } from "../Button";
+import { IconButton, type IconComponent } from "../Button";
 import { useReturnFocus } from "../useReturnFocus";
 import styles from "./Panel.module.css";
 
@@ -13,6 +13,11 @@ export interface PanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /**
+   * Delante del título: el icono del botón que lo abre (solo a la vista; el
+   * nombre del panel es el título).
+   */
+  icon?: IconComponent;
   description?: string;
   children: ReactNode;
 }
@@ -36,6 +41,7 @@ export function Panel({
   open,
   onOpenChange,
   title,
+  icon: Icon,
   description,
   children,
 }: PanelProps) {
@@ -105,7 +111,10 @@ export function Panel({
             {!isDesktop && (
               <span className={styles.handle} aria-hidden="true" />
             )}
-            <Dialog.Title className={styles.title}>{title}</Dialog.Title>
+            <Dialog.Title className={styles.title}>
+              {Icon && <Icon aria-hidden="true" />}
+              {title}
+            </Dialog.Title>
             <Dialog.Close asChild>
               <IconButton icon={X} aria-label="Cerrar" shortcut="Esc" />
             </Dialog.Close>

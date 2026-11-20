@@ -152,6 +152,7 @@ const TextToolbar = () => {
         open={openSheet === "style" && selectedText !== null}
         onOpenChange={closeSheet}
         title="Estilo del texto"
+        icon={PaintRoller}
       >
         {selectedText && <TextStylePanel text={selectedText} />}
       </Panel>

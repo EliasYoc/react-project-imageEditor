@@ -1,3 +1,4 @@
+import { CircleQuestionMark } from "lucide-react";
 import type { ReactNode } from "react";
 import { Dialog } from "../../../components/ui/Dialog";
 import styles from "./InsertHelpDialog.module.css";
@@ -44,7 +45,12 @@ const Section = ({
  * stickers. Se abre desde «¿Qué puedo insertar?», en el mismo menú.
  */
 const InsertHelpDialog = ({ open, onOpenChange }: InsertHelpDialogProps) => (
-  <Dialog open={open} onOpenChange={onOpenChange} title="¿Qué puedo insertar?">
+  <Dialog
+    open={open}
+    onOpenChange={onOpenChange}
+    title="¿Qué puedo insertar?"
+    icon={CircleQuestionMark}
+  >
     <div className={styles.sections}>
       <Section title="Imágenes (PNG, JPG, WebP…)">Se insertan quietas.</Section>
       <Section title="GIFs (.gif, y también WebP o PNG animados)">
