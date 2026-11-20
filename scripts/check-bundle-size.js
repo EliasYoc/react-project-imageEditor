@@ -22,12 +22,16 @@
 //   límite de Video es lo que mide más un 5 %. Casi todo (111,1 kB) es el
 //   codificador: convertir un video (leer MP4, MOV, WebM y MKV, y escribir
 //   MP4) usa una parte grande de mediabunny. Sin WebM ni MKV serían 100,1.
+// - 120 / 142 / Video 119: GIFs animados (el editor mide 140,1). Animarlos
+//   en el lienzo y en la exportación añade 1,2 kB, y elegir imagen o video al
+//   exportar un poco más. Cargar el código de exportar bajo demanda no
+//   ayuda: solo ahorraba 1 kB al abrir el editor y cada trozo aparte suma.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 140, Video: 119 };
+const BUDGETS_KB = { Inicio: 120, Editor: 142, Video: 119 };
 /** Los trozos que solo se descargan con un video abierto. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
 
