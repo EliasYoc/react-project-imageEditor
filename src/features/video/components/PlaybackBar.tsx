@@ -1,7 +1,7 @@
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
-import { Slider } from "radix-ui";
 import { useEffect, useMemo, useState } from "react";
 import { IconButton } from "../../../components/ui/Button";
+import { SliderBar } from "../../../components/ui/SliderBar";
 import type { VideoSource } from "../../../editor/model/types";
 import { SHORTCUT_LABELS } from "../../shortcuts";
 import { useVideoPlayback } from "../hooks/useVideoPlayback";
@@ -49,27 +49,20 @@ const PlaybackBar = ({ video }: { video: VideoSource }) => {
         onClick={() => togglePlayback(element)}
       />
       <span className={styles.time}>{position}</span>
-      <Slider.Root
+      <SliderBar
         className={styles.slider}
+        label="Posición del video"
         min={0}
         max={duration}
         step={Math.max(MIN_SEEK_STEP, duration / SEEK_STEPS)}
-        value={[Math.min(time, duration)]}
-        onValueChange={([next]) => {
+        value={Math.min(time, duration)}
+        valueText={`${formatTime(time)} de ${formatTime(duration)}`}
+        onChange={(next) => {
           setScrubTime(next);
           seeker.seek(next);
         }}
-        onValueCommit={() => setScrubTime(null)}
-      >
-        <Slider.Track className={styles.track}>
-          <Slider.Range className={styles.range} />
-        </Slider.Track>
-        <Slider.Thumb
-          className={styles.thumb}
-          aria-label="Posición del video"
-          aria-valuetext={`${formatTime(time)} de ${formatTime(duration)}`}
-        />
-      </Slider.Root>
+        onCommit={() => setScrubTime(null)}
+      />
       <IconButton
         icon={isMuted ? VolumeX : Volume2}
         aria-label={isMuted ? "Activar el sonido" : "Silenciar"}

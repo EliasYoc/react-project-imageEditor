@@ -1,5 +1,5 @@
-import { Slider as RadixSlider } from "radix-ui";
 import { classNames } from "../../../lib/classNames";
+import { SliderBar } from "../SliderBar";
 import styles from "./Slider.module.css";
 
 export interface SliderProps {
@@ -19,9 +19,9 @@ export interface SliderProps {
 }
 
 /**
- * Slider horizontal de Radix: funciona con ratón, dedo y teclado (flechas,
- * Inicio/Fin, RePág/AvPág) y lo anuncian los lectores de pantalla. Radix solo
- * pone la lógica; el aspecto es el de `Slider.module.css`.
+ * Slider horizontal con etiqueta y valor encima de su barra (`SliderBar`, de
+ * Radix): funciona con ratón, dedo y teclado (flechas, Inicio/Fin,
+ * RePág/AvPág) y lo anuncian los lectores de pantalla.
  */
 export function Slider({
   label,
@@ -37,23 +37,16 @@ export function Slider({
     <div className={classNames(styles.field, className)}>
       <span className={styles.label}>{label}</span>
       <output className={styles.value}>{valueText ?? value}</output>
-      <RadixSlider.Root
-        className={styles.root}
+      <SliderBar
+        className={styles.bar}
+        label={label}
+        value={value}
         min={min}
         max={max}
         step={step}
-        value={[value]}
-        onValueChange={([next]) => onChange(next)}
-      >
-        <RadixSlider.Track className={styles.track}>
-          <RadixSlider.Range className={styles.range} />
-        </RadixSlider.Track>
-        <RadixSlider.Thumb
-          className={styles.thumb}
-          aria-label={label}
-          aria-valuetext={valueText}
-        />
-      </RadixSlider.Root>
+        valueText={valueText}
+        onChange={onChange}
+      />
     </div>
   );
 }
