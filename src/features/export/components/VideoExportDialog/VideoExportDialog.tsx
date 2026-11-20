@@ -1,5 +1,5 @@
-import { Progress } from "radix-ui";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { ProgressBar } from "../../../../components/ui/ProgressBar";
 import { Button } from "../../../../components/ui/Button";
 import {
   Dialog,
@@ -166,16 +166,7 @@ const VideoExportBody = ({ onDone, onWorkingChange }: VideoExportBodyProps) => {
         <p id={progressId} className={styles.status}>
           Exportando el video… {percent} %
         </p>
-        <Progress.Root
-          className={styles.progress}
-          value={percent}
-          aria-labelledby={progressId}
-        >
-          <Progress.Indicator
-            className={styles.progressFill}
-            style={{ width: `${percent}%` }}
-          />
-        </Progress.Root>
+        <ProgressBar value={percent} aria-labelledby={progressId} />
         <DialogActions>
           <Button size="sm" onClick={() => controller.current?.abort()}>
             Cancelar

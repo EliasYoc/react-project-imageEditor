@@ -49,7 +49,7 @@ src/
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
                 subcarpetas que tienen algo; con varios componentes, cada uno va en su carpeta con su CSS; los tests
                 de la función quedan en su raíz
-  components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, CardSection, AngleDial, GradientStopsBar, ColorField, sliders, ColorControl, Tooltip…)
+  components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, CardSection, AngleDial, GradientStopsBar, ColorField, ProgressBar, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
 e2e/            Tests de punta a punta (Playwright) y sus archivos de prueba (fixtures/)
@@ -265,7 +265,7 @@ Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.r
 - **`Panel`**: en el móvil es una **hoja inferior modal** (se cierra con ✕, Escape, tocando fuera o deslizándola hacia abajo); en escritorio (≥ 900 px) es un **panel lateral no modal**: el lienzo sigue a la vista y se puede dibujar o elegir otro texto con él abierto. Al cerrarse, el foco vuelve al botón que lo abrió (`useReturnFocus`).
 - **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`ChoiceMenu`** (un menú para elegir una opción entre varias, con la elegida marcada: la figura del pincel Formas), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
 - **`Tooltip`**: solo con ratón o teclado, con el atajo de cada botón. No aparece cuando un panel devuelve el foco a su botón.
-- Con un video: **`Slider`** de Radix en la barra de tiempo y **`Progress`** en el avance de la exportación.
+- Con un video: **`Slider`** de Radix en la barra de tiempo y **`ProgressBar`** (Radix Progress) en el avance de la exportación.
 - Los atajos de teclado no actúan sobre la selección (Supr, Escape) si el foco está dentro de un panel o un menú.
 
 ## Stack
