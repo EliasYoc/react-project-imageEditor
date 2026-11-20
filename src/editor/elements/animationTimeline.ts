@@ -15,8 +15,9 @@ const MAX_TOO_SHORT_SECONDS = 0.01;
 const FALLBACK_FRAME_SECONDS = 0.1;
 
 /**
- * Margen al comparar tiempos: con decimales, `0,6 % 0,4` da 0,1999… en vez de
- * 0,2 y, justo en el cambio de fotograma, saldría el anterior.
+ * Margen al comparar tiempos. Con decimales, `0,6 % 0,4` da 0,1999… en vez de
+ * 0,2, y `1,2 % 0,4` da 0,3999… en vez de 0: justo en un cambio de fotograma
+ * (o de vuelta) saldría el anterior.
  */
 const TIME_EPSILON = 1e-9;
 
@@ -55,6 +56,8 @@ export const frameIndexAt = (
   // entonces: `(t % d + d) % d` redondea mal (0,1 en 0,6 daría 0,0999…).
   let time = seconds % loopDuration;
   if (time < 0) time += loopDuration;
+  // Justo al final de una vuelta ya empieza la siguiente.
+  if (loopDuration - time <= TIME_EPSILON) return 0;
   // Búsqueda binaria del último fotograma que empieza antes de `time`.
   let low = 0;
   let high = frameStarts.length - 1;

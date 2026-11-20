@@ -47,6 +47,15 @@ describe("frameIndexAt", () => {
     expect(frameIndexAt(twoFrames, 0.8)).toBe(0);
   });
 
+  it("justo al final de una vuelta ya sale el primer fotograma", () => {
+    // 1,2 % 0,4 da 0,3999… en lugar de 0.
+    const twoFrames = buildTimeline([0.2, 0.2]);
+    expect(frameIndexAt(twoFrames, 1.2)).toBe(0);
+    expect(frameIndexAt(twoFrames, 36 / 30)).toBe(0);
+    expect(frameIndexAt(twoFrames, 2)).toBe(0);
+    expect(frameIndexAt(twoFrames, 1.19)).toBe(1);
+  });
+
   it("con un solo fotograma siempre es el primero", () => {
     expect(frameIndexAt(buildTimeline([0.5]), 12.3)).toBe(0);
     expect(frameIndexAt(buildTimeline([]), 1)).toBe(0);
