@@ -118,20 +118,24 @@ export const createStrokeSession = ({
       const layers = strokeLayers(stroke);
       const isBlur = strokeEffect(stroke) === "blur";
       // La capa del resaltador se oculta mientras está vacía.
-      if (layers.highlight && !layers.paint) {
+      if (layers.isInHighlightLayer && !layers.isInPaintLayer) {
         liveNodes.highlight?.getLayer()?.visible(true);
       }
+      const isInLayer = {
+        paint: layers.isInPaintLayer,
+        highlight: layers.isInHighlightLayer,
+      };
       for (const layer of ["paint", "highlight"] as const) {
         const node = liveNodes[layer];
         // El desenfoque en curso es una imagen de todo lo que se ve: va una
         // sola vez, encima (en la capa de pintura).
-        node?.visible(isBlur ? layer === "paint" : layers[layer]);
+        node?.visible(isBlur ? layer === "paint" : isInLayer[layer]);
         node?.opacity(stroke.opacity);
         node?.globalCompositeOperation(strokeBlend(stroke));
       }
       clearLive();
       // Un borrador también quita el desenfoque del fondo mientras se arrastra.
-      if (layers.blur && !isBlur) {
+      if (layers.isInBlurLayer && !isBlur) {
         liveBlur?.setLiveEraser({
           canvas: liveCanvas,
           opacity: stroke.opacity,

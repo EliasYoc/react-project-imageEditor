@@ -9,10 +9,10 @@ export interface MenuItem {
   icon?: IconComponent;
   onSelect: () => void;
   /** Acción destructiva (en rojo). */
-  danger?: boolean;
+  isDanger?: boolean;
   disabled?: boolean;
   /** El menú sigue abierto al elegirla (p. ej. acercar varias veces). */
-  keepOpen?: boolean;
+  shouldKeepOpen?: boolean;
   /** Atajo de teclado, a la derecha (p. ej. "Ctrl+0"). */
   shortcut?: string;
 }
@@ -63,10 +63,10 @@ export function Menu({
             <DropdownMenu.Item
               key={item.label}
               className={styles.item}
-              data-danger={item.danger || undefined}
+              data-danger={item.isDanger || undefined}
               disabled={item.disabled}
               onSelect={(event) => {
-                if (item.keepOpen) event.preventDefault();
+                if (item.shouldKeepOpen) event.preventDefault();
                 item.onSelect();
               }}
             >

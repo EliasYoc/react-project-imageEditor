@@ -65,7 +65,7 @@ export interface ConfirmDialogProps {
   cancelLabel?: string;
   onConfirm: () => void;
   /** La acción destruye algo (botón rojo). */
-  destructive?: boolean;
+  isDestructive?: boolean;
 }
 
 /**
@@ -80,7 +80,7 @@ export function ConfirmDialog({
   confirmLabel,
   cancelLabel = "Cancelar",
   onConfirm,
-  destructive = false,
+  isDestructive = false,
 }: ConfirmDialogProps) {
   const returnFocus = useReturnFocus();
   return (
@@ -101,7 +101,7 @@ export function ConfirmDialog({
             <AlertDialog.Action asChild>
               <Button
                 size="sm"
-                variant={destructive ? "danger" : "primary"}
+                variant={isDestructive ? "danger" : "primary"}
                 onClick={onConfirm}
               >
                 {confirmLabel}

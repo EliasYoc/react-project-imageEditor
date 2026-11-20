@@ -144,7 +144,7 @@ const BackdropPanel = () => {
           <ColorPicker
             color={fill.color}
             onChange={(color) => setColor(color, "color")}
-            alpha
+            hasAlpha
             swatches={COLOR_PRESETS}
           />
         </>
@@ -205,7 +205,7 @@ const BackdropPanel = () => {
               </Button>
               <ColorPicker
                 color={selectedStop.color}
-                alpha
+                hasAlpha
                 onChange={(color) =>
                   setGradient(
                     setStopColor(gradient, selectedStop.id, color),

@@ -13,7 +13,7 @@ export interface ColorPickerProps {
   color: Rgba;
   onChange: (color: Rgba) => void;
   /** Con control de transparencia (si no, el color siempre es opaco). */
-  alpha?: boolean;
+  hasAlpha?: boolean;
   /** Muestras rápidas debajo del selector. */
   swatches?: readonly Rgba[];
 }
@@ -22,7 +22,7 @@ export interface ColorPickerProps {
 export function ColorPicker({
   color,
   onChange,
-  alpha = false,
+  hasAlpha = false,
   swatches = [],
 }: ColorPickerProps) {
   // RgbColorPicker compara, campo a campo, el color que recibe con el último
@@ -34,7 +34,7 @@ export function ColorPicker({
 
   return (
     <div className={styles.picker}>
-      {alpha ? (
+      {hasAlpha ? (
         <RgbaColorPicker color={color} onChange={onChange} />
       ) : (
         <RgbColorPicker
@@ -50,7 +50,7 @@ export function ColorPicker({
           prefixed
           onChange={(hex) => {
             const rgb = hexToRgb(hex);
-            if (rgb) onChange({ ...rgb, a: alpha ? color.a : 1 });
+            if (rgb) onChange({ ...rgb, a: hasAlpha ? color.a : 1 });
           }}
         />
       </label>
@@ -67,7 +67,9 @@ export function ColorPicker({
               className={styles.swatch}
               style={{ background: rgbaToCss(swatch) }}
               aria-label={`Color ${rgbaToHex(swatch)}`}
-              onClick={() => onChange({ ...swatch, a: alpha ? swatch.a : 1 })}
+              onClick={() =>
+                onChange({ ...swatch, a: hasAlpha ? swatch.a : 1 })
+              }
             />
           ))}
         </div>

@@ -39,7 +39,7 @@ const UpdateButton = () => {
         title="¿Actualizar ahora?"
         description="Se perderá el dibujo actual. Si quieres conservarlo, expórtalo antes."
         confirmLabel="Actualizar"
-        destructive
+        isDestructive
         onConfirm={applyUpdate}
       />
     </>

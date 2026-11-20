@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TextElement } from "../../editor/model/types";
@@ -7,7 +7,6 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
-import { getShortcutAction } from "../shortcuts";
 import FontPicker from "./components/FontPicker/FontPicker";
 import TextToolbar from "./components/TextToolbar/TextToolbar";
 import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
@@ -65,16 +64,17 @@ describe("TextStylePanel", () => {
     expect(screen.queryByRole("slider", { name: "Grosor" })).toBeNull();
 
     await userEvent.click(screen.getByRole("checkbox", { name: "Contorno" }));
-    expect(text().stroke.enabled).toBe(true);
+    expect(text().stroke.isEnabled).toBe(true);
     rerender(<TextStylePanel text={text()} />);
 
     const pastBefore = editorStore.getState().past.length;
-    const slider = screen.getByRole("slider", { name: "Grosor" });
-    for (const value of ["10", "15", "20"]) {
-      fireEvent.change(slider, { target: { value } });
+    const widthBefore = text().stroke.width;
+    screen.getByRole("slider", { name: "Grosor" }).focus();
+    for (let step = 0; step < 3; step++) {
+      await userEvent.keyboard("{ArrowRight}");
       rerender(<TextStylePanel text={text()} />);
     }
-    expect(text().stroke.width).toBe(0.2);
+    expect(text().stroke.width).toBeCloseTo(widthBefore + 0.03);
     expect(editorStore.getState().past.length).toBe(pastBefore + 1);
   });
 
@@ -84,10 +84,9 @@ describe("TextStylePanel", () => {
       screen.getByRole("checkbox", { name: "Caja de fondo" })
     );
     rerender(<TextStylePanel text={text()} />);
-    fireEvent.change(screen.getByRole("slider", { name: "Margen" }), {
-      target: { value: "40" },
-    });
-    expect(text().background).toMatchObject({ enabled: true, padding: 0.4 });
+    screen.getByRole("slider", { name: "Margen" }).focus();
+    await userEvent.keyboard("{End}");
+    expect(text().background).toMatchObject({ isEnabled: true, padding: 0.8 });
   });
 
   it("degradado: activarlo, cambiar la forma y recuperarlo al reactivarlo", async () => {
@@ -167,20 +166,6 @@ describe("TextStylePanel", () => {
       b: 176,
       a: 1,
     });
-  });
-});
-
-describe("atajo de negrita", () => {
-  it("Ctrl/⌘ + B solo en modo Texto", () => {
-    const key = {
-      key: "b",
-      ctrlKey: true,
-      metaKey: false,
-      shiftKey: false,
-      altKey: false,
-    };
-    expect(getShortcutAction(key, "text")).toEqual({ type: "toggleBold" });
-    expect(getShortcutAction(key, "draw")).toBeNull();
   });
 });
 

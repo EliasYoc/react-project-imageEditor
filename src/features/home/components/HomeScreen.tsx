@@ -4,6 +4,7 @@ import { Button } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
 import { toast } from "../../../components/ui/Toast";
 import { classNames } from "../../../lib/classNames";
+import { IMAGE_OPEN_ERROR_MESSAGE } from "../../../lib/messages";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectHasDocumentContent } from "../../../editor/store/selectors";
 import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
@@ -54,7 +55,7 @@ const HomeScreen = () => {
       setMode("draw");
     } catch (error) {
       console.error(error);
-      toast.error("No se pudo abrir la imagen");
+      toast.error(IMAGE_OPEN_ERROR_MESSAGE);
     } finally {
       setStatus("idle");
     }
@@ -203,7 +204,7 @@ const HomeScreen = () => {
         title="¿Empezar de nuevo?"
         description="Se descartará el documento actual y su historial (no se puede deshacer)."
         confirmLabel="Descartar y abrir"
-        destructive
+        isDestructive
         onConfirm={() => {
           const action = pending;
           setPending(null);

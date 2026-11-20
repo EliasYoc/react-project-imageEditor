@@ -24,6 +24,7 @@ Antes de escribir código propio en JavaScript o TypeScript para resolver algo, 
 | Selectores de color                                                                                      | `react-colorful`        |
 | Lienzo, nodos, transformaciones y exportación de elementos                                               | `konva` + `react-konva` |
 | Trazos de tinta                                                                                          | `perfect-freehand`      |
+| Abrir, leer y exportar video (decodificar y codificar con WebCodecs)                                     | `mediabunny`            |
 | Estado global                                                                                            | `zustand`               |
 | Fuentes                                                                                                  | `@fontsource/*`         |
 
@@ -46,7 +47,9 @@ Si ninguna lo cubre:
 
 ## 4. Las PR son del dueño
 
-- **Trabaja solo con commits locales.** **No crees ramas:** haz los commits en la rama en la que esté el repositorio (normalmente `dev`), actualizada antes de empezar. **Nunca hagas push** ni abras, edites o fusiones PR.
+- **Antes de cambiar nada, mira en qué rama estás** (`git branch --show-current`), al empezar cada tarea y no solo la primera vez. Si es `main` o `dev`, **no avances**: no edites archivos ni hagas commits. Recuérdale al dueño que sigue en esa rama y que necesita una rama de trabajo (por ejemplo `git switch -c feat/nombre`), y espera a que la cree. Leer código y responder preguntas sí se puede.
+- **Las ramas las crea el dueño, no tú.** Cuando esté en una rama que no sea `main` ni `dev`, haz los commits en ella.
+- **Trabaja solo con commits locales.** **Nunca hagas push** ni abras, edites o fusiones PR.
 - **Al terminar,** deja el texto de la PR en un archivo para que el dueño la abra.
 - **Cada commit** debe compilar y pasar `npm run check` por sí solo.
 - **Un commit por tarea.** Si el dueño pide varias tareas a la vez (p. ej. una lista numerada), cada una va en su propio commit y en ese orden, **aunque toquen los mismos archivos**. Así se pueden revisar y revertir por separado.

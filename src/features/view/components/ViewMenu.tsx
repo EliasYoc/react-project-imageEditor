@@ -42,7 +42,7 @@ const ViewMenu = () => {
     {
       label: "Acercar",
       icon: ZoomIn,
-      keepOpen: true,
+      shouldKeepOpen: true,
       shortcut: shortcut(SHORTCUT_LABELS.zoomIn),
       disabled: !canZoomIn,
       onSelect: () => zoomBy(ZOOM_STEP),
@@ -50,7 +50,7 @@ const ViewMenu = () => {
     {
       label: "Alejar",
       icon: ZoomOut,
-      keepOpen: true,
+      shouldKeepOpen: true,
       shortcut: shortcut(SHORTCUT_LABELS.zoomOut),
       disabled: !canZoomOut,
       onSelect: () => zoomBy(1 / ZOOM_STEP),

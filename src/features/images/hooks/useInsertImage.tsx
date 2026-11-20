@@ -1,5 +1,6 @@
 import { useRef, type ChangeEvent, type ReactElement } from "react";
 import { toast } from "../../../components/ui/Toast";
+import { IMAGE_OPEN_ERROR_MESSAGE } from "../../../lib/messages";
 import { loadImage } from "../../../editor/elements/imageCache";
 import { documentPointAtViewCenter } from "../../../editor/stage/viewStore";
 import { editorStore } from "../../../editor/store/editorStore";
@@ -50,7 +51,7 @@ export const useInsertImage = (): InsertImage => {
     } catch (error) {
       URL.revokeObjectURL(src);
       console.error(error);
-      toast.error("No se pudo abrir la imagen");
+      toast.error(IMAGE_OPEN_ERROR_MESSAGE);
     }
   };
 

@@ -96,7 +96,7 @@ describe("Menu", () => {
             label: "Borrar el dibujo",
             icon: Trash2,
             onSelect: onClear,
-            danger: true,
+            isDanger: true,
           },
         ]}
       />
@@ -158,7 +158,7 @@ describe("ConfirmDialog", () => {
         description="Se puede deshacer."
         confirmLabel="Borrar"
         onConfirm={onConfirm}
-        destructive
+        isDestructive
       />
     );
     const dialog = screen.getByRole("alertdialog", {
@@ -262,7 +262,7 @@ describe("color", () => {
       <ColorPicker
         color={red}
         onChange={onChange}
-        alpha
+        hasAlpha
         swatches={[{ r: 0, g: 0, b: 255, a: 1 }]}
       />
     );
@@ -327,7 +327,7 @@ describe("color", () => {
         label="Color del texto"
         color={red}
         onChange={vi.fn()}
-        alpha
+        hasAlpha
       />
     );
     await user.click(screen.getByRole("button", { name: "Color del texto" }));

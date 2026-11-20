@@ -106,6 +106,8 @@ export function registerUpdates(reload = () => window.location.reload()) {
         // El navegador solo lo comprueba al abrir la página: una pestaña que
         // sigue abierta pregunta de vez en cuando y al volver a ella.
         check = () => {
+          // Si falla (red inestable, servidor caído) no hay nada que mostrar:
+          // la próxima comprobación lo vuelve a intentar.
           if (navigator.onLine) registration.update().catch(() => {});
         };
         checkTimer = setInterval(check, CHECK_INTERVAL_MS);

@@ -30,25 +30,25 @@ const percent = (value: number) => `${Math.round(value)} %`;
 /** Sección que se activa con una casilla (contorno, sombra, caja). */
 const ToggleSection = ({
   title,
-  enabled,
+  isEnabled,
   onToggle,
   children,
 }: {
   title: string;
-  enabled: boolean;
-  onToggle: (enabled: boolean) => void;
+  isEnabled: boolean;
+  onToggle: (isEnabled: boolean) => void;
   children: ReactNode;
 }) => (
   <section className={styles.section} aria-label={title}>
     <label className={styles.sectionHeader}>
       <input
         type="checkbox"
-        checked={enabled}
+        checked={isEnabled}
         onChange={(event) => onToggle(event.target.checked)}
       />
       {title}
     </label>
-    {enabled && <div className={styles.sectionBody}>{children}</div>}
+    {isEnabled && <div className={styles.sectionBody}>{children}</div>}
   </section>
 );
 
@@ -85,7 +85,7 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
         value={text.align}
         onChange={(align) => edit({ align })}
         items={ALIGNMENTS}
-        iconOnly
+        isIconOnly
       />
       <Slider
         label="Interlineado"
@@ -99,9 +99,9 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
 
       <ToggleSection
         title="Degradado"
-        enabled={text.gradient !== null}
-        onToggle={(enabled) =>
-          edit({ gradient: enabled ? lastGradient : null })
+        isEnabled={text.gradient !== null}
+        onToggle={(isEnabled) =>
+          edit({ gradient: isEnabled ? lastGradient : null })
         }
       >
         {text.gradient && (
@@ -116,8 +116,8 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
 
       <ToggleSection
         title="Contorno"
-        enabled={stroke.enabled}
-        onToggle={(enabled) => edit({ stroke: { ...stroke, enabled } })}
+        isEnabled={stroke.isEnabled}
+        onToggle={(isEnabled) => edit({ stroke: { ...stroke, isEnabled } })}
       >
         <ColorField
           label="Color del contorno"
@@ -142,8 +142,8 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
 
       <ToggleSection
         title="Sombra"
-        enabled={shadow.enabled}
-        onToggle={(enabled) => edit({ shadow: { ...shadow, enabled } })}
+        isEnabled={shadow.isEnabled}
+        onToggle={(isEnabled) => edit({ shadow: { ...shadow, isEnabled } })}
       >
         <ColorField
           label="Color de la sombra"
@@ -178,8 +178,10 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
 
       <ToggleSection
         title="Caja de fondo"
-        enabled={background.enabled}
-        onToggle={(enabled) => edit({ background: { ...background, enabled } })}
+        isEnabled={background.isEnabled}
+        onToggle={(isEnabled) =>
+          edit({ background: { ...background, isEnabled } })
+        }
       >
         <ColorField
           label="Color de la caja"

@@ -35,9 +35,7 @@ jobs:
           cache: npm
       # Instalación limpia, exactamente con lo que dice package-lock.json.
       - run: npm ci
-      - name: Formato (Prettier)
-        run: npm run format:check
-      - name: Lint, tipos y tests unitarios
+      - name: Formato, lint, tipos y tests unitarios
         run: npm run check
       - name: Build
         run: npm run build

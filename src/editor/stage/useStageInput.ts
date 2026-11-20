@@ -32,7 +32,7 @@ type Gesture =
       ids: [number, number];
       start: { view: View; mid: Point; distance: number };
       startedAt: number;
-      moved: boolean;
+      hasMoved: boolean;
     };
 
 interface StageInputOptions {
@@ -158,7 +158,7 @@ export function useStageInput({
           distance: Math.max(1, distance(a, b)),
         },
         startedAt: performance.now(),
-        moved: false,
+        hasMoved: false,
       };
     };
 
@@ -173,7 +173,7 @@ export function useStageInput({
         distance(mid, gesture.start.mid) > TWO_FINGER_TAP_SLOP ||
         Math.abs(spread - gesture.start.distance) > TWO_FINGER_TAP_SLOP
       ) {
-        gesture.moved = true;
+        gesture.hasMoved = true;
       }
       const view = viewStore.getState();
       view.setView(
@@ -185,7 +185,7 @@ export function useStageInput({
       if (gesture.kind !== "pinching") return;
       const now = performance.now();
       const isTap =
-        !gesture.moved && now - gesture.startedAt < TWO_FINGER_TAP_MS;
+        !gesture.hasMoved && now - gesture.startedAt < TWO_FINGER_TAP_MS;
       gesture = { kind: "idle" };
       if (!isTap) return;
       if (now - lastTwoFingerTap < DOUBLE_TAP_MS) {

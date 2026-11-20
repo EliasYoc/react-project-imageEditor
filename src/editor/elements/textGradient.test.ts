@@ -128,7 +128,7 @@ describe("degradado del texto en CSS", () => {
 
   const style = {
     color: RED,
-    background: { enabled: false, color: BLUE, padding: 0.2, radius: 0.2 },
+    background: { isEnabled: false, color: BLUE, padding: 0.2, radius: 0.2 },
   };
 
   it("sin degradado, el textarea usa el color (y la caja si la hay)", () => {
@@ -139,7 +139,7 @@ describe("degradado del texto en CSS", () => {
       textEditorPaint({
         ...style,
         gradient: null,
-        background: { ...style.background, enabled: true },
+        background: { ...style.background, isEnabled: true },
       })
     ).toEqual({
       color: "rgba(255, 0, 0, 1)",
@@ -151,7 +151,7 @@ describe("degradado del texto en CSS", () => {
     const paint = textEditorPaint({
       ...style,
       gradient: gradient(),
-      background: { ...style.background, enabled: true },
+      background: { ...style.background, isEnabled: true },
     });
     expect(paint.color).toBe("transparent");
     expect(paint.backgroundImage).toBe(

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { BRUSH_SIZE_RANGE } from "../../editor/model/factories";
@@ -165,20 +165,19 @@ describe("BrushLibrary", () => {
     );
   });
 
-  it("los sliders cambian los ajustes solo del pincel actual", () => {
+  it("los sliders cambian los ajustes solo del pincel actual", async () => {
+    const user = userEvent.setup();
     render(<BrushLibrary />);
-    fireEvent.change(screen.getByRole("slider", { name: "Opacidad" }), {
-      target: { value: "35" },
-    });
-    fireEvent.change(screen.getByRole("slider", { name: "Estabilización" }), {
-      target: { value: "80" },
-    });
+    screen.getByRole("slider", { name: "Opacidad" }).focus();
+    await user.keyboard("{Home}");
+    screen.getByRole("slider", { name: "Estabilización" }).focus();
+    await user.keyboard("{End}");
     const { settings } = editorStore.getState().brush;
-    expect(settings.pen).toMatchObject({ opacity: 0.35, stabilizer: 0.8 });
+    expect(settings.pen).toMatchObject({ opacity: 0.01, stabilizer: 1 });
     expect(settings.marker.opacity).toBe(1);
     expect(screen.getByRole("slider", { name: "Opacidad" })).toHaveAttribute(
       "aria-valuetext",
-      "35 %"
+      "1 %"
     );
   });
 });
@@ -232,8 +231,8 @@ describe("vista previa de los pinceles", () => {
 });
 
 describe("selector de modo", () => {
-  it("con iconOnly muestra solo los iconos y conserva el nombre accesible", () => {
-    render(<ModeSwitcher iconOnly />);
+  it("con isIconOnly muestra solo los iconos y conserva el nombre accesible", () => {
+    render(<ModeSwitcher isIconOnly />);
     const group = screen.getByRole("radiogroup", { name: "Modo" });
     expect(within(group).getByRole("radio", { name: "Dibujar" })).toBeVisible();
     expect(within(group).getByRole("radio", { name: "Texto" })).toBeVisible();
@@ -241,7 +240,7 @@ describe("selector de modo", () => {
     expect(group.querySelector("span")).toBeNull();
   });
 
-  it("sin iconOnly muestra el texto de cada modo", () => {
+  it("sin isIconOnly muestra el texto de cada modo", () => {
     render(<ModeSwitcher />);
     expect(screen.getByText("Dibujar")).toBeInTheDocument();
     expect(screen.getByText("Texto")).toBeInTheDocument();

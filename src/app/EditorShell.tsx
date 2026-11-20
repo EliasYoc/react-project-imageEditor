@@ -85,7 +85,7 @@ const EditorShell = ({ isOpen }: { isOpen: boolean }) => {
   return (
     <>
       {isOpen && (
-        <EditorHeader center={<ModeSwitcher iconOnly={!isDesktop} />} />
+        <EditorHeader center={<ModeSwitcher isIconOnly={!isDesktop} />} />
       )}
 
       <main ref={stageRef} className={styles.stage}>

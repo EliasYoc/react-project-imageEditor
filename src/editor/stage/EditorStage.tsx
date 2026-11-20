@@ -378,7 +378,7 @@ const EditorStage = () => {
         </Layer>
         <ElementsLayer
           view={view}
-          interactive={isEditingElements}
+          isInteractive={isEditingElements}
           overlay={
             // Dos círculos (blanco y negro) para que se vea sobre cualquier color.
             <Group ref={cursorRef} visible={false} listening={false}>

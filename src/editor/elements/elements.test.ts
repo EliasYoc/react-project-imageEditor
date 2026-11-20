@@ -69,7 +69,7 @@ describe("textNodeConfig", () => {
     const config = textNodeConfig(
       text({
         stroke: {
-          enabled: true,
+          isEnabled: true,
           color: { r: 0, g: 0, b: 0, a: 1 },
           width: 0.1,
         },
@@ -88,7 +88,7 @@ describe("textNodeConfig", () => {
     const config = textNodeConfig(
       text({
         shadow: {
-          enabled: true,
+          isEnabled: true,
           color: { r: 0, g: 0, b: 0, a: 0.5 },
           blur: 0.2,
           offset: 0.05,
@@ -108,7 +108,7 @@ describe("textNodeConfig", () => {
     const element = text({
       align: "center",
       background: {
-        enabled: true,
+        isEnabled: true,
         color: { r: 255, g: 255, b: 0, a: 0.8 },
         padding: 0.3,
         radius: 0.25,
