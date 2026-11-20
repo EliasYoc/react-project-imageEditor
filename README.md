@@ -173,7 +173,7 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
 
 ## GIFs animados
 
-Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «Insertar una imagen o sticker») y **se mueve** en el lienzo, la foto o el video. También los WebP y PNG animados.
+Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «Insertar archivo») y **se mueve** en el lienzo, la foto o el video. También los WebP y PNG animados.
 
 - **Decodificar** (`editor/elements/animatedImage.ts`): con `ImageDecoder` (WebCodecs, del propio navegador; Edge, Chrome y Firefox 133 o posterior). Un canvas solo sabe pintar el primer fotograma de un GIF, así que cada fotograma se decodifica, se pinta en un canvas propio de la imagen, y ese canvas es el que pinta Konva.
 - **Memoria:** nunca se abren todos los fotogramas a la vez (un GIF de 480 × 270 con 50 fotogramas serían unos 26 MB). Se guarda el archivo comprimido y un solo canvas; cada fotograma se decodifica al necesitarlo y se suelta enseguida. Dos elementos con el mismo GIF comparten ambos.
@@ -187,7 +187,7 @@ Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «
 
 ## Stickers animados (Lottie)
 
-Un sticker **Lottie** se inserta igual que una imagen: «Insertar una imagen o sticker» acepta también `.json` y `.tgs` (el formato de Telegram: el mismo JSON comprimido con gzip). Se mueve, se transforma y sigue al video como un GIF, y **también en Safari** (no usa `ImageDecoder`).
+Un sticker **Lottie** se inserta igual que una imagen: «Insertar archivo» acepta también `.json` y `.tgs` (el formato de Telegram: el mismo JSON comprimido con gzip). Se mueve, se transforma y sigue al video como un GIF, y **también en Safari** (no usa `ImageDecoder`).
 
 - **Biblioteca:** [lottie-web](https://github.com/airbnb/lottie-web) 5.13.0 (MIT), en su versión **`lottie_light_canvas`** (54,5 kB con gzip). Se descarga solo con el primer sticker (`editor/elements/lottieSticker.ts`, cargado bajo demanda).
 - **Seguridad:**

@@ -69,7 +69,7 @@ const TextToolbar = () => {
 
   const moreOptions: MenuItem[] = [
     {
-      label: "Insertar una imagen o sticker",
+      label: "Insertar archivo",
       icon: ImagePlus,
       onSelect: pickImage,
     },

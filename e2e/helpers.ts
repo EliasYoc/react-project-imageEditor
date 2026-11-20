@@ -327,8 +327,8 @@ export async function openPhoto(page: Page) {
 }
 
 /**
- * Inserta un archivo (una imagen, un GIF o un sticker) con «Insertar una
- * imagen o sticker», del menú «Más opciones» del modo Texto.
+ * Inserta un archivo (una imagen, un GIF o un sticker) con «Insertar archivo»,
+ * del menú «Más opciones» del modo Texto.
  */
 export async function insertFile(page: Page, path: string) {
   await page.getByRole("radio", { name: "Texto" }).click();
@@ -338,9 +338,7 @@ export async function insertFile(page: Page, path: string) {
     .getByRole("contentinfo")
     .getByRole("button", { name: "Más opciones", exact: true })
     .click();
-  await page
-    .getByRole("menuitem", { name: "Insertar una imagen o sticker" })
-    .click();
+  await page.getByRole("menuitem", { name: "Insertar archivo" }).click();
   await (await chooser).setFiles(path);
 }
 
