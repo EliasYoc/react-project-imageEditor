@@ -4,10 +4,11 @@
 // - Inicio: lo que descarga la pantalla de inicio, es decir, los scripts que
 //   enlaza build/index.html (el resto de la app no hace falta para verla).
 // - Editor: el resto del JS, que se descarga en segundo plano (ver App.tsx).
-// - Video: lo que solo se descarga con un video abierto: el diálogo de
-//   exportarlo (VideoExportDialog-*.js) y el codificador (encodeVideo-*.js,
-//   con mediabunny), que llega al exportar. Va aparte para que Editor siga
-//   midiendo lo que tarda en cargar el editor cuando no se usa video.
+// - Video: lo que solo se descarga para exportar un video (el de un video
+//   abierto o el de un lienzo con GIFs): el diálogo (VideoExportDialog-*.js)
+//   y el codificador (encodeVideo-*.js, con mediabunny), que llega al
+//   exportar. Va aparte para que Editor siga midiendo lo que tarda en cargar
+//   el editor cuando no se usa video.
 //
 // Se mide comprimido con gzip, como lo envía el servidor. Si un cambio
 // necesita de verdad más espacio, se sube el límite aquí, en la misma PR,
@@ -22,12 +23,16 @@
 //   límite de Video es lo que mide más un 5 %. Casi todo (111,1 kB) es el
 //   codificador: convertir un video (leer MP4, MOV, WebM y MKV, y escribir
 //   MP4) usa una parte grande de mediabunny. Sin WebM ni MKV serían 100,1.
+// - 120 / 142 / Video 119: GIFs animados (el editor mide 140,1). Animarlos
+//   en el lienzo y en la exportación añade 1,2 kB, y elegir imagen o video al
+//   exportar un poco más. Cargar el código de exportar bajo demanda no
+//   ayuda: solo ahorraba 1 kB al abrir el editor y cada trozo aparte suma.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 140, Video: 119 };
+const BUDGETS_KB = { Inicio: 120, Editor: 142, Video: 119 };
 /** Los trozos que solo se descargan con un video abierto. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
 

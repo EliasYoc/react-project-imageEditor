@@ -16,6 +16,7 @@ vi.mock("./documentCompositor", () => ({
 
 const SIZE = { width: 1280, height: 720 };
 const render = vi.fn();
+const dispose = vi.fn();
 const done = {
   status: "done",
   blob: new Blob(["video"], { type: "video/mp4" }),
@@ -43,7 +44,8 @@ beforeEach(() => {
   mockObjectUrls();
   editorStore.setState(createInitialState());
   vi.mocked(createDocumentCompositor).mockReset();
-  vi.mocked(createDocumentCompositor).mockResolvedValue({ render });
+  dispose.mockClear();
+  vi.mocked(createDocumentCompositor).mockResolvedValue({ render, dispose });
   vi.mocked(encodeVideo).mockReset();
   vi.mocked(encodeVideo).mockResolvedValue(done);
 });
@@ -125,6 +127,8 @@ describe("exportVideo", () => {
       exportVideo({ onProgress: vi.fn(), signal: new AbortController().signal })
     ).rejects.toThrow("sin memoria");
     expect(release).toHaveBeenCalledTimes(1);
+    // También se suelta lo que el compositor guarda (la escena de los GIFs).
+    expect(dispose).toHaveBeenCalledTimes(1);
   });
 
   it("sin un video abierto, falla", async () => {

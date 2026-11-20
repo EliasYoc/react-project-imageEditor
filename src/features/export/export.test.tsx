@@ -13,8 +13,11 @@ import type { EncodeVideoResult } from "./utils/encodeVideo";
 import { defaultExportName } from "./utils/exportName";
 import type { ExportVideoOptions } from "./utils/exportVideo";
 
-const exportVideo = vi.hoisted(() => vi.fn());
-vi.mock("./utils/exportVideo", () => ({ exportVideo }));
+const { exportVideo, exportAnimation } = vi.hoisted(() => ({
+  exportVideo: vi.fn(),
+  exportAnimation: vi.fn(),
+}));
+vi.mock("./utils/exportVideo", () => ({ exportVideo, exportAnimation }));
 
 const save = vi.hoisted(() => ({ saveImage: vi.fn(), sharesFile: vi.fn() }));
 vi.mock("../../lib/saveImage", () => save);
@@ -79,13 +82,15 @@ beforeEach(() => {
   });
   toastStore.setState({ toasts: [] });
   running = null;
-  exportVideo.mockReset();
-  exportVideo.mockImplementation(
-    (options: ExportVideoOptions) =>
-      new Promise<EncodeVideoResult>((finish, fail) => {
-        running = { ...options, finish, fail };
-      })
-  );
+  // Las dos exportaciones de video quedan en curso hasta que el test diga.
+  const startRunning = (options: ExportVideoOptions) =>
+    new Promise<EncodeVideoResult>((finish, fail) => {
+      running = { ...options, finish, fail };
+    });
+  for (const exportFn of [exportVideo, exportAnimation]) {
+    exportFn.mockReset();
+    exportFn.mockImplementation(startRunning);
+  }
   save.saveImage.mockReset();
   save.saveImage.mockResolvedValue("downloaded");
   save.sharesFile.mockReset();
@@ -245,6 +250,20 @@ describe("exportar un video", () => {
     expect(within(dialog).getByText("El video está listo.")).toBeVisible();
   });
 
+  it("con un GIF encima, exporta el video del documento", async () => {
+    state().addImage({
+      src: "blob:gif",
+      width: 64,
+      height: 64,
+      center: { x: 640, y: 360 },
+      isAnimated: true,
+    });
+    const user = userEvent.setup();
+    await startExport(user);
+    expect(exportVideo).toHaveBeenCalled();
+    expect(exportAnimation).not.toHaveBeenCalled();
+  });
+
   it("en el móvil, si el toque de Exportar aún vale, comparte sin más pasos", async () => {
     save.sharesFile.mockReturnValue(true);
     save.saveImage.mockResolvedValue("shared");
@@ -257,5 +276,59 @@ describe("exportar un video", () => {
     await act(async () => running.finish(done));
     expect(save.saveImage).toHaveBeenCalledWith(mp4, "fiesta-editado.mp4");
     expect(isOpen.current).toBe(false);
+  });
+});
+
+describe("exportar un lienzo con GIFs", () => {
+  beforeEach(() => {
+    editorStore.setState({
+      ...createInitialState(),
+      mode: "text",
+      canvasSize: { width: 1080, height: 1080 },
+    });
+    state().addImage({
+      src: "blob:gif",
+      width: 64,
+      height: 64,
+      center: { x: 540, y: 540 },
+      isAnimated: true,
+    });
+  });
+
+  it("deja elegir imagen o video; empieza en un video de 15 s sin sonido", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+    const dialog = await videoDialog();
+    expect(dialog).toHaveAccessibleDescription(
+      "Se guarda en MP4 a 1080 × 1080 px, 15 segundos, sin sonido."
+    );
+    expect(within(dialog).getByRole("radio", { name: "Video" })).toBeChecked();
+    expect(await within(dialog).findByText(".mp4")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("radio", { name: "Imagen" }));
+    const imageDialog = screen.getByRole("dialog", { name: "Exportar imagen" });
+    expect(imageDialog).toHaveAccessibleDescription(
+      "Se guarda a 1080 × 1080 px."
+    );
+    expect(within(imageDialog).getByText(".png")).toBeInTheDocument();
+  });
+
+  it("como video, compone el de los GIFs y lo descarga como dibujo-fecha.mp4", async () => {
+    const user = userEvent.setup();
+    renderDialog();
+    const dialog = await videoDialog();
+    await user.click(
+      await within(dialog).findByRole("button", { name: "Exportar" })
+    );
+    expect(exportAnimation).toHaveBeenCalled();
+    expect(exportVideo).not.toHaveBeenCalled();
+    // Mientras exporta no se puede cambiar a imagen.
+    expect(within(dialog).queryByRole("radio")).toBeNull();
+
+    await act(async () => running?.finish(done));
+    expect(save.saveImage).toHaveBeenCalledWith(
+      mp4,
+      expect.stringMatching(/^dibujo-\d{4}-\d{2}-\d{2}\.mp4$/)
+    );
   });
 });

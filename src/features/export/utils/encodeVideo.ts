@@ -1,14 +1,17 @@
 import {
   BlobSource,
   BufferTarget,
+  CanvasSource,
   Conversion,
   ConversionCanceledError,
+  getFirstEncodableVideoCodec,
   Input,
   MATROSKA,
   MP4,
   Mp4OutputFormat,
   Output,
   QTFF,
+  QUALITY_HIGH,
   WEBM,
 } from "mediabunny";
 import type { Size } from "../../../editor/model/types";
@@ -28,9 +31,13 @@ export interface EncodeVideoOptions {
   size: Size;
   /**
    * Compone un fotograma: `drawBackground` pinta el fotograma original y el
-   * resultado lleva encima el resto del documento.
+   * resultado lleva encima el resto del documento, con los GIFs en el
+   * fotograma del segundo `seconds` del video.
    */
-  renderFrame: (drawBackground: DrawBackground) => CanvasImageSource;
+  renderFrame: (
+    drawBackground: DrawBackground,
+    seconds: number
+  ) => Promise<CanvasImageSource>;
   /** Avance de 0 a 1. */
   onProgress: (progress: number) => void;
   /** Al abortarla, la exportación se cancela. */
@@ -88,8 +95,9 @@ export const encodeVideo = async ({
       processedWidth: size.width,
       processedHeight: size.height,
       process: (sample) =>
-        renderFrame((ctx, { width, height }) =>
-          sample.draw(ctx, 0, 0, width, height)
+        renderFrame(
+          (ctx, { width, height }) => sample.draw(ctx, 0, 0, width, height),
+          sample.timestamp
         ),
     },
     // Lo que no se pueda convertir se comprueba justo debajo.
@@ -119,5 +127,82 @@ export const encodeVideo = async ({
     status: "done",
     blob: new Blob([target.buffer], { type: "video/mp4" }),
     hasLostSound: discarded.some((track) => track.isAudioTrack()),
+  };
+};
+
+export interface EncodeFramesOptions {
+  /** Tamaño del video (lados pares: lo exige H.264). */
+  size: Size;
+  /** Duración, en segundos. */
+  duration: number;
+  /** Fotogramas por segundo. */
+  frameRate: number;
+  /**
+   * Compone el fotograma del segundo `seconds`. Devuelve SIEMPRE el mismo
+   * canvas, del tamaño `size`: es lo que lee `CanvasSource`.
+   */
+  renderFrame: (seconds: number) => Promise<HTMLCanvasElement>;
+  /** Avance de 0 a 1. */
+  onProgress: (progress: number) => void;
+  /** Al abortarla, la exportación se cancela. */
+  signal: AbortSignal;
+}
+
+/**
+ * Crea un MP4 sin sonido con los fotogramas que compone `renderFrame`: el
+ * video de un lienzo o una foto con GIFs. Como `encodeVideo`, va tan rápido
+ * como el equipo pueda y el MP4 se arma en memoria.
+ *
+ * El códec es el primero que el navegador sepa codificar en un MP4 a ese
+ * tamaño (normalmente H.264).
+ */
+export const encodeFrames = async ({
+  size,
+  duration,
+  frameRate,
+  renderFrame,
+  onProgress,
+  signal,
+}: EncodeFramesOptions): Promise<EncodeVideoResult> => {
+  const format = new Mp4OutputFormat();
+  const codec = await getFirstEncodableVideoCodec(
+    format.getSupportedVideoCodecs(),
+    { ...size, quality: QUALITY_HIGH }
+  );
+  if (!codec) return { status: "unsupported" };
+
+  const target = new BufferTarget();
+  const output = new Output({ format, target });
+  const frameCount = Math.round(duration * frameRate);
+  // `CanvasSource` necesita el canvas al crearse: llega con el primer fotograma.
+  let source: CanvasSource | null = null;
+  try {
+    for (let index = 0; index < frameCount; index++) {
+      if (signal.aborted) {
+        await output.cancel();
+        return { status: "canceled" };
+      }
+      const seconds = index / frameRate;
+      const canvas = await renderFrame(seconds);
+      if (!source) {
+        source = new CanvasSource(canvas, { codec, quality: QUALITY_HIGH });
+        output.addVideoTrack(source, { frameRate });
+        await output.start();
+      }
+      await source.add(seconds, 1 / frameRate);
+      onProgress((index + 1) / frameCount);
+    }
+    await output.finalize();
+  } catch (error) {
+    // Se suelta el codificador; el error que importa es el primero.
+    await output.cancel().catch(() => {});
+    throw error;
+  }
+
+  if (!target.buffer) throw new Error("La exportación no dejó ningún archivo");
+  return {
+    status: "done",
+    blob: new Blob([target.buffer], { type: "video/mp4" }),
+    hasLostSound: false,
   };
 };

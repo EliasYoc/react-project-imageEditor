@@ -75,6 +75,15 @@ export const selectCanUndo = (state: EditorStore) => state.past.length > 0;
 /** El video abierto como fondo, o null (foto o lienzo en blanco). */
 export const selectVideo = (state: EditorStore) => state.photo.video;
 
+/**
+ * Hay algún GIF que se mueve: un lienzo o una foto se pueden exportar como
+ * video. Siempre false en un navegador que no anima GIFs (Safari).
+ */
+export const selectHasAnimatedElements = (state: EditorStore) =>
+  selectElements(state).some(
+    (element) => element.whatTask === "image" && element.isAnimated
+  );
+
 /** El documento tiene de fondo una foto o un video (no es un lienzo en blanco). */
 export const selectHasBackground = (state: EditorStore) =>
   state.photo.source !== null || state.photo.video !== null;

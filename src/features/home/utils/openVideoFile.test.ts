@@ -4,12 +4,7 @@ import {
   mockObjectUrls,
   type FakeVideoOptions,
 } from "../../../test/video";
-import {
-  isVideoFile,
-  openVideoFile,
-  videoDocumentSize,
-  VideoOpenError,
-} from "./openVideoFile";
+import { isVideoFile, openVideoFile, VideoOpenError } from "./openVideoFile";
 
 const file = new File(["x"], "playa.mp4", { type: "video/mp4" });
 
@@ -44,25 +39,6 @@ describe("abrir un video", () => {
       false
     );
     expect(isVideoFile(null)).toBe(false);
-  });
-
-  it("el documento mide lo que el video, hasta Full HD y con lados pares", () => {
-    expect(videoDocumentSize({ width: 1280, height: 720 })).toEqual({
-      width: 1280,
-      height: 720,
-    });
-    expect(videoDocumentSize({ width: 3840, height: 2160 })).toEqual({
-      width: 1920,
-      height: 1080,
-    });
-    expect(videoDocumentSize({ width: 2160, height: 3840 })).toEqual({
-      width: 1080,
-      height: 1920,
-    });
-    expect(videoDocumentSize({ width: 853, height: 481 })).toEqual({
-      width: 854,
-      height: 482,
-    });
   });
 
   it("lo prepara como fondo del documento, en pausa y con sonido", async () => {
