@@ -635,21 +635,25 @@ export interface FrameColor {
 }
 
 /**
- * Reproduce el video (al doble de velocidad) y apunta, en cada fotograma que
- * se pinta, su momento exacto y el color de `point`, hasta `untilSeconds`.
+ * Recorre los fotogramas de un video de `frameRate` fotogramas por segundo,
+ * hasta `untilSeconds`, y apunta de cada uno su momento exacto y el color de
+ * `point`.
  *
- * Es más fiable que saltar a un momento (`readVideo`): con mucha carga, tras
- * un salto el `<video>` a veces aún muestra el fotograma anterior.
- * `requestVideoFrameCallback` da el momento del fotograma que se pinta.
+ * Con el video en pausa, salta a la mitad de cada fotograma y lo pinta en el
+ * aviso de `requestVideoFrameCallback`, que llega con ese fotograma ya en
+ * pantalla y dice su momento. Hay que hacerlo así:
+ * - tras un salto, sin esperar ese aviso, el `<video>` a veces aún muestra el
+ *   fotograma anterior (`readVideo`);
+ * - reproduciendo, con mucha carga, al pintar a veces ya muestra el siguiente.
  */
-export const readFramesWhilePlaying = (
+export const readEveryFrame = (
   page: Page,
   bytes: Uint8Array,
   point: Point,
-  untilSeconds: number
+  { frameRate, untilSeconds }: { frameRate: number; untilSeconds: number }
 ): Promise<FrameColor[]> =>
   page.evaluate(
-    async ({ bytes, point, untilSeconds }) => {
+    async ({ bytes, point, frameRate, untilSeconds }) => {
       const video = document.createElement("video");
       video.muted = true;
       // En la página, para que el navegador pinte cada fotograma.
@@ -671,30 +675,23 @@ export const readFramesWhilePlaying = (
       if (!ctx) throw new Error("Sin contexto 2D");
 
       const frames: { time: number; color: Rgba }[] = [];
-      await new Promise<void>((resolve) => {
-        const onFrame = (
-          _now: number,
-          { mediaTime }: VideoFrameCallbackMetadata
-        ) => {
-          ctx.drawImage(video, 0, 0);
-          const [r, g, b, a] = ctx.getImageData(point.x, point.y, 1, 1).data;
-          frames.push({ time: mediaTime, color: { r, g, b, a } });
-          if (mediaTime >= untilSeconds) {
-            video.pause();
-            resolve();
-          } else {
-            video.requestVideoFrameCallback(onFrame);
-          }
-        };
-        video.requestVideoFrameCallback(onFrame);
-        video.playbackRate = 2;
-        void video.play();
-      });
+      const frameCount = Math.round(untilSeconds * frameRate);
+      for (let index = 0; index < frameCount; index++) {
+        const frame = new Promise<{ time: number; color: Rgba }>((resolve) =>
+          video.requestVideoFrameCallback((_now, { mediaTime }) => {
+            ctx.drawImage(video, 0, 0);
+            const [r, g, b, a] = ctx.getImageData(point.x, point.y, 1, 1).data;
+            resolve({ time: mediaTime, color: { r, g, b, a } });
+          })
+        );
+        video.currentTime = (index + 0.5) / frameRate;
+        frames.push(await frame);
+      }
       video.remove();
       URL.revokeObjectURL(url);
       return frames;
     },
-    { bytes: Array.from(bytes), point, untilSeconds }
+    { bytes: Array.from(bytes), point, frameRate, untilSeconds }
   );
 
 /**
@@ -730,15 +727,18 @@ export async function expectCanvasExportsAnimation(
   expect(exported.duration).toBeCloseTo(15, 0);
   expect(exported.soundSeconds).toBe(0);
 
-  // El archivo animado está en el centro del documento. En cada fotograma de los dos
-  // primeros segundos sale el color que le toca en ese momento.
-  const frames = await readFramesWhilePlaying(
+  // El archivo animado está en el centro del documento. En cada fotograma de
+  // los dos primeros segundos sale el color que le toca en ese momento.
+  const frames = await readEveryFrame(
     page,
     bytes,
     { x: 540, y: 540 },
-    2
+    {
+      frameRate: 30,
+      untilSeconds: 2,
+    }
   );
-  expect(frames.length).toBeGreaterThan(10);
+  expect(frames).toHaveLength(60);
   const wrong = frames.filter(({ time, color }) =>
     testAnimationColorAt(time) === "rojo" ? !isRed(color) : !isBlue(color)
   );
