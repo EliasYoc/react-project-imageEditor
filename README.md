@@ -49,7 +49,7 @@ src/
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
                 subcarpetas que tienen algo; con varios componentes, cada uno va en su carpeta con su CSS; los tests
                 de la función quedan en su raíz
-  components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, CardSection, AngleDial, GradientStopsBar, ColorField, ProgressBar, sliders, ColorControl, Tooltip…)
+  components/   ui/: primitivas accesibles (Button, Panel, Dialog, Menu, Segmented, CardSection, AngleDial, GradientStopsBar, ColorField, ProgressBar, ToggleSection, sliders, ColorControl, Tooltip…)
   styles/       tokens.css (colores, espacios, capas) y CSS global
   lib/          Utilidades puras
 e2e/            Tests de punta a punta (Playwright) y sus archivos de prueba (fixtures/)
