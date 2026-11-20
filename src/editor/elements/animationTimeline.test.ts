@@ -38,6 +38,15 @@ describe("frameIndexAt", () => {
     expect(frameIndexAt(timeline, -0.05)).toBe(2);
   });
 
+  it("justo en el cambio de fotograma ya sale el nuevo, aunque los decimales redondeen", () => {
+    // Dos fotogramas de 0,2 s: 0,6 % 0,4 da 0,1999… en lugar de 0,2.
+    const twoFrames = buildTimeline([0.2, 0.2]);
+    expect(frameIndexAt(twoFrames, 0.6)).toBe(1);
+    expect(frameIndexAt(twoFrames, 1.0)).toBe(1);
+    expect(frameIndexAt(twoFrames, 18 / 30)).toBe(1);
+    expect(frameIndexAt(twoFrames, 0.8)).toBe(0);
+  });
+
   it("con un solo fotograma siempre es el primero", () => {
     expect(frameIndexAt(buildTimeline([0.5]), 12.3)).toBe(0);
     expect(frameIndexAt(buildTimeline([]), 1)).toBe(0);

@@ -15,6 +15,12 @@ const MAX_TOO_SHORT_SECONDS = 0.01;
 const FALLBACK_FRAME_SECONDS = 0.1;
 
 /**
+ * Margen al comparar tiempos: con decimales, `0,6 % 0,4` da 0,1999… en vez de
+ * 0,2 y, justo en el cambio de fotograma, saldría el anterior.
+ */
+const TIME_EPSILON = 1e-9;
+
+/**
  * Lo que se muestra un fotograma, en segundos, a partir de la duración que
  * da `ImageDecoder` (en microsegundos, o null si el archivo no la indica).
  */
@@ -54,7 +60,7 @@ export const frameIndexAt = (
   let high = frameStarts.length - 1;
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
-    if (frameStarts[middle] <= time) low = middle;
+    if (frameStarts[middle] <= time + TIME_EPSILON) low = middle;
     else high = middle - 1;
   }
   return low;
