@@ -157,7 +157,6 @@ const HomeScreen = () => {
             key={section.id}
             title={section.title}
             headingLevel={2}
-            titleClassName={styles.sectionTitle}
             gridClassName={styles.presets}
           >
             {section.presets.map(({ id, label, size }) => {

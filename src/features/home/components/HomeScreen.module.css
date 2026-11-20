@@ -73,12 +73,6 @@
   text-align: center;
 }
 
-/* El tamaño del título y la separación los pone CardSection. */
-.sectionTitle {
-  color: var(--color-text-active);
-  font-weight: 600;
-}
-
 .presets {
   grid-template-columns: repeat(4, 1fr);
 }

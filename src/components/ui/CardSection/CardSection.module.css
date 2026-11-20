@@ -1,4 +1,4 @@
-/* Solo la estructura: el color, el peso del título y las columnas los pone cada pantalla. */
+/* El título es igual en todas las pantallas; las columnas las pone cada una. */
 .section {
   display: flex;
   flex-direction: column;
@@ -6,7 +6,9 @@
 }
 
 .title {
+  color: var(--color-text-active);
   font-size: var(--font-size-sm);
+  font-weight: 600;
 }
 
 .grid {

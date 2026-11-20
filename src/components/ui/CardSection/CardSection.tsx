@@ -9,22 +9,19 @@ export interface CardSectionProps {
   headingLevel: 2 | 3;
   /** Las tarjetas, que se reparten en la rejilla. */
   children: ReactNode;
-  /** Color, peso y demás del título: cada pantalla pone el suyo. */
-  titleClassName?: string;
   /** Columnas de la rejilla: cada pantalla pone las suyas. */
   gridClassName?: string;
 }
 
 /**
  * Sección con un título y una rejilla de tarjetas (los pinceles, los tamaños
- * de lienzo…). Solo da la estructura y el nombre accesible: las tarjetas y su
- * aspecto los pone quien la usa.
+ * de lienzo…). Pone el título, la rejilla y el nombre accesible: las tarjetas
+ * y sus columnas las pone quien la usa.
  */
 export function CardSection({
   title,
   headingLevel,
   children,
-  titleClassName,
   gridClassName,
 }: CardSectionProps) {
   const titleId = useId();
@@ -32,10 +29,7 @@ export function CardSection({
 
   return (
     <section className={styles.section} aria-labelledby={titleId}>
-      <Heading
-        id={titleId}
-        className={classNames(styles.title, titleClassName)}
-      >
+      <Heading id={titleId} className={styles.title}>
         {title}
       </Heading>
       <div className={classNames(styles.grid, gridClassName)}>{children}</div>

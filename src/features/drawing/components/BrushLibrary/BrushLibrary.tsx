@@ -49,7 +49,6 @@ const BrushLibrary = () => {
           key={kind}
           title={title}
           headingLevel={3}
-          titleClassName={styles.title}
           gridClassName={styles.grid}
         >
           {BRUSH_PRESET_IDS.filter((id) => BRUSH_PRESETS[id].kind === kind).map(
