@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -12,6 +18,7 @@ import { ConfirmDialog } from "./Dialog";
 import { ChoiceMenu, Menu } from "./Menu";
 import { Panel } from "./Panel";
 import { Segmented } from "./Segmented";
+import { CardSection } from "./CardSection";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -242,6 +249,23 @@ describe("VerticalSlider", () => {
     slider.focus();
     await user.keyboard("{ArrowUp}");
     expect(onChange).toHaveBeenCalledWith(11);
+  });
+});
+
+describe("CardSection", () => {
+  it("es una región con el nombre de su título, que usa el nivel pedido", () => {
+    render(
+      <CardSection title="Dibujo" headingLevel={3}>
+        <button type="button">Lápiz</button>
+      </CardSection>
+    );
+    const section = screen.getByRole("region", { name: "Dibujo" });
+    expect(
+      within(section).getByRole("heading", { level: 3, name: "Dibujo" })
+    ).toBeInTheDocument();
+    expect(
+      within(section).getByRole("button", { name: "Lápiz" })
+    ).toBeInTheDocument();
   });
 });
 

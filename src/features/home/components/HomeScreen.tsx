@@ -1,6 +1,7 @@
 import { ArrowRight, ImagePlus, Video } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { Button } from "../../../components/ui/Button";
+import { CardSection } from "../../../components/ui/CardSection";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
 import { toast } from "../../../components/ui/Toast";
 import { classNames } from "../../../lib/classNames";
@@ -152,43 +153,40 @@ const HomeScreen = () => {
         </Button>
 
         {CANVAS_SECTIONS.map((section) => (
-          <section
+          <CardSection
             key={section.id}
-            className={styles.canvasSection}
-            aria-labelledby={`home-${section.id}`}
+            title={section.title}
+            headingLevel={2}
+            titleClassName={styles.sectionTitle}
+            gridClassName={styles.presets}
           >
-            <h2 id={`home-${section.id}`} className={styles.sectionTitle}>
-              {section.title}
-            </h2>
-            <div className={styles.presets}>
-              {section.presets.map(({ id, label, size }) => {
-                const { width, height } = size();
-                const name = section.network
-                  ? `${label} de ${section.network}`
-                  : label;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={styles.preset}
-                    aria-label={`${name}, ${width} × ${height} píxeles`}
-                    onClick={() => runOrConfirm(() => newDocument(size()))}
-                  >
-                    <span className={styles.shapeBox} aria-hidden="true">
-                      <span
-                        className={styles.shape}
-                        style={shapeStyle(width, height)}
-                      />
-                    </span>
-                    <span className={styles.presetLabel}>{label}</span>
-                    <span className={styles.presetSize} aria-hidden="true">
-                      {width} × {height}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+            {section.presets.map(({ id, label, size }) => {
+              const { width, height } = size();
+              const name = section.network
+                ? `${label} de ${section.network}`
+                : label;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={styles.preset}
+                  aria-label={`${name}, ${width} × ${height} píxeles`}
+                  onClick={() => runOrConfirm(() => newDocument(size()))}
+                >
+                  <span className={styles.shapeBox} aria-hidden="true">
+                    <span
+                      className={styles.shape}
+                      style={shapeStyle(width, height)}
+                    />
+                  </span>
+                  <span className={styles.presetLabel}>{label}</span>
+                  <span className={styles.presetSize} aria-hidden="true">
+                    {width} × {height}
+                  </span>
+                </button>
+              );
+            })}
+          </CardSection>
         ))}
       </section>
 

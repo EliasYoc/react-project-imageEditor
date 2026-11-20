@@ -73,22 +73,14 @@
   text-align: center;
 }
 
-.canvasSection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
+/* El tamaño del título y la separación los pone CardSection. */
 .sectionTitle {
   color: var(--color-text-active);
-  font-size: var(--font-size-sm);
   font-weight: 600;
 }
 
 .presets {
-  display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-2);
 }
 
 .preset {
