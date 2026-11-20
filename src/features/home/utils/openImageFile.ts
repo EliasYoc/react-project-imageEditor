@@ -1,18 +1,11 @@
 import type { Photo, Size } from "../../../editor/model/types";
 import { createCanvas, get2dContext } from "../../../lib/canvas";
-import { fitToMaxSide, readFileAsDataUrl } from "../../../lib/helper";
+import { fitToMaxSide } from "../../../lib/helper";
+import { loadImageElement } from "../../../lib/loadImageElement";
 
 /** Las imágenes más grandes que esto se reducen a MAX_IMAGE_SIDE píxeles. */
 const HEAVY_IMAGE_SIDE = 2800;
 const MAX_IMAGE_SIDE = 2048;
-
-const loadImage = (src: string) =>
-  new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("No se pudo leer la imagen"));
-    image.src = src;
-  });
 
 /** El nombre del archivo sin la extensión ("playa.jpg" → "playa"). */
 export const baseName = (fileName: string) =>
@@ -34,7 +27,17 @@ export const isImageFile = (file: File | null | undefined): file is File =>
 export const openImageFile = async (
   file: File
 ): Promise<Photo & { size: Size }> => {
-  const image = await loadImage(await readFileAsDataUrl(file));
+  // Una URL al archivo, no un data URL: no se guarda en memoria una copia de
+  // la foto en base64. La imagen ya cargada se dibuja sin la URL, así que se
+  // libera enseguida. Sin `imageCache`: la foto se abre una vez y la caché la
+  // guardaría para siempre, también después de abrir otra.
+  const src = URL.createObjectURL(file);
+  let image: HTMLImageElement;
+  try {
+    image = await loadImageElement(src);
+  } finally {
+    URL.revokeObjectURL(src);
+  }
   const isHeavy =
     image.width > HEAVY_IMAGE_SIDE || image.height > HEAVY_IMAGE_SIDE;
   const size = isHeavy

@@ -1,6 +1,7 @@
 import { ArrowRight, ImagePlus, Video } from "lucide-react";
 import { useRef, useState, type ChangeEvent } from "react";
 import { Button } from "../../../components/ui/Button";
+import { CardSection } from "../../../components/ui/CardSection";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
 import { toast } from "../../../components/ui/Toast";
 import { classNames } from "../../../lib/classNames";
@@ -11,6 +12,7 @@ import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { MOD_KEY } from "../../shortcuts";
 import styles from "./HomeScreen.module.css";
 import { CANVAS_SECTIONS } from "../constants/canvasPresets";
+import { NETWORK_ICONS } from "../constants/networkIcons";
 import { openImageFile } from "../utils/openImageFile";
 import { openVideoFile, VideoOpenError } from "../utils/openVideoFile";
 import { useImageDropAndPaste } from "../hooks/useImageDrop";
@@ -152,43 +154,40 @@ const HomeScreen = () => {
         </Button>
 
         {CANVAS_SECTIONS.map((section) => (
-          <section
+          <CardSection
             key={section.id}
-            className={styles.canvasSection}
-            aria-labelledby={`home-${section.id}`}
+            title={section.title}
+            icon={NETWORK_ICONS[section.id]}
+            headingLevel={2}
+            gridClassName={styles.presets}
           >
-            <h2 id={`home-${section.id}`} className={styles.sectionTitle}>
-              {section.title}
-            </h2>
-            <div className={styles.presets}>
-              {section.presets.map(({ id, label, size }) => {
-                const { width, height } = size();
-                const name = section.network
-                  ? `${label} de ${section.network}`
-                  : label;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    className={styles.preset}
-                    aria-label={`${name}, ${width} × ${height} píxeles`}
-                    onClick={() => runOrConfirm(() => newDocument(size()))}
-                  >
-                    <span className={styles.shapeBox} aria-hidden="true">
-                      <span
-                        className={styles.shape}
-                        style={shapeStyle(width, height)}
-                      />
-                    </span>
-                    <span className={styles.presetLabel}>{label}</span>
-                    <span className={styles.presetSize} aria-hidden="true">
-                      {width} × {height}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+            {section.presets.map(({ id, label, size }) => {
+              const { width, height } = size();
+              const name = section.network
+                ? `${label} de ${section.network}`
+                : label;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className={styles.preset}
+                  aria-label={`${name}, ${width} × ${height} píxeles`}
+                  onClick={() => runOrConfirm(() => newDocument(size()))}
+                >
+                  <span className={styles.shapeBox} aria-hidden="true">
+                    <span
+                      className={styles.shape}
+                      style={shapeStyle(width, height)}
+                    />
+                  </span>
+                  <span className={styles.presetLabel}>{label}</span>
+                  <span className={styles.presetSize} aria-hidden="true">
+                    {width} × {height}
+                  </span>
+                </button>
+              );
+            })}
+          </CardSection>
         ))}
       </section>
 

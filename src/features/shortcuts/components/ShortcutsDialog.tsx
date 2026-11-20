@@ -1,5 +1,6 @@
 import { useUiStore } from "../../../app/uiStore";
 import { Dialog } from "../../../components/ui/Dialog";
+import { Kbd } from "../../../components/ui/Kbd";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { MOD_KEY, SHORTCUT_LABELS as KEYS } from "../constants/shortcutLabels";
 import styles from "./ShortcutsDialog.module.css";
@@ -75,7 +76,7 @@ const ShortcutsDialog = () => {
                 <div key={action} className={styles.row}>
                   <dt>{action}</dt>
                   <dd>
-                    <kbd className={styles.kbd}>{keys}</kbd>
+                    <Kbd>{keys}</Kbd>
                   </dd>
                 </div>
               ))}

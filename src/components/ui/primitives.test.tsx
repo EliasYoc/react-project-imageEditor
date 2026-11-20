@@ -1,6 +1,12 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hexToRgb, rgbaToHex } from "../../editor/model/color";
@@ -12,6 +18,8 @@ import { ConfirmDialog } from "./Dialog";
 import { ChoiceMenu, Menu } from "./Menu";
 import { Panel } from "./Panel";
 import { Segmented } from "./Segmented";
+import { CardSection } from "./CardSection";
+import { ColorField } from "./ColorField";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -242,6 +250,75 @@ describe("VerticalSlider", () => {
     slider.focus();
     await user.keyboard("{ArrowUp}");
     expect(onChange).toHaveBeenCalledWith(11);
+  });
+});
+
+describe("CardSection", () => {
+  it("es una región con el nombre de su título, que usa el nivel pedido", () => {
+    render(
+      <CardSection title="Dibujo" headingLevel={3}>
+        <button type="button">Lápiz</button>
+      </CardSection>
+    );
+    const section = screen.getByRole("region", { name: "Dibujo" });
+    expect(
+      within(section).getByRole("heading", { level: 3, name: "Dibujo" })
+    ).toBeInTheDocument();
+    expect(
+      within(section).getByRole("button", { name: "Lápiz" })
+    ).toBeInTheDocument();
+  });
+});
+
+describe("CardSection con icono", () => {
+  it("el icono es decorativo: el nombre de la sección sigue siendo su título", () => {
+    const { container } = render(
+      <CardSection title="Instagram" headingLevel={2} icon={X}>
+        <button type="button">Publicación</button>
+      </CardSection>
+    );
+    expect(
+      screen.getByRole("region", { name: "Instagram" })
+    ).toBeInTheDocument();
+    expect(container.querySelector("h2 svg")).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
+  });
+});
+
+describe("ColorField", () => {
+  it("muestra su selector solo cuando está abierto y avisa del estado", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    const color = { r: 255, g: 0, b: 0, a: 1 };
+    const { rerender } = render(
+      <ColorField
+        label="Color"
+        color={color}
+        isOpen={false}
+        onToggle={onToggle}
+        onChange={() => {}}
+      />
+    );
+    const button = screen.getByRole("button", { name: "Color" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("slider")).toBeNull();
+
+    await user.click(button);
+    expect(onToggle).toHaveBeenCalledOnce();
+
+    rerender(
+      <ColorField
+        label="Color"
+        color={color}
+        isOpen
+        onToggle={onToggle}
+        onChange={() => {}}
+      />
+    );
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
   });
 });
 

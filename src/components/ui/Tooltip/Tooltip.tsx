@@ -1,6 +1,7 @@
 import { Tooltip as RadixTooltip } from "radix-ui";
 import type { ReactElement, ReactNode } from "react";
 import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { Kbd } from "../Kbd";
 import styles from "./Tooltip.module.css";
 
 /**
@@ -79,7 +80,7 @@ export function Tooltip({
           collisionPadding={8}
         >
           {label}
-          {shortcut && <kbd className={styles.kbd}>{shortcut}</kbd>}
+          {shortcut && <Kbd>{shortcut}</Kbd>}
         </RadixTooltip.Content>
       </RadixTooltip.Portal>
     </RadixTooltip.Root>

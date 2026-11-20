@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { gradientToCss, stopsToCss } from "../../editor/engine/fill/css";
 import type { Gradient } from "../../editor/model/types";
 import {
@@ -8,10 +8,7 @@ import {
   editorStore,
 } from "../../editor/store/editorStore";
 import { createFakeVideoSource, mockObjectUrls } from "../../test/video";
-import AngleDial from "./components/AngleDial/AngleDial";
 import BackdropPanel from "./components/BackdropPanel/BackdropPanel";
-import GradientStopsBar from "./components/GradientStopsBar/GradientStopsBar";
-import { normalizeAngle, pointerAngle } from "./utils/angle";
 
 const gradient = (): Gradient => ({
   type: "linear",
@@ -36,82 +33,6 @@ describe("gradientToCss", () => {
     expect(stopsToCss(gradient().stops)).toBe(
       `linear-gradient(90deg, ${stops})`
     );
-  });
-});
-
-describe("ángulo del dial", () => {
-  it("0° arriba y en sentido horario, como en CSS", () => {
-    expect(pointerAngle(0, -1)).toBe(0);
-    expect(pointerAngle(1, 0)).toBe(90);
-    expect(pointerAngle(0, 1)).toBe(180);
-    expect(pointerAngle(-1, 0)).toBe(270);
-  });
-
-  it("con imán redondea a 15° y normaliza a 0–359", () => {
-    expect(pointerAngle(1, -1.2, true)).toBe(45);
-    expect(normalizeAngle(-10)).toBe(350);
-    expect(normalizeAngle(360)).toBe(0);
-  });
-});
-
-describe("AngleDial", () => {
-  it("es un slider de teclado: ±1°, Shift ±15° y vuelta completa", () => {
-    const onChange = vi.fn();
-    render(<AngleDial value={359} onChange={onChange} />);
-    const dial = screen.getByRole("slider", { name: "Ángulo" });
-    expect(dial).toHaveAttribute("aria-valuetext", "359°");
-
-    fireEvent.keyDown(dial, { key: "ArrowRight" });
-    expect(onChange).toHaveBeenLastCalledWith(0);
-    fireEvent.keyDown(dial, { key: "ArrowLeft", shiftKey: true });
-    expect(onChange).toHaveBeenLastCalledWith(344);
-  });
-});
-
-describe("GradientStopsBar", () => {
-  it("cada parada es un slider: las flechas la mueven (un solo paso al juntar) y Supr la quita", () => {
-    const onChange = vi.fn();
-    const many = {
-      ...gradient(),
-      stops: [
-        ...gradient().stops,
-        { id: "c", color: { r: 0, g: 255, b: 0, a: 1 }, offset: 0.5 },
-      ],
-    };
-    render(
-      <GradientStopsBar
-        gradient={many}
-        selectedId="a"
-        onSelect={() => {}}
-        onChange={onChange}
-      />
-    );
-    const [first] = screen.getAllByRole("slider");
-    expect(first).toHaveAttribute("aria-valuenow", "20");
-
-    fireEvent.keyDown(first, { key: "ArrowRight", shiftKey: true });
-    const [moved, mergeKey] = onChange.mock.calls[0];
-    expect(moved.stops[0].offset).toBeCloseTo(0.3);
-    expect(mergeKey).toBe("stop:a");
-
-    fireEvent.keyDown(first, { key: "Delete" });
-    expect(
-      onChange.mock.calls[1][0].stops.map((stop: { id: string }) => stop.id)
-    ).toEqual(["b", "c"]);
-  });
-
-  it("con solo 2 paradas no deja quitar ninguna", () => {
-    const onChange = vi.fn();
-    render(
-      <GradientStopsBar
-        gradient={gradient()}
-        selectedId="a"
-        onSelect={() => {}}
-        onChange={onChange}
-      />
-    );
-    fireEvent.keyDown(screen.getAllByRole("slider")[0], { key: "Delete" });
-    expect(onChange).not.toHaveBeenCalled();
   });
 });
 

@@ -4,7 +4,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import styles from "./AngleDial.module.css";
-import { normalizeAngle, pointerAngle } from "../../utils/angle";
+import { normalizeAngle, pointerAngle } from "./angle";
 
 interface AngleDialProps {
   /** Grados, como en CSS: 0 = arriba, sentido horario. */
@@ -18,7 +18,11 @@ interface AngleDialProps {
  * imán cada 15°) o con el teclado (flechas ±1°, Shift o RePág/AvPág ±15°,
  * Inicio = 0°).
  */
-const AngleDial = ({ value, onChange, label = "Ángulo" }: AngleDialProps) => {
+export const AngleDial = ({
+  value,
+  onChange,
+  label = "Ángulo",
+}: AngleDialProps) => {
   const dialRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
 
@@ -89,5 +93,3 @@ const AngleDial = ({ value, onChange, label = "Ángulo" }: AngleDialProps) => {
     </div>
   );
 };
-
-export default AngleDial;

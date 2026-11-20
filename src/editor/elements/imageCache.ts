@@ -1,3 +1,5 @@
+import { loadImageElement } from "../../lib/loadImageElement";
+
 const loading = new Map<string, Promise<HTMLImageElement>>();
 const ready = new Map<string, HTMLImageElement>();
 
@@ -8,18 +10,17 @@ const ready = new Map<string, HTMLImageElement>();
 export const loadImage = (src: string): Promise<HTMLImageElement> => {
   const cached = loading.get(src);
   if (cached) return cached;
-  const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => {
+  const promise = loadImageElement(src).then(
+    (image) => {
       ready.set(src, image);
-      resolve(image);
-    };
-    image.onerror = () => {
+      return image;
+    },
+    (error: unknown) => {
+      // Un fallo no se guarda: la próxima vez se vuelve a intentar.
       loading.delete(src);
-      reject(new Error("No se pudo cargar la imagen"));
-    };
-    image.src = src;
-  });
+      throw error;
+    }
+  );
   loading.set(src, promise);
   return promise;
 };
