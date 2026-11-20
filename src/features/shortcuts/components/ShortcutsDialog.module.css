@@ -30,14 +30,3 @@
   padding: 4px 0;
   font-size: var(--font-size-sm);
 }
-
-.kbd {
-  padding: 2px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-active);
-  font-family: inherit;
-  font-size: 12px;
-  white-space: nowrap;
-}

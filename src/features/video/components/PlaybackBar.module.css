@@ -20,51 +20,10 @@
   white-space: nowrap;
 }
 
-/*
- * Barra de tiempo, con el aspecto del slider horizontal de los paneles: pista
- * de 6px y pulgar blanco. La altura da un área cómoda para el dedo.
- */
+/* Dónde va la barra de tiempo; su aspecto es el de `SliderBar`. */
 .slider {
-  position: relative;
-  display: flex;
   flex: 1;
-  align-items: center;
   min-width: 48px;
-  height: 28px;
   margin: 0 var(--space-2);
-  cursor: pointer;
   touch-action: none;
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.track {
-  position: relative;
-  flex-grow: 1;
-  height: 6px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-active);
-}
-
-.range {
-  position: absolute;
-  height: 100%;
-  background: var(--color-text-active);
-}
-
-.thumb {
-  display: block;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--color-text-strong);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-  outline: none;
-}
-
-/* Solo se ve al navegar con teclado (Tab), no al arrastrar. */
-.thumb:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
 }

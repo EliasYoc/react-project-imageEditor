@@ -1,5 +1,6 @@
 import { EllipsisVertical } from "lucide-react";
 import { Button, IconButton } from "../../../../components/ui/Button";
+import { CardSection } from "../../../../components/ui/CardSection";
 import { ChoiceMenu } from "../../../../components/ui/Menu";
 import {
   BRUSH_PRESETS,
@@ -44,12 +45,14 @@ const BrushLibrary = () => {
     <div className={styles.library}>
       <BrushSettingsPanel />
       {SECTIONS.map(({ kind, title }) => (
-        <section key={kind} aria-label={title}>
-          <h3 className={styles.title}>{title}</h3>
-          <div className={styles.grid}>
-            {BRUSH_PRESET_IDS.filter(
-              (id) => BRUSH_PRESETS[id].kind === kind
-            ).map((id) => {
+        <CardSection
+          key={kind}
+          title={title}
+          headingLevel={3}
+          gridClassName={styles.grid}
+        >
+          {BRUSH_PRESET_IDS.filter((id) => BRUSH_PRESETS[id].kind === kind).map(
+            (id) => {
               const Icon = BRUSH_ICONS[id];
               const { name } = BRUSH_PRESETS[id];
               const card = (
@@ -92,9 +95,9 @@ const BrushLibrary = () => {
                   />
                 </div>
               );
-            })}
-          </div>
-        </section>
+            }
+          )}
+        </CardSection>
       ))}
     </div>
   );

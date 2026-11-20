@@ -1,16 +1,5 @@
 import type { Size } from "../editor/model/types";
 
-/** Lee un archivo como data URL (para cargarlo en un <img>). */
-export const readFileAsDataUrl = (file: File) =>
-  new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => resolve(reader.result as string));
-    reader.addEventListener("error", () =>
-      reject(reader.error ?? new Error("No se pudo leer el archivo"))
-    );
-    reader.readAsDataURL(file);
-  });
-
 const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
   "image/png": "png",
   "image/jpeg": "jpg",

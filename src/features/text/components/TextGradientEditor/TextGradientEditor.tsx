@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Button } from "../../../../components/ui/Button";
+import { AngleDial } from "../../../../components/ui/AngleDial";
+import { ColorField } from "../../../../components/ui/ColorField";
+import { GradientStopsBar } from "../../../../components/ui/GradientStopsBar";
 import { Segmented } from "../../../../components/ui/Segmented";
 import {
   MIN_STOPS,
@@ -8,8 +11,6 @@ import {
 } from "../../../../editor/engine/fill/stops";
 import { textGradientCss } from "../../../../editor/elements/textGradient";
 import type { Gradient, GradientType } from "../../../../editor/model/types";
-import { AngleDial, GradientStopsBar } from "../../../backdrop";
-import ColorField from "../ColorField/ColorField";
 import styles from "./TextGradientEditor.module.css";
 import { TEXT_GRADIENT_PRESETS } from "../../constants/textGradientPresets";
 

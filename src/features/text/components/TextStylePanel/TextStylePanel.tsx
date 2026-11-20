@@ -1,10 +1,12 @@
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import {
   Segmented,
   type SegmentedItem,
 } from "../../../../components/ui/Segmented";
 import { Slider } from "../../../../components/ui/Slider";
+import { ToggleSection } from "../../../../components/ui/ToggleSection";
+import { ColorField } from "../../../../components/ui/ColorField";
 import type {
   Gradient,
   TextAlign,
@@ -12,7 +14,6 @@ import type {
   TextStyle,
 } from "../../../../editor/model/types";
 import { useEditorStore } from "../../../../editor/store/editorStore";
-import ColorField from "../ColorField/ColorField";
 import TextGradientEditor from "../TextGradientEditor/TextGradientEditor";
 import styles from "./TextStylePanel.module.css";
 import { DEFAULT_TEXT_GRADIENT } from "../../constants/textGradientPresets";
@@ -26,31 +27,6 @@ const ALIGNMENTS: readonly SegmentedItem<TextAlign>[] = [
 type ColorTarget = "gradient" | "stroke" | "shadow" | "background";
 
 const percent = (value: number) => `${Math.round(value)} %`;
-
-/** Sección que se activa con una casilla (contorno, sombra, caja). */
-const ToggleSection = ({
-  title,
-  isEnabled,
-  onToggle,
-  children,
-}: {
-  title: string;
-  isEnabled: boolean;
-  onToggle: (isEnabled: boolean) => void;
-  children: ReactNode;
-}) => (
-  <section className={styles.section} aria-label={title}>
-    <label className={styles.sectionHeader}>
-      <input
-        type="checkbox"
-        checked={isEnabled}
-        onChange={(event) => onToggle(event.target.checked)}
-      />
-      {title}
-    </label>
-    {isEnabled && <div className={styles.sectionBody}>{children}</div>}
-  </section>
-);
 
 /**
  * Estilo del texto seleccionado: alineación, interlineado, degradado,

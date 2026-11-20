@@ -1,6 +1,6 @@
-import { ColorPicker } from "../../../../components/ui/ColorControl";
-import { rgbaToCss } from "../../../../editor/model/color";
-import type { Rgba } from "../../../../editor/model/types";
+import { ColorPicker } from "../ColorControl";
+import { rgbaToCss } from "../../../editor/model/color";
+import type { Rgba } from "../../../editor/model/types";
 import styles from "./ColorField.module.css";
 
 interface ColorFieldProps {
@@ -15,7 +15,7 @@ interface ColorFieldProps {
  * Muestra de color que despliega su selector debajo (dentro de un panel, sin
  * abrir otro encima).
  */
-const ColorField = ({
+export const ColorField = ({
   label,
   color,
   isOpen,
@@ -39,5 +39,3 @@ const ColorField = ({
     {isOpen && <ColorPicker color={color} onChange={onChange} hasAlpha />}
   </div>
 );
-
-export default ColorField;

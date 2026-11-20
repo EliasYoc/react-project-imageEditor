@@ -15,3 +15,13 @@ pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
     DevTools falso). Los e2e usan el build de producción, donde el store no
     conecta con DevTools: antes de darlo por bueno, comprobar que sin el
     arreglo el test falla.
+
+## La carga de imágenes vive en un solo sitio (`loadImageElement`)
+
+- **e2e:** «Insertar una imagen» (menú «Más opciones» del modo Texto) la
+  muestra en el lienzo, y la imagen exportada la incluye. Hoy ningún e2e
+  inserta una imagen como elemento: solo hay un test unitario que comprueba
+  que se abre el selector de archivos.
+- **e2e:** insertar dos veces la misma imagen y una que no se puede leer (un
+  archivo `.png` que no es una imagen): la segunda muestra el aviso de error y
+  la app sigue funcionando.

@@ -23,10 +23,10 @@ import type {
   Rgba,
 } from "../../../../editor/model/types";
 import { useEditorStore } from "../../../../editor/store/editorStore";
-import AngleDial from "../AngleDial/AngleDial";
 import styles from "./BackdropPanel.module.css";
 import GradientPreview from "../GradientPreview/GradientPreview";
-import GradientStopsBar from "../GradientStopsBar/GradientStopsBar";
+import { AngleDial } from "../../../../components/ui/AngleDial";
+import { GradientStopsBar } from "../../../../components/ui/GradientStopsBar";
 
 type Tab = "none" | "color" | "gradient";
 

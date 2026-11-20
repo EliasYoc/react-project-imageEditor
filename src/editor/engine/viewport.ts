@@ -158,17 +158,3 @@ export const clampPan = (view: View, stage: Size, doc: Size): View => {
     y: clamp(view.y, -halfHeight, stage.height - halfHeight),
   };
 };
-
-/**
- * Transform CSS para la capa HTML de textos e imágenes (legacy, hasta la
- * Fase 4). Sus posiciones están en píxeles de pantalla de la vista ajustada:
- * esta transformación las lleva a la vista actual.
- */
-export const overlayTransform = (view: View, fit: View) => {
-  const k = view.scale / fit.scale;
-  return {
-    x: view.x - fit.x * k,
-    y: view.y - fit.y * k,
-    scale: k,
-  };
-};

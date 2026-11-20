@@ -6,7 +6,6 @@ import {
   documentRectOnScreen,
   documentToScreen,
   fitView,
-  overlayTransform,
   panBy,
   pinchView,
   screenToDocument,
@@ -149,24 +148,5 @@ describe("zoom y desplazamiento", () => {
     const center = documentToScreen({ x: 800, y: 600 }, clamped);
     expect(center.x).toBeCloseTo(stage.width);
     expect(center.y).toBeCloseTo(0);
-  });
-});
-
-describe("overlayTransform", () => {
-  const fit: View = { x: 100, y: 0, scale: 0.5 };
-
-  it("en la vista ajustada no transforma nada", () => {
-    expect(overlayTransform(fit, fit)).toEqual({ x: 0, y: 0, scale: 1 });
-  });
-
-  it("lleva un punto de la vista ajustada al mismo punto del documento en la vista actual", () => {
-    const view: View = { x: -300, y: 50, scale: 2 };
-    const { x, y, scale } = overlayTransform(view, fit);
-    const docPoint = { x: 40, y: 70 };
-    const inFit = documentToScreen(docPoint, fit);
-    expectPointClose(
-      { x: inFit.x * scale + x, y: inFit.y * scale + y },
-      documentToScreen(docPoint, view)
-    );
   });
 });

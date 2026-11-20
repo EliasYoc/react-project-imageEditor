@@ -3,16 +3,16 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { stopsToCss } from "../../../../editor/engine/fill/css";
+import { stopsToCss } from "../../../editor/engine/fill/css";
 import {
   MIN_STOPS,
   addStop,
   moveStop,
   removeStop,
-} from "../../../../editor/engine/fill/stops";
-import { rgbaToCss } from "../../../../editor/model/color";
-import type { Gradient } from "../../../../editor/model/types";
-import { createId } from "../../../../lib/createId";
+} from "../../../editor/engine/fill/stops";
+import { rgbaToCss } from "../../../editor/model/color";
+import type { Gradient } from "../../../editor/model/types";
+import { createId } from "../../../lib/createId";
 import styles from "./GradientStopsBar.module.css";
 
 interface GradientStopsBarProps {
@@ -30,7 +30,7 @@ interface GradientStopsBarProps {
  * - con teclado, cada parada es un slider: flechas (±1 %, Shift ±10 %),
  *   Inicio/Fin, y Supr para quitarla.
  */
-const GradientStopsBar = ({
+export const GradientStopsBar = ({
   gradient,
   selectedId,
   onSelect,
@@ -134,5 +134,3 @@ const GradientStopsBar = ({
     </div>
   );
 };
-
-export default GradientStopsBar;
