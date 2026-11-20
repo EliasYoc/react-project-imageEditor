@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import { useId, type ReactNode } from "react";
 import { classNames } from "../../../lib/classNames";
 import styles from "./CardSection.module.css";
@@ -5,6 +6,8 @@ import styles from "./CardSection.module.css";
 export interface CardSectionProps {
   /** Título visible; también es el nombre accesible de la sección. */
   title: string;
+  /** Icono opcional a la izquierda del título (decorativo: el título ya dice lo mismo). */
+  icon?: LucideIcon;
   /** Nivel del encabezado (`h2` o `h3`), según dónde esté la sección. */
   headingLevel: 2 | 3;
   /** Las tarjetas, que se reparten en la rejilla. */
@@ -20,6 +23,7 @@ export interface CardSectionProps {
  */
 export function CardSection({
   title,
+  icon: Icon,
   headingLevel,
   children,
   gridClassName,
@@ -29,7 +33,11 @@ export function CardSection({
 
   return (
     <section className={styles.section} aria-labelledby={titleId}>
-      <Heading id={titleId} className={styles.title}>
+      <Heading
+        id={titleId}
+        className={classNames(styles.title, Icon && styles.hasIcon)}
+      >
+        {Icon && <Icon aria-hidden="true" className={styles.icon} />}
         {title}
       </Heading>
       <div className={classNames(styles.grid, gridClassName)}>{children}</div>

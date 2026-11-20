@@ -12,6 +12,7 @@ import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { MOD_KEY } from "../../shortcuts";
 import styles from "./HomeScreen.module.css";
 import { CANVAS_SECTIONS } from "../constants/canvasPresets";
+import { NETWORK_ICONS } from "../constants/networkIcons";
 import { openImageFile } from "../utils/openImageFile";
 import { openVideoFile, VideoOpenError } from "../utils/openVideoFile";
 import { useImageDropAndPaste } from "../hooks/useImageDrop";
@@ -156,6 +157,7 @@ const HomeScreen = () => {
           <CardSection
             key={section.id}
             title={section.title}
+            icon={NETWORK_ICONS[section.id]}
             headingLevel={2}
             gridClassName={styles.presets}
           >

@@ -125,7 +125,7 @@ El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve e
   - **Abrir una foto**, con el botón, arrastrándola a la ventana o pegándola;
   - **Agregar video**, con el botón (ver [Video](#video));
   - **Lienzo en blanco** en tres tamaños: Pantalla, Historia 1080×1920 y Horizontal 1920×1080.
-  - **Lienzos por red social**, una sección cada una (`home/constants/canvasPresets.ts`): Instagram, Facebook, WhatsApp, Telegram, X y YouTube. Ningún tamaño se repite en el inicio (un test lo vigila): las historias y el estado usan «Historia».
+  - **Lienzos por red social**, una sección cada una (`home/constants/canvasPresets.ts`): Instagram, Facebook, WhatsApp, Telegram, X y YouTube. Cada título lleva el logo de la red (`home/constants/networkIcons.ts`: trazados de simple-icons, licencia CC0, sin instalar nada). Ningún tamaño se repite en el inicio (un test lo vigila): las historias y el estado usan «Historia».
 - **Empezar otro documento** borra el actual y su historial (`newDocument` / `loadPhoto`). Si tenía algo (un dibujo, una foto, un video o un fondo), se pide confirmación antes.
 - **Soltar un archivo** sobre la app nunca hace que el navegador lo abra (y se salga del editor).
 - **Avisos** (`components/ui/Toast`, Radix Toast):

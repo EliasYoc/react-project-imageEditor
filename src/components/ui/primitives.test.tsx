@@ -6,7 +6,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Trash2 } from "lucide-react";
+import { Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hexToRgb, rgbaToHex } from "../../editor/model/color";
@@ -267,6 +267,23 @@ describe("CardSection", () => {
     expect(
       within(section).getByRole("button", { name: "Lápiz" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("CardSection con icono", () => {
+  it("el icono es decorativo: el nombre de la sección sigue siendo su título", () => {
+    const { container } = render(
+      <CardSection title="Instagram" headingLevel={2} icon={X}>
+        <button type="button">Publicación</button>
+      </CardSection>
+    );
+    expect(
+      screen.getByRole("region", { name: "Instagram" })
+    ).toBeInTheDocument();
+    expect(container.querySelector("h2 svg")).toHaveAttribute(
+      "aria-hidden",
+      "true"
+    );
   });
 });
 
