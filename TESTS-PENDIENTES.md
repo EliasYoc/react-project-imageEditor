@@ -16,6 +16,20 @@ pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
     conecta con DevTools: antes de darlo por bueno, comprobar que sin el
     arreglo el test falla.
 
+## Los GIFs se mueven en el lienzo
+
+- **e2e:** dos elementos con el mismo GIF se mueven los dos (comparten el
+  decodificador y el canvas).
+- **e2e:** con un video de fondo, el GIF se para cuando el video está en pausa
+  y cambia de fotograma al mover la barra de tiempo.
+- **e2e:** sin `ImageDecoder` (como en Safari; se simula borrándolo con
+  `page.addInitScript`), el GIF se inserta quieto (solo se ve rojo) y no hay
+  errores en la consola.
+- **e2e:** un `.gif` dañado o un PNG renombrado a `.gif` muestra el aviso de
+  error o se inserta quieto, y la app sigue funcionando.
+- **e2e:** al volver al inicio con un GIF en el lienzo, la animación se para
+  (sin `requestAnimationFrame` en marcha).
+
 ## La carga de imágenes vive en un solo sitio (`loadImageElement`)
 
 - **e2e:** «Insertar una imagen» (menú «Más opciones» del modo Texto) la

@@ -146,6 +146,7 @@ export const createImageElement = ({
   width,
   height,
   center,
+  isAnimated,
 }: {
   id: string;
   zIndex: number;
@@ -153,6 +154,7 @@ export const createImageElement = ({
   width: number;
   height: number;
   center: Point;
+  isAnimated: boolean;
 }): ImageElement => ({
   whatTask: "image",
   id,
@@ -160,6 +162,7 @@ export const createImageElement = ({
   src,
   width,
   height,
+  isAnimated,
   x: center.x - width / 2,
   y: center.y - height / 2,
   rotation: 0,

@@ -1,6 +1,7 @@
 import Konva from "konva/lib/Core";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Layer as KonvaLayer } from "konva/lib/Layer";
+import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import type { Label as KonvaLabel } from "konva/lib/shapes/Label";
 import type { Text as KonvaText } from "konva/lib/shapes/Text";
 import type { Transformer as KonvaTransformer } from "konva/lib/shapes/Transformer";
@@ -32,7 +33,11 @@ import type { View } from "../engine/viewport";
 import type { EditorElement, ImageElement, TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
-import { useFontReady, useLoadedImage } from "./elementHooks";
+import {
+  useFontReady,
+  useImageAnimation,
+  useLoadedImage,
+} from "./elementHooks";
 
 /** Un arrastre empieza tras moverse unos píxeles: un toque sigue siendo un toque. */
 Konva.dragDistance = 4;
@@ -99,12 +104,20 @@ const ImageNode = ({
   isInteractive,
   handlers,
 }: NodeProps<ImageElement>) => {
+  const nodeRef = useRef<KonvaImageNode>(null);
   const image = useLoadedImage(element.src);
-  if (!image) return null;
+  // Un GIF pinta su fotograma actual; mientras se abre, la imagen quieta.
+  const frame = useImageAnimation(
+    element.isAnimated ? element.src : null,
+    nodeRef
+  );
+  const shown = frame ?? image;
+  if (!shown) return null;
   return (
     <KonvaImage
+      ref={nodeRef}
       {...imageNodeConfig(element)}
-      image={image}
+      image={shown}
       draggable={isInteractive}
       {...handlers.forElement(element)}
     />

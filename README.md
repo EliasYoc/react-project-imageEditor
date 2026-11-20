@@ -171,6 +171,16 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
 - **Estilos**: alineación, interlineado, degradado, contorno, sombra y caja de fondo. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
 - **Degradado en el texto** (lineal o radial, `editor/elements/textGradient.ts`): se reparte en la caja del texto ya medida, sin el margen interior, y abarca todas las líneas, como `background-clip: text`. El radial es un círculo hasta la esquina más lejana, porque Konva no deforma el degradado en elipse y no tiene cónico para las formas.
 
+## GIFs animados
+
+Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «Insertar una imagen») y **se mueve** en el lienzo, la foto o el video. También los WebP y PNG animados.
+
+- **Decodificar** (`editor/elements/animatedImage.ts`): con `ImageDecoder` (WebCodecs, del propio navegador; Edge, Chrome y Firefox 133 o posterior). Un canvas solo sabe pintar el primer fotograma de un GIF, así que cada fotograma se decodifica, se pinta en un canvas propio de la imagen, y ese canvas es el que pinta Konva.
+- **Memoria:** nunca se abren todos los fotogramas a la vez (un GIF de 480 × 270 con 50 fotogramas serían unos 26 MB). Se guarda el archivo comprimido y un solo canvas; cada fotograma se decodifica al necesitarlo y se suelta enseguida. Dos elementos con el mismo GIF comparten ambos.
+- **Si es animada** se mira una vez, al insertarla (`isAnimated` en el elemento).
+- **El tiempo** (`editor/stage/animationClock.ts`): con un video de fondo, el del video (los GIFs se paran en pausa y saltan con la barra de tiempo, como saldrán al exportar); si no, el reloj de la página. El fotograma de cada momento sale de su línea de tiempo (`animationTimeline.ts`): los fotogramas de 10 ms o menos duran 100 ms, como en `<img>`. Solo se repinta al cambiar de fotograma, y nada con el editor oculto.
+- **Safari** no tiene `ImageDecoder`: allí el GIF se queda quieto en su primer fotograma, como una imagen normal.
+
 ## Rendimiento
 
 - **El editor se carga bajo demanda** (`src/app/EditorShell.tsx`).
@@ -216,6 +226,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
+  - los GIFs: que uno insertado se mueve en el lienzo;
   - el fondo de color y de degradado;
   - exportar: el nombre y el tamaño del PNG, y su contenido;
   - el teclado y la PWA sin conexión.
@@ -225,7 +236,8 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Cómo se comprueba el lienzo:** leyendo los **píxeles** de capturas de pantalla y de la imagen exportada. Se decodifican en el propio navegador, sin librerías de imágenes.
 - **Archivos de prueba** (`e2e/fixtures/`):
   - `foto.png`: 400 × 300, negra a la izquierda y blanca a la derecha;
-  - `video.mp4`: 320 × 240, 2 segundos, H.264 con sonido AAC (un tono). También es negro a la izquierda y blanco a la derecha, y su franja de arriba es roja el primer segundo y azul el segundo: así un test sabe en qué momento del video está. Se generó una vez en Edge, dibujando en un canvas y codificándolo con mediabunny.
+  - `video.mp4`: 320 × 240, 2 segundos, H.264 con sonido AAC (un tono). También es negro a la izquierda y blanco a la derecha, y su franja de arriba es roja el primer segundo y azul el segundo: así un test sabe en qué momento del video está. Se generó una vez en Edge, dibujando en un canvas y codificándolo con mediabunny;
+  - `animado.gif`: 64 × 64, un fotograma rojo y otro azul de 200 ms, en bucle. Se generó una vez escribiendo los bytes del GIF con un script de Node (sin comprimir: los navegadores no codifican GIF).
 - **Si un test falla:** Playwright guarda una traza (capturas, DOM y red de cada paso) en `test-results/`. Se abre con `npx playwright show-trace <ruta>/trace.zip`. El informe HTML queda en `playwright-report/`.
 
 ## CI (GitHub Actions)

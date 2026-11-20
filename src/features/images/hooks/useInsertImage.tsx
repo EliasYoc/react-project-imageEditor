@@ -1,12 +1,24 @@
 import { useRef, type ChangeEvent, type ReactElement } from "react";
 import { toast } from "../../../components/ui/Toast";
 import { IMAGE_OPEN_ERROR_MESSAGE } from "../../../lib/messages";
+import { isAnimatedImage } from "../../../editor/elements/animatedImage";
 import { loadImage } from "../../../editor/elements/imageCache";
 import { documentPointAtViewCenter } from "../../../editor/stage/viewStore";
 import { editorStore } from "../../../editor/store/editorStore";
 
 /** Como mucho la mitad del documento, para que la imagen entre entera. */
 const MAX_DOCUMENT_FRACTION = 0.5;
+
+/**
+ * La imagen es un GIF (o WebP/PNG animado) que se puede animar. Si el
+ * navegador abrió la imagen pero no sus fotogramas, se inserta quieta: es
+ * mejor que no insertarla.
+ */
+const checkAnimated = (file: File) =>
+  isAnimatedImage(file).catch((error: unknown) => {
+    console.error(error);
+    return false;
+  });
 
 interface InsertImage {
   /** Abre el selector de archivos (llamar desde un clic o una opción de menú). */
@@ -36,6 +48,7 @@ export const useInsertImage = (): InsertImage => {
     try {
       // El tamaño natural de la imagen decide su tamaño inicial en el documento.
       const image = await loadImage(src);
+      const isAnimated = await checkAnimated(file);
       const { canvasSize, addImage } = editorStore.getState();
       const fit = Math.min(
         1,
@@ -47,6 +60,7 @@ export const useInsertImage = (): InsertImage => {
         width: image.naturalWidth * fit,
         height: image.naturalHeight * fit,
         center: documentPointAtViewCenter(),
+        isAnimated,
       });
     } catch (error) {
       URL.revokeObjectURL(src);
