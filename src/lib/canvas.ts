@@ -15,13 +15,6 @@ export const get2dContext = (canvas: HTMLCanvasElement) => {
   return ctx;
 };
 
-/** Copia de un canvas (p. ej. para que otro código no lo modifique después). */
-export const cloneCanvas = (source: HTMLCanvasElement) => {
-  const copy = createCanvas(source);
-  get2dContext(copy).drawImage(source, 0, 0);
-  return copy;
-};
-
 /** Versión con promesa de `canvas.toBlob`. */
 export const canvasToBlob = (
   canvas: HTMLCanvasElement,
