@@ -33,12 +33,15 @@
 // - 120 / 142 / Video 119 / Stickers 59: stickers Lottie (miden 118,7, 141,2,
 //   114,0 y 56,5). El límite de Stickers es lo que mide más un 5 %; casi todo
 //   es lottie-web en su versión "light" para canvas (54,5 kB).
+// - 120 / 144 / Video 119 / Stickers 59: la ayuda «¿Qué puedo insertar?»
+//   (el editor mide 142,4). Sus textos, el icono y el separador del menú
+//   suman 1 kB; cargarla bajo demanda no ayuda (seguiría contando en Editor).
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 142, Video: 119, Stickers: 59 };
+const BUDGETS_KB = { Inicio: 120, Editor: 144, Video: 119, Stickers: 59 };
 /** Los trozos que solo se descargan para exportar un video. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
 /** Los trozos que solo se descargan con el primer sticker. */
