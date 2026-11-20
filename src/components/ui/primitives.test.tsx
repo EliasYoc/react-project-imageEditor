@@ -19,6 +19,7 @@ import { ChoiceMenu, Menu } from "./Menu";
 import { Panel } from "./Panel";
 import { Segmented } from "./Segmented";
 import { CardSection } from "./CardSection";
+import { ColorField } from "./ColorField";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -266,6 +267,41 @@ describe("CardSection", () => {
     expect(
       within(section).getByRole("button", { name: "Lápiz" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("ColorField", () => {
+  it("muestra su selector solo cuando está abierto y avisa del estado", async () => {
+    const user = userEvent.setup();
+    const onToggle = vi.fn();
+    const color = { r: 255, g: 0, b: 0, a: 1 };
+    const { rerender } = render(
+      <ColorField
+        label="Color"
+        color={color}
+        isOpen={false}
+        onToggle={onToggle}
+        onChange={() => {}}
+      />
+    );
+    const button = screen.getByRole("button", { name: "Color" });
+    expect(button).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("slider")).toBeNull();
+
+    await user.click(button);
+    expect(onToggle).toHaveBeenCalledOnce();
+
+    rerender(
+      <ColorField
+        label="Color"
+        color={color}
+        isOpen
+        onToggle={onToggle}
+        onChange={() => {}}
+      />
+    );
+    expect(button).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getAllByRole("slider").length).toBeGreaterThan(0);
   });
 });
 

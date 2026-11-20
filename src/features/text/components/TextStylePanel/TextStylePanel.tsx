@@ -5,6 +5,7 @@ import {
   type SegmentedItem,
 } from "../../../../components/ui/Segmented";
 import { Slider } from "../../../../components/ui/Slider";
+import { ColorField } from "../../../../components/ui/ColorField";
 import type {
   Gradient,
   TextAlign,
@@ -12,7 +13,6 @@ import type {
   TextStyle,
 } from "../../../../editor/model/types";
 import { useEditorStore } from "../../../../editor/store/editorStore";
-import ColorField from "../ColorField/ColorField";
 import TextGradientEditor from "../TextGradientEditor/TextGradientEditor";
 import styles from "./TextStylePanel.module.css";
 import { DEFAULT_TEXT_GRADIENT } from "../../constants/textGradientPresets";
