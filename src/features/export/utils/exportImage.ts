@@ -5,7 +5,10 @@ import type { Photo, Size } from "../../../editor/model/types";
 import { canvasToBlob } from "../../../lib/canvas";
 import { getDownloadFileName } from "../../../lib/helper";
 import { saveImage } from "../../../lib/saveImage";
-import { createDocumentCompositor } from "./documentCompositor";
+import {
+  createDocumentCompositor,
+  drawStillBackground,
+} from "./documentCompositor";
 
 /** Tamaño real de la imagen de fondo (la original, no la del lienzo). */
 const sourceSize = (source: NonNullable<Photo["source"]>): Size =>
@@ -25,19 +28,12 @@ export const renderDocument = async () => {
   const state = editorStore.getState();
   const { photo, canvasSize } = state;
   const output = photo.source ? sourceSize(photo.source) : canvasSize;
-  const background = photo.source ?? photo.video?.element;
+  const background = photo.source ?? photo.video?.element ?? null;
   const seconds = currentAnimationTime(selectVideo(state));
 
   const compositor = await createDocumentCompositor(state, output);
   try {
-    return await compositor.render((ctx, { width, height }) => {
-      if (background) {
-        ctx.drawImage(background, 0, 0, width, height);
-      } else {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, width, height);
-      }
-    }, seconds);
+    return await compositor.render(drawStillBackground(background), seconds);
   } finally {
     compositor.dispose();
   }

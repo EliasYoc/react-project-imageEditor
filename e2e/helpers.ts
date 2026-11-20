@@ -278,10 +278,14 @@ export async function tapAt(page: Page, point: Point, touch: boolean) {
 
 /**
  * Elige una opción del menú ⋮ de la cabecera (p. ej. "Exportar" o "Volver al
- * inicio").
+ * inicio"). En modo Texto, la barra de herramientas tiene otro "Más
+ * opciones": se busca solo en la cabecera.
  */
 export async function openMenuItem(page: Page, name: string) {
-  await page.getByRole("button", { name: "Más opciones", exact: true }).click();
+  await page
+    .getByRole("banner")
+    .getByRole("button", { name: "Más opciones", exact: true })
+    .click();
   await page.getByRole("menuitem", { name }).click();
 }
 

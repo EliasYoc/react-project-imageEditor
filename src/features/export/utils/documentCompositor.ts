@@ -26,6 +26,21 @@ export type DrawBackground = (
   size: Size
 ) => void;
 
+/**
+ * Pinta de fondo una imagen que no cambia mientras se compone (la foto, o el
+ * fotograma actual del video) o, sin ella, blanco.
+ */
+export const drawStillBackground =
+  (image: CanvasImageSource | null): DrawBackground =>
+  (ctx, { width, height }) => {
+    if (image) {
+      ctx.drawImage(image, 0, 0, width, height);
+    } else {
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, width, height);
+    }
+  };
+
 export interface DocumentCompositor {
   /**
    * Compone el documento sobre el fondo que pinta `drawBackground`, con los

@@ -72,7 +72,8 @@ const useAnimatedImage = (src: string | null) => {
 /**
  * Anima un GIF del lienzo (`src` null si la imagen no es animada): sigue el
  * reloj de la animación y repinta la capa del nodo cuando cambia de
- * fotograma. Con el editor oculto (en el inicio) no gasta nada.
+ * fotograma. Con el editor oculto (en el inicio) o mientras se exporta un
+ * video, se para: no gasta lo que necesita la exportación.
  *
  * Devuelve el canvas con el fotograma actual, o null mientras se abre (o si
  * no se pudo): entonces se muestra la imagen quieta.
@@ -83,7 +84,9 @@ export const useImageAnimation = (
 ) => {
   const animation = useAnimatedImage(src);
   const video = useEditorStore(selectVideo);
-  const isEditorVisible = useEditorStore((state) => state.mode !== "home");
+  const isPlaying = useEditorStore(
+    (state) => state.mode !== "home" && state.status !== "exportingVideo"
+  );
 
   useEffect(() => {
     if (!animation) return;
@@ -91,9 +94,9 @@ export const useImageAnimation = (
   }, [animation, nodeRef]);
 
   useEffect(() => {
-    if (!animation || !isEditorVisible) return;
+    if (!animation || !isPlaying) return;
     return onAnimationTick(video, animation.showFrameAt);
-  }, [animation, isEditorVisible, video]);
+  }, [animation, isPlaying, video]);
 
   return animation?.canvas ?? null;
 };

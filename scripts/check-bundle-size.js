@@ -4,10 +4,11 @@
 // - Inicio: lo que descarga la pantalla de inicio, es decir, los scripts que
 //   enlaza build/index.html (el resto de la app no hace falta para verla).
 // - Editor: el resto del JS, que se descarga en segundo plano (ver App.tsx).
-// - Video: lo que solo se descarga con un video abierto: el diálogo de
-//   exportarlo (VideoExportDialog-*.js) y el codificador (encodeVideo-*.js,
-//   con mediabunny), que llega al exportar. Va aparte para que Editor siga
-//   midiendo lo que tarda en cargar el editor cuando no se usa video.
+// - Video: lo que solo se descarga para exportar un video (el de un video
+//   abierto o el de un lienzo con GIFs): el diálogo (VideoExportDialog-*.js)
+//   y el codificador (encodeVideo-*.js, con mediabunny), que llega al
+//   exportar. Va aparte para que Editor siga midiendo lo que tarda en cargar
+//   el editor cuando no se usa video.
 //
 // Se mide comprimido con gzip, como lo envía el servidor. Si un cambio
 // necesita de verdad más espacio, se sube el límite aquí, en la misma PR,

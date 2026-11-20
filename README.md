@@ -43,7 +43,7 @@ src/
     store/      Store de Zustand: la única fuente de verdad del documento y su historial
     engine/     Motor puro, sin React ni nodos de Konva: vista, raster con checkpoints, puntero
       brushes/  Motor de pinceles: tinta (perfect-freehand), sellos, desenfoque, estabilizador, presets
-    elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes
+    elements/   Textos e imágenes: fuentes, configuración de nodos de Konva, imán, caché de imágenes, GIFs animados
     stage/      Lienzo con Konva (react-konva): capas, elementos, editor de texto y entrada del puntero
   features/     Una carpeta por función: home, editor-header, drawing, text, images, backdrop, export, shortcuts, update, video, view.
                 Dentro, el código va por tipo (components/, hooks/, utils/, constants/), solo con las
@@ -180,7 +180,9 @@ Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «
 - **Si es animada** se mira una vez, al insertarla (`isAnimated` en el elemento).
 - **El tiempo** (`editor/stage/animationClock.ts`): con un video de fondo, el del video (los GIFs se paran en pausa y saltan con la barra de tiempo, como saldrán al exportar); si no, el reloj de la página. El fotograma de cada momento sale de su línea de tiempo (`animationTimeline.ts`): los fotogramas de 10 ms o menos duran 100 ms, como en `<img>`. Solo se repinta al cambiar de fotograma, y nada con el editor oculto.
 - **Al exportar** (`features/export/utils/renderElements.ts`): la imagen lleva el fotograma que se ve en el lienzo, y el video de un documento de video lleva los GIFs moviéndose, con el fotograma de cada momento del video. Los GIFs se vuelven a abrir aparte (otro decodificador y otro canvas), así la animación de la pantalla no les cambia el fotograma a medias. La escena de Konva de los elementos se crea una vez y, con GIFs, se vuelve a pintar en cada fotograma, en el mismo canvas (a la resolución de salida con `setPixelRatio`).
-- **Safari** no tiene `ImageDecoder`: allí el GIF se queda quieto en su primer fotograma, como una imagen normal.
+- **Un lienzo o una foto con GIFs** se exportan **como imagen o como video**: el diálogo deja elegir (empieza en video). El video es un **MP4 sin sonido de 15 s** a 30 fotogramas por segundo, del tamaño del documento reducido a Full HD si es mayor (`fitVideoSize` en `lib/videoSize.ts`, el mismo que al abrir un video). Lo compone `exportAnimation` (`exportVideo.ts`) y lo codifica `encodeFrames` (`encodeVideo.ts`) con el `CanvasSource` de mediabunny. Va en el mismo archivo de JavaScript que exportar un video, así que solo se descarga al usarlo. El fondo (la foto) se reduce una vez al tamaño del video; los GIFs se repiten, cada uno a su ritmo, hasta el final. Medido en Edge: 1080 × 1080 con un GIF, unos 5 s.
+- **Mientras se exporta un video**, la animación del lienzo se para: no le quita tiempo a la exportación.
+- **Safari** no tiene `ImageDecoder`: allí el GIF se queda quieto en su primer fotograma, como una imagen normal, y el diálogo de exportar es el de siempre (solo imagen).
 
 ## Rendimiento
 
@@ -227,7 +229,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
   - el dibujo: el trazo, deshacer y rehacer, el slider de tamaño, el borrador, el resaltador sobre una foto y el zoom;
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
-  - los GIFs: que uno insertado se mueve en el lienzo;
+  - los GIFs: que uno insertado se mueve en el lienzo, y que un lienzo con un GIF se exporta como un MP4 de 15 s en el que el GIF se mueve;
   - el fondo de color y de degradado;
   - exportar: el nombre y el tamaño del PNG, y su contenido;
   - el teclado y la PWA sin conexión.
@@ -256,7 +258,7 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
   - **Si al repetirlo pasa, era "flaky":** un fallo intermitente que conviene investigar.
 - **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
 - **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
-  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga con un video abierto: el diálogo de exportarlo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`) y el del **editor** (el resto);
+  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga para exportar un video, el de un video abierto o el de un lienzo con GIFs: el diálogo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`) y el del **editor** (el resto);
   - falla si pasan de **120 kB**, **119 kB** y **142 kB**: hoy son unos 119, 114 y 140;
   - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
 - **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
