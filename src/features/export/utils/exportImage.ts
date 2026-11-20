@@ -1,4 +1,6 @@
+import { currentAnimationTime } from "../../../editor/stage/animationClock";
 import { editorStore } from "../../../editor/store/editorStore";
+import { selectVideo } from "../../../editor/store/selectors";
 import type { Photo, Size } from "../../../editor/model/types";
 import { canvasToBlob } from "../../../lib/canvas";
 import { getDownloadFileName } from "../../../lib/helper";
@@ -17,23 +19,28 @@ const sourceSize = (source: NonNullable<Photo["source"]>): Size =>
  * que las capas del lienzo (ver `createDocumentCompositor`).
  *
  * Con un video de fondo, la imagen es su fotograma actual, al tamaño del
- * documento.
+ * documento. Los GIFs salen en el fotograma que se ve en el lienzo.
  */
 export const renderDocument = async () => {
   const state = editorStore.getState();
   const { photo, canvasSize } = state;
   const output = photo.source ? sourceSize(photo.source) : canvasSize;
   const background = photo.source ?? photo.video?.element;
+  const seconds = currentAnimationTime(selectVideo(state));
 
   const compositor = await createDocumentCompositor(state, output);
-  return compositor.render((ctx, { width, height }) => {
-    if (background) {
-      ctx.drawImage(background, 0, 0, width, height);
-    } else {
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, width, height);
-    }
-  });
+  try {
+    return await compositor.render((ctx, { width, height }) => {
+      if (background) {
+        ctx.drawImage(background, 0, 0, width, height);
+      } else {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, width, height);
+      }
+    }, seconds);
+  } finally {
+    compositor.dispose();
+  }
 };
 
 /**

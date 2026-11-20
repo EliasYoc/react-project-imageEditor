@@ -30,6 +30,18 @@ pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 - **e2e:** al volver al inicio con un GIF en el lienzo, la animación se para
   (sin `requestAnimationFrame` en marcha).
 
+## La exportación lleva los GIFs en movimiento
+
+Comprobado a mano en Edge (20/11/2026) con un script de Playwright: falta
+convertirlo en e2e.
+
+- **e2e:** exportar un video con un GIF encima: en el MP4, el centro del GIF
+  es rojo y azul en momentos distintos (cada 0,2 s, como el GIF).
+- **e2e:** exportar la imagen de un lienzo con un GIF: sale el fotograma que
+  se ve (rojo o azul, no blanco).
+- **e2e:** un GIF que no se puede decodificar al exportar sale quieto y la
+  exportación termina (`loadImages` en `renderElements.ts`).
+
 ## La carga de imágenes vive en un solo sitio (`loadImageElement`)
 
 - **e2e:** «Insertar una imagen» (menú «Más opciones» del modo Texto) la

@@ -30,7 +30,8 @@ const withScreenAwake = async <T>(task: () => Promise<T>) => {
  * El documento se compone igual que al exportar una imagen
  * (`createDocumentCompositor`): lo fijo (trazos, textos, imágenes, capa de
  * color) se pinta una vez, y en cada fotograma solo se repite lo que depende
- * del fondo. El tamaño es el del documento, que se fijó al abrir el video.
+ * del fondo y, si hay GIFs, los elementos, con el fotograma de ese momento
+ * del video. El tamaño es el del documento, que se fijó al abrir el video.
  *
  * El codificador (`encodeVideo`, con mediabunny) se descarga aquí, la primera
  * vez que se exporta un video.
@@ -51,13 +52,17 @@ export const exportVideo = async ({
     createDocumentCompositor(state, size),
     import("./encodeVideo"),
   ]);
-  return withScreenAwake(() =>
-    encodeVideo({
-      file: video.file,
-      size,
-      renderFrame: compositor.render,
-      onProgress,
-      signal,
-    })
-  );
+  try {
+    return await withScreenAwake(() =>
+      encodeVideo({
+        file: video.file,
+        size,
+        renderFrame: compositor.render,
+        onProgress,
+        signal,
+      })
+    );
+  } finally {
+    compositor.dispose();
+  }
 };

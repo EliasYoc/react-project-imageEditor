@@ -44,38 +44,60 @@ export interface AnimatedImage {
 }
 
 /**
- * Abre la imagen animada de `src` (una URL blob:).
+ * Abre la imagen animada de `src` (una URL blob:): su decodificador, su
+ * línea de tiempo y un canvas de su tamaño con el primer fotograma.
  *
  * Para no gastar memoria, nunca se guardan todos los fotogramas abiertos: un
  * GIF de 480 × 270 con 50 fotogramas ocuparía unos 26 MB. Se guarda el
  * archivo comprimido (dentro del decodificador) y un solo canvas; cada
  * fotograma se decodifica al necesitarlo y se suelta después de pintarlo.
  */
-const createAnimatedImage = async (src: string): Promise<AnimatedImage> => {
+const openAnimation = async (src: string) => {
   const decoder = await openDecoder(await (await fetch(src)).blob());
   const frameCount = decoder.tracks.selectedTrack?.frameCount ?? 0;
 
   // Lo que dura cada fotograma solo se sabe al decodificarlo: se recorren
   // todos una vez. El primero se queda pintado en el canvas.
   const durations: number[] = [];
-  let firstFrame: HTMLCanvasElement | null = null;
+  let canvas: HTMLCanvasElement | null = null;
   for (let frameIndex = 0; frameIndex < frameCount; frameIndex++) {
     const { image } = await decoder.decode({ frameIndex });
     durations.push(frameSeconds(image.duration));
-    if (!firstFrame) {
-      firstFrame = createCanvas({
+    if (!canvas) {
+      canvas = createCanvas({
         width: image.displayWidth,
         height: image.displayHeight,
       });
-      get2dContext(firstFrame).drawImage(image, 0, 0);
+      get2dContext(canvas).drawImage(image, 0, 0);
     }
     image.close();
   }
-  if (!firstFrame) throw new Error("La imagen animada no tiene fotogramas");
+  if (!canvas) {
+    decoder.close();
+    throw new Error("La imagen animada no tiene fotogramas");
+  }
+  return { decoder, canvas, timeline: buildTimeline(durations) };
+};
 
-  const canvas = firstFrame;
-  const ctx = get2dContext(canvas);
-  const timeline = buildTimeline(durations);
+/** Decodifica un fotograma y lo pinta en `canvas`, en lugar del anterior. */
+const drawFrame = async (
+  decoder: ImageDecoder,
+  canvas: HTMLCanvasElement,
+  frameIndex: number
+) => {
+  const { image } = await decoder.decode({ frameIndex });
+  try {
+    const ctx = get2dContext(canvas);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+  } finally {
+    image.close();
+  }
+};
+
+/** Una imagen animada que se mueve en el lienzo. */
+const createAnimatedImage = async (src: string): Promise<AnimatedImage> => {
+  const { decoder, canvas, timeline } = await openAnimation(src);
   const listeners = new Set<() => void>();
   let shownIndex = 0;
   let wantedIndex = 0;
@@ -92,13 +114,7 @@ const createAnimatedImage = async (src: string): Promise<AnimatedImage> => {
     try {
       while (wantedIndex !== shownIndex) {
         const frameIndex = wantedIndex;
-        const { image } = await decoder.decode({ frameIndex });
-        try {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(image, 0, 0);
-        } finally {
-          image.close();
-        }
+        await drawFrame(decoder, canvas, frameIndex);
         shownIndex = frameIndex;
         for (const listener of listeners) listener();
       }
@@ -123,6 +139,38 @@ const createAnimatedImage = async (src: string): Promise<AnimatedImage> => {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+  };
+};
+
+/** Una imagen animada para exportar, que se pinta momento a momento. */
+export interface AnimationReader {
+  /** Del tamaño de la imagen, con el fotograma que se pintó el último. */
+  readonly canvas: HTMLCanvasElement;
+  /** Pinta en `canvas` el fotograma del segundo `seconds`. */
+  drawFrameAt: (seconds: number) => Promise<void>;
+  /** Suelta el decodificador. */
+  close: () => void;
+}
+
+/**
+ * Abre la imagen animada de `src` para exportarla. Va aparte de la del
+ * lienzo (otro decodificador y otro canvas): mientras se exporta, la
+ * animación de la pantalla no le cambia el fotograma.
+ */
+export const openAnimationReader = async (
+  src: string
+): Promise<AnimationReader> => {
+  const { decoder, canvas, timeline } = await openAnimation(src);
+  let shownIndex = 0;
+  return {
+    canvas,
+    drawFrameAt: async (seconds) => {
+      const frameIndex = frameIndexAt(timeline, seconds);
+      if (frameIndex === shownIndex) return;
+      await drawFrame(decoder, canvas, frameIndex);
+      shownIndex = frameIndex;
+    },
+    close: () => decoder.close(),
   };
 };
 

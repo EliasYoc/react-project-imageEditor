@@ -28,9 +28,13 @@ export interface EncodeVideoOptions {
   size: Size;
   /**
    * Compone un fotograma: `drawBackground` pinta el fotograma original y el
-   * resultado lleva encima el resto del documento.
+   * resultado lleva encima el resto del documento, con los GIFs en el
+   * fotograma del segundo `seconds` del video.
    */
-  renderFrame: (drawBackground: DrawBackground) => CanvasImageSource;
+  renderFrame: (
+    drawBackground: DrawBackground,
+    seconds: number
+  ) => Promise<CanvasImageSource>;
   /** Avance de 0 a 1. */
   onProgress: (progress: number) => void;
   /** Al abortarla, la exportación se cancela. */
@@ -88,8 +92,9 @@ export const encodeVideo = async ({
       processedWidth: size.width,
       processedHeight: size.height,
       process: (sample) =>
-        renderFrame((ctx, { width, height }) =>
-          sample.draw(ctx, 0, 0, width, height)
+        renderFrame(
+          (ctx, { width, height }) => sample.draw(ctx, 0, 0, width, height),
+          sample.timestamp
         ),
     },
     // Lo que no se pueda convertir se comprueba justo debajo.

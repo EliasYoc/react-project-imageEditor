@@ -12,7 +12,10 @@ import {
   selectStrokeLayers,
 } from "../../../editor/store/selectors";
 import { createCanvas, get2dContext } from "../../../lib/canvas";
-import { renderElements } from "./renderElements";
+import {
+  createElementsRenderer,
+  type ElementsRenderer,
+} from "./renderElements";
 
 /**
  * Pinta el fondo de un fotograma (la foto, un fotograma del video, o blanco)
@@ -25,10 +28,16 @@ export type DrawBackground = (
 
 export interface DocumentCompositor {
   /**
-   * Compone el documento sobre el fondo que pinta `drawBackground`. Devuelve
-   * SIEMPRE el mismo canvas: la siguiente llamada lo vuelve a pintar.
+   * Compone el documento sobre el fondo que pinta `drawBackground`, con los
+   * GIFs en su fotograma del segundo `seconds`. Devuelve SIEMPRE el mismo
+   * canvas: la siguiente llamada lo vuelve a pintar.
    */
-  render: (drawBackground: DrawBackground) => HTMLCanvasElement;
+  render: (
+    drawBackground: DrawBackground,
+    seconds: number
+  ) => Promise<HTMLCanvasElement>;
+  /** Suelta lo que guarda entre fotogramas (la escena de los GIFs). */
+  dispose: () => void;
 }
 
 /**
@@ -51,6 +60,21 @@ const paintStrokeLayer = (
 };
 
 /**
+ * Pinta la capa de los elementos cubriendo todo el canvas. Konva redondea su
+ * tamaño a píxeles enteros: se estira al de salida para que encaje justo.
+ */
+const drawLayer = (
+  ctx: CanvasRenderingContext2D,
+  layer: HTMLCanvasElement,
+  output: Size
+) => {
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(layer, 0, 0, output.width, output.height);
+  ctx.restore();
+};
+
+/**
  * Prepara la composición del documento a la resolución `output`, en el mismo
  * orden que las capas del lienzo:
  * 1. el fondo y encima la capa de color o degradado;
@@ -61,7 +85,8 @@ const paintStrokeLayer = (
  * Lo que no depende del fondo (la capa de color, la máscara del desenfoque,
  * el resaltador, la pintura y los elementos) se pinta UNA vez, aquí. `render`
  * solo repite lo que cambia con el fondo, así que sirve igual para una imagen
- * (una llamada) que para cada fotograma de un video.
+ * (una llamada) que para cada fotograma de un video. Con GIFs, los elementos
+ * cambian con el tiempo: se vuelven a pintar en cada `render`.
  */
 export const createDocumentCompositor = async (
   state: EditorStore,
@@ -93,22 +118,30 @@ export const createDocumentCompositor = async (
     ? paintStrokeLayer(strokes.highlight, output, canvasSize, scratch)
     : null;
 
-  // Pintura y elementos en una sola capa: van seguidos y siempre encima.
-  let overlay: HTMLCanvasElement | null = null;
-  if (strokes.paint.length || elements.length) {
-    overlay = paintStrokeLayer(strokes.paint, output, canvasSize, scratch);
-    if (elements.length) {
-      const layer = await renderElements(elements, canvasSize, output);
-      const overlayCtx = get2dContext(overlay);
-      overlayCtx.setTransform(1, 0, 0, 1, 0, 0);
-      overlayCtx.drawImage(layer, 0, 0, overlay.width, overlay.height);
+  // Pintura y elementos en una sola capa: van seguidos y siempre encima. Con
+  // GIFs, los elementos van aparte y se pintan en cada `render`.
+  let overlay = strokes.paint.length
+    ? paintStrokeLayer(strokes.paint, output, canvasSize, scratch)
+    : null;
+  let animatedElements: ElementsRenderer | null = null;
+  if (elements.length) {
+    const renderer = await createElementsRenderer(elements, canvasSize, output);
+    if (renderer.isAnimated) {
+      animatedElements = renderer;
+    } else {
+      overlay ??= createCanvas(output);
+      drawLayer(get2dContext(overlay), await renderer.render(0), output);
+      renderer.dispose();
     }
   }
 
   // Copia desenfocada del fondo: se reutiliza de un fotograma al siguiente.
   let blurred: HTMLCanvasElement | null = null;
 
-  const render = (drawBackground: DrawBackground) => {
+  const render = async (drawBackground: DrawBackground, seconds: number) => {
+    // Antes de tocar el canvas: mientras se espera a los GIFs, sigue entero.
+    const elementsLayer = await animatedElements?.render(seconds);
+
     ctx.save();
     drawBackground(ctx, output);
     ctx.restore();
@@ -143,8 +176,9 @@ export const createDocumentCompositor = async (
     }
 
     if (overlay) ctx.drawImage(overlay, 0, 0);
+    if (elementsLayer) drawLayer(ctx, elementsLayer, output);
     return canvas;
   };
 
-  return { render };
+  return { render, dispose: () => animatedElements?.dispose() };
 };

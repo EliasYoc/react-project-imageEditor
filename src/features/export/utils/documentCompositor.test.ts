@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { blurLayers } from "../../../editor/engine/brushes/blur";
 import { paintFill } from "../../../editor/engine/fill/paintFill";
 import type { EditorStore } from "../../../editor/store/editorStore";
@@ -6,7 +6,7 @@ import {
   createDocumentCompositor,
   type DrawBackground,
 } from "./documentCompositor";
-import { renderElements } from "./renderElements";
+import { createElementsRenderer } from "./renderElements";
 
 /**
  * jsdom no tiene canvas 2D: se usan canvas falsos que apuntan lo que se hace
@@ -33,11 +33,19 @@ interface FakeContext {
   fillRect: () => void;
   drawImage: (source: { id?: number; name?: string }) => void;
 }
+interface FakeRenderer {
+  /** Hay algún GIF. */
+  isAnimated: boolean;
+  render: Mock<(seconds: number) => Promise<unknown>>;
+  dispose: Mock<() => void>;
+}
 
 const fakes = vi.hoisted(() => ({
   canvases: [] as unknown[],
   blurred: { name: "fondo desenfocado" },
   elements: { name: "elementos" },
+  /** La escena de los textos e imágenes (se crea en `beforeEach`). */
+  renderer: null as unknown as FakeRenderer,
   layers: {
     paint: [] as { id: string }[],
     highlight: [] as { id: string }[],
@@ -117,7 +125,7 @@ vi.mock("../../../editor/store/selectors", async (importOriginal) => ({
 }));
 
 vi.mock("./renderElements", () => ({
-  renderElements: vi.fn(async () => fakes.elements),
+  createElementsRenderer: vi.fn(async () => fakes.renderer),
 }));
 
 const DOC = { width: 400, height: 300 };
@@ -151,7 +159,12 @@ beforeEach(() => {
   fakes.elementList = [];
   vi.mocked(blurLayers).mockClear();
   vi.mocked(paintFill).mockClear();
-  vi.mocked(renderElements).mockClear();
+  vi.mocked(createElementsRenderer).mockClear();
+  fakes.renderer = {
+    isAnimated: false,
+    render: vi.fn(async () => fakes.elements),
+    dispose: vi.fn(),
+  };
   paintWhite.mockClear();
 });
 
@@ -161,7 +174,7 @@ describe("createDocumentCompositor", () => {
       stateWith({ hasPhoto: false }),
       OUTPUT
     );
-    const result = compositor.render(paintWhite);
+    const result = await compositor.render(paintWhite, 0);
 
     // Solo el resultado y el búfer de trazo: ninguna capa.
     expect(fakes.canvases).toHaveLength(2);
@@ -169,7 +182,7 @@ describe("createDocumentCompositor", () => {
     expect(steps(result)).toEqual(["rect white"]);
     expect(paintWhite.mock.calls[0][1]).toEqual(OUTPUT);
     expect(blurLayers).not.toHaveBeenCalled();
-    expect(renderElements).not.toHaveBeenCalled();
+    expect(createElementsRenderer).not.toHaveBeenCalled();
   });
 
   it("compone las capas en el orden del lienzo", async () => {
@@ -193,13 +206,13 @@ describe("createDocumentCompositor", () => {
       "stroke p",
       "draw elementos source-over 1",
     ]);
-    expect(vi.mocked(renderElements).mock.calls[0]).toEqual([
+    expect(vi.mocked(createElementsRenderer).mock.calls[0]).toEqual([
       fakes.elementList,
       DOC,
       OUTPUT,
     ]);
 
-    const result = compositor.render(paintWhite);
+    const result = await compositor.render(paintWhite, 0);
     expect(steps(result)).toEqual([
       "rect white",
       `draw canvas${fill.id} overlay 0.5`,
@@ -236,8 +249,8 @@ describe("createDocumentCompositor", () => {
       ...canvas.steps,
     ]);
 
-    const first = compositor.render(paintWhite);
-    const second = compositor.render(paintWhite);
+    const first = await compositor.render(paintWhite, 0);
+    const second = await compositor.render(paintWhite, 0);
 
     // El mismo canvas, sin crear ninguno más ni repintar las capas.
     expect(second).toBe(first);
@@ -246,7 +259,9 @@ describe("createDocumentCompositor", () => {
       [fill, mask, highlight, overlay].map((canvas) => canvas.steps)
     ).toEqual(fixed);
     expect(paintFill).toHaveBeenCalledTimes(1);
-    expect(renderElements).toHaveBeenCalledTimes(1);
+    // Sin GIFs, los elementos se pintan una vez y su escena se suelta.
+    expect(fakes.renderer.render).toHaveBeenCalledTimes(1);
+    expect(fakes.renderer.dispose).toHaveBeenCalledTimes(1);
 
     // Por fotograma: el fondo y su desenfoque, reutilizando la copia.
     expect(paintWhite).toHaveBeenCalledTimes(2);
@@ -262,7 +277,7 @@ describe("createDocumentCompositor", () => {
       stateWith({ hasPhoto: false, fill: "red" }),
       OUTPUT
     );
-    const result = compositor.render(paintWhite);
+    const result = await compositor.render(paintWhite, 0);
     expect(steps(result)).toEqual([
       "rect white",
       `draw canvas${canvasAt(2).id} source-over 0.5`,
@@ -274,10 +289,35 @@ describe("createDocumentCompositor", () => {
       stateWith({ hasPhoto: false, hasVideo: true, fill: "red" }),
       OUTPUT
     );
-    expect(steps(compositor.render(paintWhite))).toEqual([
+    expect(steps(await compositor.render(paintWhite, 0))).toEqual([
       "rect white",
       `draw canvas${canvasAt(2).id} overlay 0.5`,
     ]);
+  });
+
+  it("con GIFs, los elementos se pintan en cada fotograma, en su momento y encima de la pintura", async () => {
+    fakes.layers = { paint: [{ id: "p" }], highlight: [], blur: [] };
+    fakes.elementList = [{ id: "gif" }];
+    fakes.renderer.isAnimated = true;
+    const compositor = await createDocumentCompositor(stateWith(), OUTPUT);
+    const overlay = canvasAt(2);
+    // La pintura sigue pintándose una vez; los elementos ya no van en ella.
+    expect(steps(overlay)).toEqual(["stroke p"]);
+    expect(fakes.renderer.render).not.toHaveBeenCalled();
+
+    const result = await compositor.render(paintWhite, 1.5);
+    await compositor.render(paintWhite, 2);
+    expect(fakes.renderer.render.mock.calls).toEqual([[1.5], [2]]);
+    expect(steps(result).slice(-3)).toEqual([
+      "rect white",
+      `draw canvas${overlay.id} source-over 1`,
+      "draw elementos source-over 1",
+    ]);
+
+    // La escena se guarda entre fotogramas y se suelta al terminar.
+    expect(fakes.renderer.dispose).not.toHaveBeenCalled();
+    compositor.dispose();
+    expect(fakes.renderer.dispose).toHaveBeenCalledTimes(1);
   });
 
   it("los textos e imágenes van en su capa aunque no haya pintura", async () => {
@@ -285,7 +325,7 @@ describe("createDocumentCompositor", () => {
     const compositor = await createDocumentCompositor(stateWith(), OUTPUT);
     const overlay = canvasAt(2);
     expect(steps(overlay)).toEqual(["draw elementos source-over 1"]);
-    expect(steps(compositor.render(paintWhite))).toEqual([
+    expect(steps(await compositor.render(paintWhite, 0))).toEqual([
       "rect white",
       `draw canvas${overlay.id} source-over 1`,
     ]);
