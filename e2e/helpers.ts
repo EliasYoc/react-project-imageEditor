@@ -520,7 +520,9 @@ export async function exportImage(
  */
 export async function exportVideo(page: Page, isMobile: boolean) {
   await openMenuItem(page, "Exportar");
-  const dialog = page.getByRole("dialog", { name: "Exportar video" });
+  // «Exportar video» con un video abierto; solo «Exportar» en un lienzo con
+  // GIFs o stickers, que deja elegir entre imagen y video.
+  const dialog = page.getByRole("dialog", { name: /^Exportar( video)?$/ });
   const submit = dialog.getByRole("button", { name: "Exportar" });
   if (!isMobile) {
     const download = page.waitForEvent("download");
@@ -712,7 +714,7 @@ export async function expectCanvasExportsAnimation(
   isMobile: boolean
 ) {
   await openMenuItem(page, "Exportar");
-  const dialog = page.getByRole("dialog", { name: "Exportar video" });
+  const dialog = page.getByRole("dialog", { name: "Exportar", exact: true });
   await expect(dialog).toContainText(
     "Se guarda en MP4 a 1080 × 1080 px, 15 segundos, sin sonido."
   );

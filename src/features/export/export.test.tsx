@@ -280,6 +280,10 @@ describe("exportar un video", () => {
 });
 
 describe("exportar un lienzo con GIFs", () => {
+  /** El título es solo «Exportar»: la opción marcada dice imagen o video. */
+  const animatedDialog = () =>
+    screen.findByRole("dialog", { name: "Exportar" });
+
   beforeEach(() => {
     editorStore.setState({
       ...createInitialState(),
@@ -298,7 +302,7 @@ describe("exportar un lienzo con GIFs", () => {
   it("deja elegir imagen o video; empieza en un video de 15 s sin sonido", async () => {
     const user = userEvent.setup();
     renderDialog();
-    const dialog = await videoDialog();
+    const dialog = await animatedDialog();
     expect(dialog).toHaveAccessibleDescription(
       "Se guarda en MP4 a 1080 × 1080 px, 15 segundos, sin sonido."
     );
@@ -306,17 +310,15 @@ describe("exportar un lienzo con GIFs", () => {
     expect(await within(dialog).findByText(".mp4")).toBeInTheDocument();
 
     await user.click(within(dialog).getByRole("radio", { name: "Imagen" }));
-    const imageDialog = screen.getByRole("dialog", { name: "Exportar imagen" });
-    expect(imageDialog).toHaveAccessibleDescription(
-      "Se guarda a 1080 × 1080 px."
-    );
-    expect(within(imageDialog).getByText(".png")).toBeInTheDocument();
+    expect(dialog).toHaveAccessibleName("Exportar");
+    expect(dialog).toHaveAccessibleDescription("Se guarda a 1080 × 1080 px.");
+    expect(within(dialog).getByText(".png")).toBeInTheDocument();
   });
 
   it("como video, compone el de los GIFs y lo descarga como dibujo-fecha.mp4", async () => {
     const user = userEvent.setup();
     renderDialog();
-    const dialog = await videoDialog();
+    const dialog = await animatedDialog();
     await user.click(
       await within(dialog).findByRole("button", { name: "Exportar" })
     );

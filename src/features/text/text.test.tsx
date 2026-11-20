@@ -208,7 +208,7 @@ describe("TextToolbar", () => {
     });
     for (const kind of [
       /^Imágenes/,
-      /^GIFs animados/,
+      /^GIFs/,
       /^Stickers Lottie/,
       /^Stickers de Telegram/,
     ]) {

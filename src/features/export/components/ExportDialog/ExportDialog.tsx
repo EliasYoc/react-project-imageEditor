@@ -124,7 +124,8 @@ const AnimatedExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
     <Dialog
       open={open}
       onOpenChange={changeOpen}
-      title={isVideo ? "Exportar video" : "Exportar imagen"}
+      // Solo «Exportar»: la opción marcada debajo ya dice imagen o video.
+      title="Exportar"
       description={
         isVideo
           ? `Se guarda en MP4 a ${videoSize.width} × ${videoSize.height} px, ${ANIMATION_VIDEO_SECONDS} segundos, sin sonido.`

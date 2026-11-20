@@ -47,7 +47,7 @@ const InsertHelpDialog = ({ open, onOpenChange }: InsertHelpDialogProps) => (
   <Dialog open={open} onOpenChange={onOpenChange} title="¿Qué puedo insertar?">
     <div className={styles.sections}>
       <Section title="Imágenes (PNG, JPG, WebP…)">Se insertan quietas.</Section>
-      <Section title="GIFs animados (.gif, y también WebP o PNG animados)">
+      <Section title="GIFs (.gif, y también WebP o PNG animados)">
         Se mueven en el lienzo y al exportar como video. Para guardarlos: en el
         móvil, mantén pulsado el GIF y elige «Guardar imagen»; en el ordenador,
         clic derecho → «Guardar imagen como…». En Safari (iPhone y Mac) se ven
@@ -66,12 +66,11 @@ const InsertHelpDialog = ({ open, onOpenChange }: InsertHelpDialogProps) => (
       </Section>
       <Section title="Stickers de Telegram (.tgs)">
         Son stickers Lottie comprimidos y se insertan tal cual. Para
-        conseguirlos, envía el sticker a un bot de Telegram que convierta
-        stickers a .tgs (algunos también a .json) y descarga el archivo que te
-        devuelve.
+        conseguirlos, envía el sticker a un bot de Telegram que lo convierta a
+        .tgs (algunos también a .json) y descarga el archivo que te devuelve.
       </Section>
       <p className={styles.note}>
-        Usa solo GIFs y stickers que tengas permiso para usar: tienen autor.
+        Usa solo GIFs y stickers con permiso de su autor.
       </p>
     </div>
   </Dialog>
