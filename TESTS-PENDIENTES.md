@@ -75,6 +75,20 @@ convertirlo en e2e.
 - **Rendimiento:** repetir la medición del README (30 copias y 9 distintos,
   móvil con CPU ×4) en un teléfono de verdad.
 
+## Los stickers Lottie se exportan
+
+Comprobado a mano en Edge (20/11/2026) con tres stickers reales: la imagen
+sale nítida a 1080 × 1080 y el video de 15 s se exporta en 4,5 s.
+
+- **e2e:** exportar como imagen un lienzo con un sticker: sale el fotograma
+  que se ve (rojo o azul).
+- **e2e:** un video con un sticker encima: en el MP4 el sticker va al ritmo
+  del video.
+- **e2e:** un sticker que ya no se puede leer al exportar no sale, y la
+  exportación termina.
+- **unitario:** `stickerSides` (renderElements) usa la copia más grande de
+  cada sticker y no pasa de 2048 px.
+
 ## La carga de imágenes vive en un solo sitio (`loadImageElement`)
 
 - **e2e:** «Insertar una imagen» (menú «Más opciones» del modo Texto) la

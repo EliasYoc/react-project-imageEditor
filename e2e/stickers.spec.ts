@@ -1,6 +1,8 @@
 import { test } from "@playwright/test";
 import {
   expectBothColorsAt,
+  expectCanvasExportsAnimation,
+  fakeShareSheet,
   fittedCenter,
   insertFile,
   openBlankCanvas,
@@ -24,4 +26,17 @@ test.describe("Stickers", () => {
       await expectBothColorsAt(page, await fittedCenter(page));
     });
   }
+
+  test("un lienzo con un sticker se exporta como un video de 15 s con el sticker moviéndose", async ({
+    page,
+    isMobile,
+  }) => {
+    // Componer y codificar 450 fotogramas tarda más que un test normal.
+    test.setTimeout(120_000);
+    if (isMobile) await fakeShareSheet(page);
+    await openBlankCanvas(page);
+    await insertFile(page, STICKERS[0]);
+
+    await expectCanvasExportsAnimation(page, isMobile);
+  });
 });

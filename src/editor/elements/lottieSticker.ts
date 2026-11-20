@@ -1,7 +1,7 @@
 import type { AnimationConfigWithData } from "lottie-web";
 import lottie from "lottie-web/build/player/lottie_light_canvas";
 import { createCanvas, get2dContext } from "../../lib/canvas";
-import type { AnimatedImage } from "./animatedImage";
+import type { AnimatedImage, AnimationReader } from "./animatedImage";
 import { lottieFrameAt, wholeStepsIn } from "./animationTimeline";
 import { readLottieFile, type LottieData } from "./lottieFile";
 import { stickerResolution } from "./stickerResolution";
@@ -197,5 +197,23 @@ export const openLottieSticker = async (
         updateResolution();
       };
     },
+  };
+};
+
+/**
+ * Un sticker para exportar, aparte del del lienzo: con su propio canvas de
+ * lado mayor `side` (el tamaño con que sale en el archivo; al ser vectorial,
+ * sale nítido) y pintado en el momento exacto de cada fotograma, sin turnos.
+ */
+export const openLottieReader = async (
+  src: string,
+  side: number
+): Promise<AnimationReader> => {
+  const data = await loadLottieData(src);
+  const player = await createLottieCanvas(data, Math.max(1, Math.round(side)));
+  return {
+    canvas: player.canvas,
+    drawFrameAt: async (seconds) => player.drawAt(seconds),
+    close: player.destroy,
   };
 };

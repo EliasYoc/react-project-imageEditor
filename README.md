@@ -201,6 +201,7 @@ Un sticker **Lottie** se inserta igual que una imagen: «Insertar una imagen o s
   - en pantalla, como mucho 30 fotogramas por segundo;
   - **pintado por turnos**: como mucho 8 ms de stickers por frame de pantalla; los que no caben esperan al siguiente, así un teléfono lento no se traba (sus animaciones van más despacio).
   - Medido en Edge con stickers reales (512 × 512, de 36 a 136 capas), móvil emulado con la CPU 4 veces más lenta: 30 copias del mismo, 144 fps; 9 distintos, 62 fps (peor frame 35 ms; antes de pintar por turnos, 24 fps con frames de 110 ms).
+- **Al exportar** (`features/export/utils/renderElements.ts`), cada sticker usa un lector aparte del lienzo (`openLottieReader`), con su propio canvas al **tamaño con que sale en el archivo** (como mucho 2048 px): es vectorial, así que sale nítido. Se pinta en el momento exacto de cada fotograma, sin turnos ni límite de 30 fps. Como con los GIFs, la imagen lleva el fotograma visible y el video de un lienzo dura 15 s. Medido en Edge: un lienzo de 1080 × 1080 con tres stickers reales se exporta como video en 4,5 s.
 
 ## Rendimiento
 
@@ -248,7 +249,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
   - los GIFs: que uno insertado se mueve en el lienzo, y que un lienzo con un GIF se exporta como un MP4 de 15 s en el que el GIF se mueve;
-  - los stickers: que uno `.json` y uno `.tgs` insertados se mueven en el lienzo;
+  - los stickers: que uno `.json` y uno `.tgs` insertados se mueven en el lienzo, y que un lienzo con un sticker se exporta como un MP4 de 15 s en el que el sticker se mueve;
   - el fondo de color y de degradado;
   - exportar: el nombre y el tamaño del PNG, y su contenido;
   - el teclado y la PWA sin conexión.

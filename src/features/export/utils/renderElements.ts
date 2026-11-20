@@ -22,30 +22,65 @@ import type {
 } from "../../../editor/model/types";
 
 export interface ElementsRenderer {
-  /** Hay algún GIF: lo que se pinta cambia con el tiempo. */
+  /** Hay algún GIF o sticker: lo que se pinta cambia con el tiempo. */
   isAnimated: boolean;
   /**
    * Pinta los elementos como se ven en el segundo `seconds`. Devuelve
    * SIEMPRE el mismo canvas: la siguiente llamada lo vuelve a pintar.
    */
   render: (seconds: number) => Promise<HTMLCanvasElement>;
-  /** Suelta la escena de Konva y los GIFs. */
+  /** Suelta la escena de Konva, los GIFs y los stickers. */
   dispose: () => void;
 }
 
 /**
- * La imagen de cada elemento de imagen: la de `imageCache` o, si es un GIF
- * que se puede animar, el canvas de su lector, que pinta el fotograma de
- * cada momento. Los elementos con el mismo GIF comparten lector.
- *
- * Si un GIF no se puede abrir, sale quieto, como se ve en el lienzo.
+ * Lado mayor, en píxeles, con el que se pinta un sticker al exportar: como
+ * mucho este, aunque salga más grande (pintarlo cuesta según sus píxeles).
  */
-const loadImages = async (images: readonly ImageElement[]) => {
+const MAX_STICKER_SIDE = 2048;
+
+/**
+ * Lado con el que se exporta cada sticker (por archivo): el de su copia más
+ * grande en el archivo de salida, para que salga nítido (es vectorial).
+ */
+const stickerSides = (images: readonly ImageElement[], outputScale: number) => {
+  const sides = new Map<string, number>();
+  for (const { animation, src, width, height, scale } of images) {
+    if (animation !== "lottie") continue;
+    const side = Math.max(width, height) * scale * outputScale;
+    sides.set(
+      src,
+      Math.min(MAX_STICKER_SIDE, Math.max(sides.get(src) ?? 0, side))
+    );
+  }
+  return sides;
+};
+
+/**
+ * La imagen de cada elemento de imagen: la de `imageCache` o, si se mueve
+ * (un GIF que se puede animar o un sticker), el canvas de su lector, que
+ * pinta el fotograma de cada momento. Los elementos con el mismo archivo
+ * comparten lector.
+ *
+ * Si un GIF no se puede abrir, sale quieto, como se ve en el lienzo; un
+ * sticker que no se puede abrir no sale (tampoco se ve en el lienzo).
+ */
+const loadImages = async (
+  images: readonly ImageElement[],
+  outputScale: number
+) => {
+  const sides = stickerSides(images, outputScale);
   const readers = new Map<string, Promise<AnimationReader | null>>();
-  const openReader = (src: string) => {
+  const openReader = ({ src, animation }: ImageElement) => {
     let reader = readers.get(src);
     if (!reader) {
-      reader = openAnimationReader(src).catch((error: unknown) => {
+      const opening =
+        animation === "lottie"
+          ? import("../../../editor/elements/lottieSticker").then((module) =>
+              module.openLottieReader(src, sides.get(src) ?? 0)
+            )
+          : openAnimationReader(src);
+      reader = opening.catch((error: unknown) => {
         console.error(error);
         return null;
       });
@@ -57,11 +92,14 @@ const loadImages = async (images: readonly ImageElement[]) => {
   const sources = new Map<string, CanvasImageSource>();
   await Promise.all(
     images.map(async (element) => {
-      const reader =
-        element.animation === "frames" && canAnimateImages()
-          ? await openReader(element.src)
-          : null;
-      sources.set(element.id, reader?.canvas ?? (await loadImage(element.src)));
+      const isMoving =
+        element.animation === "lottie" ||
+        (element.animation === "frames" && canAnimateImages());
+      const reader = isMoving ? await openReader(element) : null;
+      if (reader) sources.set(element.id, reader.canvas);
+      else if (element.animation !== "lottie") {
+        sources.set(element.id, await loadImage(element.src));
+      }
     })
   );
   const animations = (await Promise.all(readers.values())).filter(
@@ -90,13 +128,15 @@ export const createElementsRenderer = async (
   output: Size
 ): Promise<ElementsRenderer> => {
   const ordered = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+  /** Píxeles de salida por píxel del documento. */
+  const outputScale = output.width / docSize.width;
 
   // Fuentes e imágenes listas antes de crear los nodos (Konva mide al crear).
   const images = ordered.filter(
     (element): element is ImageElement => element.whatTask === "image"
   );
   const [{ sources, animations }] = await Promise.all([
-    loadImages(images),
+    loadImages(images, outputScale),
     Promise.all(
       ordered.map((element) =>
         element.whatTask === "text"
@@ -115,7 +155,7 @@ export const createElementsRenderer = async (
   const layer = new Layer({ listening: false });
   stage.add(layer);
   // La capa se pinta directamente a la resolución de salida.
-  layer.getCanvas().setPixelRatio(output.width / docSize.width);
+  layer.getCanvas().setPixelRatio(outputScale);
 
   for (const element of ordered) {
     if (element.whatTask === "text") {
