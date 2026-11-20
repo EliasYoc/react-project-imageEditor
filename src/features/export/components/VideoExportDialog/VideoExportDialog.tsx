@@ -15,7 +15,12 @@ import {
   VIDEO_MIME_TYPE,
   defaultExportName,
 } from "../../utils/exportName";
-import { exportVideo } from "../../utils/exportVideo";
+import type { EncodeVideoResult } from "../../utils/encodeVideo";
+import {
+  exportAnimation,
+  exportVideo,
+  type ExportVideoOptions,
+} from "../../utils/exportVideo";
 import type { ExportDialogProps } from "../ExportDialog/ExportDialog";
 import styles from "./VideoExportDialog.module.css";
 import FileNameField from "../FileNameField/FileNameField";
@@ -44,7 +49,7 @@ const VideoExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
       description={`Se guarda en MP4 a ${width} × ${height} px, con su sonido.`}
     >
       {/* Se monta al abrir: cada vez empieza con el nombre sugerido. */}
-      <VideoExportBody
+      <DocumentVideoExportBody
         onDone={() => onOpenChange(false)}
         onWorkingChange={setIsWorking}
       />
@@ -52,17 +57,58 @@ const VideoExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
   );
 };
 
-interface VideoExportBodyProps {
+interface ExportBodyProps {
   onDone: () => void;
   onWorkingChange: (isWorking: boolean) => void;
 }
 
-const VideoExportBody = ({ onDone, onWorkingChange }: VideoExportBodyProps) => {
+/** Exportar el video del documento, con el dibujo encima y su sonido. */
+const DocumentVideoExportBody = (props: ExportBodyProps) => {
   const fileName = useEditorStore((state) => state.photo.fileName);
+  return (
+    <VideoExportBody
+      {...props}
+      runExport={exportVideo}
+      suggestedName={defaultExportName({
+        hasPhoto: false,
+        isVideo: true,
+        fileName,
+      })}
+    />
+  );
+};
+
+/**
+ * Exportar un lienzo o una foto con GIFs como video (lo usa `ExportDialog`,
+ * que lo carga bajo demanda desde este archivo).
+ */
+export const AnimationExportBody = (props: ExportBodyProps) => {
+  const hasPhoto = useEditorStore((state) => state.photo.source !== null);
+  const fileName = useEditorStore((state) => state.photo.fileName);
+  return (
+    <VideoExportBody
+      {...props}
+      runExport={exportAnimation}
+      suggestedName={defaultExportName({ hasPhoto, fileName })}
+    />
+  );
+};
+
+interface VideoExportBodyProps extends ExportBodyProps {
+  /** Exporta el video y dice cómo terminó. */
+  runExport: (options: ExportVideoOptions) => Promise<EncodeVideoResult>;
+  /** El nombre que se propone (y el que se usa si se deja vacío). */
+  suggestedName: string;
+}
+
+const VideoExportBody = ({
+  onDone,
+  onWorkingChange,
+  runExport,
+  suggestedName,
+}: VideoExportBodyProps) => {
   const setStatus = useEditorStore((state) => state.setStatus);
-  const suggested = () =>
-    defaultExportName({ hasPhoto: false, isVideo: true, fileName });
-  const [name, setName] = useState(suggested);
+  const [name, setName] = useState(suggestedName);
   /** null = aún no se ha empezado; después, el avance de 0 a 100. */
   const [percent, setPercent] = useState<number | null>(null);
   const [ready, setReady] = useState<ReadyVideo | null>(null);
@@ -90,7 +136,7 @@ const VideoExportBody = ({ onDone, onWorkingChange }: VideoExportBodyProps) => {
     onWorkingChange(true);
     setStatus("exportingVideo");
     try {
-      return await exportVideo({
+      return await runExport({
         onProgress: (progress) => setPercent(Math.round(progress * 100)),
         signal: abort.signal,
       });
@@ -107,7 +153,7 @@ const VideoExportBody = ({ onDone, onWorkingChange }: VideoExportBodyProps) => {
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const savedName = getDownloadFileName(
-      name.trim() || suggested(),
+      name.trim() || suggestedName,
       VIDEO_MIME_TYPE
     );
     const result = await run();

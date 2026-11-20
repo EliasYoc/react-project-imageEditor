@@ -195,6 +195,12 @@ export interface ImageElement extends BaseElement {
   /** Tamaño sin escalar, en píxeles del documento. */
   width: number;
   height: number;
+  /**
+   * Es un GIF (o WebP/PNG animado) que el navegador sabe animar. Se mira una
+   * vez, al insertarla: en un navegador sin `ImageDecoder` (Safari) es false
+   * y la imagen se queda quieta.
+   */
+  isAnimated: boolean;
 }
 
 export type EditorElement = TextElement | ImageElement;

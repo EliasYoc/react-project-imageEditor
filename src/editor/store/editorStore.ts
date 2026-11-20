@@ -114,6 +114,7 @@ export interface EditorActions {
     width: number;
     height: number;
     center: Point;
+    isAnimated: boolean;
   }) => string;
   /**
    * Cambia un elemento creando un paso del historial. Con `mergeKey`, los
@@ -418,7 +419,7 @@ const createStateStore = (initialState?: Partial<EditorState>) =>
             return id;
           },
 
-          addImage: ({ src, width, height, center }) => {
+          addImage: ({ src, width, height, center, isAnimated }) => {
             const id = createId();
             set(
               (state) => ({
@@ -431,6 +432,7 @@ const createStateStore = (initialState?: Partial<EditorState>) =>
                     width,
                     height,
                     center,
+                    isAnimated,
                   }),
                 ]),
                 selectedElementId: id,

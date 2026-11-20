@@ -306,6 +306,13 @@ test.describe("Exportar el video", () => {
 
     const { name, bytes } = await exportVideo(page, isMobile);
     expect(name).toBe("video-editado.mp4");
+    // Antes de leer el video: el aviso dura 4 s y, con varios tests a la vez,
+    // leerlo puede tardar más.
+    if (!isMobile) {
+      await expect(
+        page.getByText("Video descargado: video-editado.mp4", { exact: true })
+      ).toBeVisible();
+    }
     const exported = await readVideo(page, bytes, {
       times: [0.5, 1.5],
       points: [STROKE, STRIP, LEFT, RIGHT],
@@ -323,12 +330,6 @@ test.describe("Exportar el video", () => {
     expect(isBlue(late[1])).toBe(true);
     expect(isDark(early[2])).toBe(true);
     expect(isWhite(early[3])).toBe(true);
-
-    if (!isMobile) {
-      await expect(
-        page.getByText("Video descargado: video-editado.mp4", { exact: true })
-      ).toBeVisible();
-    }
   });
 
   test("en el móvil, si exportar tardó, el video se comparte con un toque más", async ({

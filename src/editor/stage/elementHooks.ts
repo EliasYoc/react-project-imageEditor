@@ -1,7 +1,15 @@
-import { useEffect, useReducer } from "react";
+import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
+import { useEffect, useReducer, type RefObject } from "react";
+import {
+  getLoadedAnimatedImage,
+  loadAnimatedImage,
+} from "../elements/animatedImage";
 import { ensureFont, isFontReady } from "../elements/fontLoader";
 import type { FontId } from "../elements/fonts";
 import { getLoadedImage, loadImage } from "../elements/imageCache";
+import { useEditorStore } from "../store/editorStore";
+import { selectVideo } from "../store/selectors";
+import { onAnimationTick } from "./animationClock";
 
 /** Fuerza un render cuando termina algo asíncrono (carga de fuente o imagen). */
 const useForceRender = () => useReducer((count: number) => count + 1, 0)[1];
@@ -41,4 +49,54 @@ export const useLoadedImage = (src: string) => {
     };
   }, [src, forceRender]);
   return getLoadedImage(src);
+};
+
+/** La imagen animada ya abierta (null mientras se abre, si falla o sin `src`). */
+const useAnimatedImage = (src: string | null) => {
+  const forceRender = useForceRender();
+  useEffect(() => {
+    if (!src || getLoadedAnimatedImage(src)) return;
+    let isActive = true;
+    loadAnimatedImage(src)
+      .then(() => {
+        if (isActive) forceRender();
+      })
+      .catch((error) => console.error(error));
+    return () => {
+      isActive = false;
+    };
+  }, [src, forceRender]);
+  return src ? getLoadedAnimatedImage(src) : null;
+};
+
+/**
+ * Anima un GIF del lienzo (`src` null si la imagen no es animada): sigue el
+ * reloj de la animación y repinta la capa del nodo cuando cambia de
+ * fotograma. Con el editor oculto (en el inicio) o mientras se exporta un
+ * video, se para: no gasta lo que necesita la exportación.
+ *
+ * Devuelve el canvas con el fotograma actual, o null mientras se abre (o si
+ * no se pudo): entonces se muestra la imagen quieta.
+ */
+export const useImageAnimation = (
+  src: string | null,
+  nodeRef: RefObject<KonvaImageNode | null>
+) => {
+  const animation = useAnimatedImage(src);
+  const video = useEditorStore(selectVideo);
+  const isPlaying = useEditorStore(
+    (state) => state.mode !== "home" && state.status !== "exportingVideo"
+  );
+
+  useEffect(() => {
+    if (!animation) return;
+    return animation.onFrame(() => nodeRef.current?.getLayer()?.batchDraw());
+  }, [animation, nodeRef]);
+
+  useEffect(() => {
+    if (!animation || !isPlaying) return;
+    return onAnimationTick(video, animation.showFrameAt);
+  }, [animation, isPlaying, video]);
+
+  return animation?.canvas ?? null;
 };

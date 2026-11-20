@@ -1,6 +1,6 @@
 import type { Photo, Size, VideoSource } from "../../../editor/model/types";
 import { releaseVideo } from "../../../editor/store/videoLifecycle";
-import { fitToMaxSide } from "../../../lib/helper";
+import { fitVideoSize } from "../../../lib/videoSize";
 import { baseName } from "./openImageFile";
 
 /**
@@ -10,12 +10,6 @@ import { baseName } from "./openImageFile";
 export const MAX_VIDEO_SECONDS = 120;
 /** Margen: un video "de 2 minutos" suele durar unas décimas más. */
 const DURATION_MARGIN = 1;
-
-/**
- * Lado mayor del documento, que es también el del video exportado (Full HD).
- * Un 4K necesitaría unos 200 MB solo en capas al exportar.
- */
-const MAX_VIDEO_SIDE = 1920;
 
 /** Cuánto se espera a los datos del video antes de darlo por ilegible. */
 const METADATA_TIMEOUT = 15_000;
@@ -45,19 +39,6 @@ export class VideoOpenError extends Error {
 /** El archivo es un video. */
 export const isVideoFile = (file: File | null | undefined): file is File =>
   !!file && file.type.startsWith("video/");
-
-/**
- * Tamaño del documento de un video: el del video, reducido a Full HD si es
- * mayor y con los lados pares (el códec H.264 no admite lados impares).
- */
-export const videoDocumentSize = (video: Size): Size => {
-  const { width, height } =
-    Math.max(video.width, video.height) > MAX_VIDEO_SIDE
-      ? fitToMaxSide(video, MAX_VIDEO_SIDE)
-      : video;
-  const even = (value: number) => Math.max(2, Math.round(value / 2) * 2);
-  return { width: even(width), height: even(height) };
-};
 
 /**
  * Espera un evento del video: `true` si llega, `false` si pasa el tiempo.
@@ -149,7 +130,8 @@ export const openVideoFile = async (
       mimeType: null,
       fileName: baseName(file.name),
       video: { ...video, duration },
-      size: videoDocumentSize({ width: videoWidth, height: videoHeight }),
+      // El documento mide lo que el video, que es también el tamaño al exportar.
+      size: fitVideoSize({ width: videoWidth, height: videoHeight }),
     };
   } catch (error) {
     releaseVideo(video);

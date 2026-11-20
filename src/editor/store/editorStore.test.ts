@@ -44,12 +44,13 @@ const red: Backdrop = {
 };
 
 const addText = (x = 0) => state().addText({ x, y: 0 }, 50);
-const addImage = () =>
+const addImage = (isAnimated = false) =>
   state().addImage({
     src: "blob:imagen",
     width: 100,
     height: 50,
     center: { x: 500, y: 400 },
+    isAnimated,
   });
 
 let store: ReturnType<typeof createEditorStore>;
@@ -316,7 +317,13 @@ describe("elementos", () => {
       y: 375,
       width: 100,
       height: 50,
+      isAnimated: false,
     });
+  });
+
+  it("addImage guarda si la imagen es animada (un GIF)", () => {
+    addImage(true);
+    expect(selectElements(state())[0]).toMatchObject({ isAnimated: true });
   });
 
   it("editElement cambia solo ese elemento, sin mutar el anterior, y crea un paso", () => {
