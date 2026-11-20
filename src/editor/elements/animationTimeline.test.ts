@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { buildTimeline, frameIndexAt, frameSeconds } from "./animationTimeline";
+import {
+  buildTimeline,
+  frameIndexAt,
+  frameSeconds,
+  lottieFrameAt,
+  wholeStepsIn,
+} from "./animationTimeline";
 
 describe("frameSeconds", () => {
   it("pasa de microsegundos a segundos", () => {
@@ -59,5 +65,42 @@ describe("frameIndexAt", () => {
   it("con un solo fotograma siempre es el primero", () => {
     expect(frameIndexAt(buildTimeline([0.5]), 12.3)).toBe(0);
     expect(frameIndexAt(buildTimeline([]), 1)).toBe(0);
+  });
+});
+
+describe("lottieFrameAt", () => {
+  // 30 fps y 12 fotogramas: una vuelta de 0,4 s, como el sticker de prueba.
+  const sticker = { fr: 30, ip: 0, op: 12 };
+
+  it("da el fotograma de cada momento y se repite", () => {
+    expect(lottieFrameAt(sticker, 0)).toBe(0);
+    expect(lottieFrameAt(sticker, 0.1)).toBe(3);
+    expect(lottieFrameAt(sticker, 0.5)).toBe(3);
+    expect(lottieFrameAt(sticker, -0.1)).toBe(9);
+  });
+
+  it("en los cambios de fotograma y de vuelta no se queda en el anterior por el redondeo", () => {
+    for (let index = 0; index < 450; index++) {
+      const frame = lottieFrameAt(sticker, index / 30);
+      expect(frame).toBe(index % 12);
+    }
+  });
+
+  it("cuenta desde su primer fotograma (ip) y deja los intermedios con decimales", () => {
+    // Del 10 al 70 a 60 fps: una vuelta de 1 s.
+    const offset = { fr: 60, ip: 10, op: 70 };
+    expect(lottieFrameAt(offset, 0.5)).toBe(30);
+    expect(lottieFrameAt(offset, 1)).toBe(0);
+    expect(lottieFrameAt({ fr: 24, ip: 0, op: 48 }, 0.1)).toBeCloseTo(2.4);
+  });
+});
+
+describe("wholeStepsIn", () => {
+  it("cuenta los pasos enteros aunque el redondeo deje 5,9999…", () => {
+    expect(wholeStepsIn(0.2, 30)).toBe(6);
+    expect(wholeStepsIn(0.19, 30)).toBe(5);
+    for (let step = 0; step < 450; step++) {
+      expect(wholeStepsIn(step / 30, 30)).toBe(step);
+    }
   });
 });

@@ -18,6 +18,7 @@ import {
   type BrushPresetId,
   type BrushState,
   type BrushSettings,
+  type ImageAnimation,
   type ImageElement,
   type LogEntry,
   type Mode,
@@ -114,7 +115,7 @@ export interface EditorActions {
     width: number;
     height: number;
     center: Point;
-    isAnimated: boolean;
+    animation: ImageAnimation;
   }) => string;
   /**
    * Cambia un elemento creando un paso del historial. Con `mergeKey`, los
@@ -419,7 +420,7 @@ const createStateStore = (initialState?: Partial<EditorState>) =>
             return id;
           },
 
-          addImage: ({ src, width, height, center, isAnimated }) => {
+          addImage: ({ src, width, height, center, animation }) => {
             const id = createId();
             set(
               (state) => ({
@@ -432,7 +433,7 @@ const createStateStore = (initialState?: Partial<EditorState>) =>
                     width,
                     height,
                     center,
-                    isAnimated,
+                    animation,
                   }),
                 ]),
                 selectedElementId: id,

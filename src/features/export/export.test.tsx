@@ -256,7 +256,7 @@ describe("exportar un video", () => {
       width: 64,
       height: 64,
       center: { x: 640, y: 360 },
-      isAnimated: true,
+      animation: "frames",
     });
     const user = userEvent.setup();
     await startExport(user);
@@ -291,7 +291,7 @@ describe("exportar un lienzo con GIFs", () => {
       width: 64,
       height: 64,
       center: { x: 540, y: 540 },
-      isAnimated: true,
+      animation: "frames",
     });
   });
 

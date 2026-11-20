@@ -170,11 +170,11 @@ describe("TextStylePanel", () => {
 });
 
 describe("TextToolbar", () => {
-  it("«Insertar una imagen» está en el menú «Más opciones» y abre el selector de archivos", async () => {
+  it("«Insertar una imagen o sticker» está en el menú «Más opciones» y abre el selector de archivos", async () => {
     const user = userEvent.setup();
     const { container } = render(<TextToolbar />);
     expect(
-      screen.queryByRole("button", { name: "Insertar una imagen" })
+      screen.queryByRole("button", { name: "Insertar una imagen o sticker" })
     ).toBeNull();
 
     const input = container.querySelector<HTMLInputElement>(
@@ -185,7 +185,7 @@ describe("TextToolbar", () => {
     screen.getByRole("button", { name: "Más opciones" }).focus();
     await user.keyboard("{Enter}");
     await user.click(
-      screen.getByRole("menuitem", { name: "Insertar una imagen" })
+      screen.getByRole("menuitem", { name: "Insertar una imagen o sticker" })
     );
     expect(openPicker).toHaveBeenCalledOnce();
   });

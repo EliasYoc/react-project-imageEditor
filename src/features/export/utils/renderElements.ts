@@ -58,7 +58,7 @@ const loadImages = async (images: readonly ImageElement[]) => {
   await Promise.all(
     images.map(async (element) => {
       const reader =
-        element.isAnimated && canAnimateImages()
+        element.animation === "frames" && canAnimateImages()
           ? await openReader(element.src)
           : null;
       sources.set(element.id, reader?.canvas ?? (await loadImage(element.src)));

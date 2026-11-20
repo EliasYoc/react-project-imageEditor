@@ -326,6 +326,43 @@ export async function openPhoto(page: Page) {
   ).toBeVisible();
 }
 
+/**
+ * Inserta un archivo (una imagen, un GIF o un sticker) con «Insertar una
+ * imagen o sticker», del menú «Más opciones» del modo Texto.
+ */
+export async function insertFile(page: Page, path: string) {
+  await page.getByRole("radio", { name: "Texto" }).click();
+  const chooser = page.waitForEvent("filechooser");
+  // El «Más opciones» de la barra de herramientas, no el de la cabecera.
+  await page
+    .getByRole("contentinfo")
+    .getByRole("button", { name: "Más opciones", exact: true })
+    .click();
+  await page
+    .getByRole("menuitem", { name: "Insertar una imagen o sticker" })
+    .click();
+  await (await chooser).setFiles(path);
+}
+
+/**
+ * Mira el punto una y otra vez hasta ver los dos colores de los archivos
+ * animados de prueba (el GIF y el sticker: rojo y azul, 200 ms cada uno).
+ */
+export const expectBothColorsAt = (page: Page, point: Point) => {
+  const seen = new Set<string>();
+  return expect
+    .poll(
+      async () => {
+        const color = await screenColor(page, point);
+        if (isRed(color)) seen.add("rojo");
+        if (isBlue(color)) seen.add("azul");
+        return [...seen].sort();
+      },
+      { intervals: [50], message: "la animación cambia de fotograma" }
+    )
+    .toEqual(["azul", "rojo"]);
+};
+
 /** Abre el video de prueba con el botón "Agregar video". */
 export async function openVideo(page: Page) {
   await page.goto("/");

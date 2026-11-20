@@ -59,6 +59,22 @@ convertirlo en e2e.
 - **Rendimiento:** un lienzo con 20 GIFs en un móvil (CPU ×4 más lenta): que
   la animación no se trabe y cuánto tarda el video de 15 s.
 
+## Los stickers Lottie se insertan y se mueven en el lienzo
+
+- **unitario:** `objectUrlFor` da la misma URL para el mismo contenido (y una
+  nueva para otro), y `release` solo suelta una URL nueva.
+- **e2e:** un `.json` que no es un sticker, y uno con una imagen externa,
+  muestran su aviso («Este archivo no es un sticker animado», «El sticker usa
+  archivos externos…») y no se insertan. Comprobado a mano el 20/11/2026.
+- **e2e:** insertar dos veces el mismo sticker: los dos se mueven a la vez (el
+  mismo reproductor).
+- **e2e:** con un video de fondo, el sticker se para con el video en pausa.
+- **e2e:** al hacer zoom, el sticker se repinta a más resolución (sin verse
+  vacío al cambiar de escalón).
+- **e2e:** sin `ImageDecoder` (Safari simulado), el sticker sí se mueve.
+- **Rendimiento:** repetir la medición del README (30 copias y 9 distintos,
+  móvil con CPU ×4) en un teléfono de verdad.
+
 ## La carga de imágenes vive en un solo sitio (`loadImageElement`)
 
 - **e2e:** «Insertar una imagen» (menú «Más opciones» del modo Texto) la

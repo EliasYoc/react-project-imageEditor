@@ -51,7 +51,7 @@ type Sheet = "font" | "style";
 
 /**
  * Barra del modo Texto: añadir texto, fuente, estilo, color, eliminar y el
- * menú "Más opciones" (por ahora, insertar una imagen). Fuente, estilo y color
+ * menú "Más opciones" (insertar una imagen o un sticker). Fuente, estilo y color
  * se aplican al texto seleccionado.
  */
 const TextToolbar = () => {
@@ -68,7 +68,11 @@ const TextToolbar = () => {
   const closeSheet = (open: boolean) => !open && setOpenSheet(null);
 
   const moreOptions: MenuItem[] = [
-    { label: "Insertar una imagen", icon: ImagePlus, onSelect: pickImage },
+    {
+      label: "Insertar una imagen o sticker",
+      icon: ImagePlus,
+      onSelect: pickImage,
+    },
   ];
 
   return (
