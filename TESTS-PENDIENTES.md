@@ -89,6 +89,13 @@ sale nítida a 1080 × 1080 y el video de 15 s se exporta en 4,5 s.
 - **unitario:** `stickerSides` (renderElements) usa la copia más grande de
   cada sticker y no pasa de 2048 px.
 
+## «¿Qué puedo insertar?» en el menú de la barra de Texto
+
+- **e2e (móvil):** la ayuda se abre desde el menú, se lee entera (con scroll
+  si no cabe) y se cierra con un toque fuera; el foco vuelve al menú.
+- **unitario:** con el teclado, el separador no recibe foco (las flechas
+  pasan de «¿Qué puedo insertar?» a «Insertar archivo»).
+
 ## La carga de imágenes vive en un solo sitio (`loadImageElement`)
 
 - **e2e:** «Insertar una imagen» (menú «Más opciones» del modo Texto) la

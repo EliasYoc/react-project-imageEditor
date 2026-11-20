@@ -189,4 +189,34 @@ describe("TextToolbar", () => {
     );
     expect(openPicker).toHaveBeenCalledOnce();
   });
+
+  it("«¿Qué puedo insertar?», encima de «Insertar archivo», explica los tipos de archivo", async () => {
+    const user = userEvent.setup();
+    render(<TextToolbar />);
+    await user.click(screen.getByRole("button", { name: "Más opciones" }));
+    const items = screen
+      .getAllByRole("menuitem")
+      .map((item) => item.textContent);
+    expect(items).toEqual(["¿Qué puedo insertar?", "Insertar archivo"]);
+    expect(screen.getByRole("separator")).toBeInTheDocument();
+
+    await user.click(
+      screen.getByRole("menuitem", { name: "¿Qué puedo insertar?" })
+    );
+    const dialog = await screen.findByRole("dialog", {
+      name: "¿Qué puedo insertar?",
+    });
+    for (const kind of [
+      /^Imágenes/,
+      /^GIFs animados/,
+      /^Stickers Lottie/,
+      /^Stickers de Telegram/,
+    ]) {
+      expect(within(dialog).getByRole("region", { name: kind })).toBeVisible();
+    }
+    // Las webs para conseguir stickers se abren en otra pestaña.
+    expect(
+      within(dialog).getByRole("link", { name: "LottieFiles" })
+    ).toHaveAttribute("target", "_blank");
+  });
 });

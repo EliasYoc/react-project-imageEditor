@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
-import type { ReactElement } from "react";
+import { Fragment, type ReactElement } from "react";
 import type { IconComponent } from "../Button/IconButton";
 import styles from "./Menu.module.css";
 
@@ -15,6 +15,8 @@ export interface MenuItem {
   shouldKeepOpen?: boolean;
   /** Atajo de teclado, a la derecha (p. ej. "Ctrl+0"). */
   shortcut?: string;
+  /** Una línea debajo la separa de las opciones siguientes. */
+  hasSeparatorAfter?: boolean;
 }
 
 export interface MenuProps {
@@ -60,26 +62,30 @@ export function Menu({
             </DropdownMenu.Label>
           )}
           {items.map((item) => (
-            <DropdownMenu.Item
-              key={item.label}
-              className={styles.item}
-              data-danger={item.isDanger || undefined}
-              disabled={item.disabled}
-              onSelect={(event) => {
-                if (item.shouldKeepOpen) event.preventDefault();
-                item.onSelect();
-              }}
-            >
-              {item.icon && <item.icon aria-hidden="true" />}
-              {item.label}
-              {item.shortcut && (
-                // Solo a la vista: el nombre de la opción no lo incluye
-                // (los atajos están en la lista de atajos, tecla ?).
-                <span className={styles.shortcut} aria-hidden="true">
-                  {item.shortcut}
-                </span>
+            <Fragment key={item.label}>
+              <DropdownMenu.Item
+                className={styles.item}
+                data-danger={item.isDanger || undefined}
+                disabled={item.disabled}
+                onSelect={(event) => {
+                  if (item.shouldKeepOpen) event.preventDefault();
+                  item.onSelect();
+                }}
+              >
+                {item.icon && <item.icon aria-hidden="true" />}
+                {item.label}
+                {item.shortcut && (
+                  // Solo a la vista: el nombre de la opción no lo incluye
+                  // (los atajos están en la lista de atajos, tecla ?).
+                  <span className={styles.shortcut} aria-hidden="true">
+                    {item.shortcut}
+                  </span>
+                )}
+              </DropdownMenu.Item>
+              {item.hasSeparatorAfter && (
+                <DropdownMenu.Separator className={styles.separator} />
               )}
-            </DropdownMenu.Item>
+            </Fragment>
           ))}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

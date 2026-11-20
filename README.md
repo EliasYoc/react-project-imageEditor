@@ -189,6 +189,8 @@ Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «
 
 Un sticker **Lottie** se inserta igual que una imagen: «Insertar archivo» acepta también `.json` y `.tgs` (el formato de Telegram: el mismo JSON comprimido con gzip). Se mueve, se transforma y sigue al video como un GIF, y **también en Safari** (no usa `ImageDecoder`).
 
+**«¿Qué puedo insertar?»**, encima de «Insertar archivo» en el mismo menú (separada por una línea, `hasSeparatorAfter` en `Menu`), abre una ayuda (`features/images/components/InsertHelpDialog.tsx`). Explica cada tipo de archivo (imágenes, GIFs, stickers Lottie y de Telegram) y cómo conseguirlos: guardar un GIF desde el navegador, LottieFiles y los emojis animados de Google para `.json`, y los bots de Telegram que convierten stickers a `.tgs`.
+
 - **Biblioteca:** [lottie-web](https://github.com/airbnb/lottie-web) 5.13.0 (MIT), en su versión **`lottie_light_canvas`** (54,5 kB con gzip). Se descarga solo con el primer sticker (`editor/elements/lottieSticker.ts`, cargado bajo demanda).
 - **Seguridad:**
   - la versión "light" no ejecuta las expresiones de After Effects (las versiones completas lo hacen con `eval`): un archivo malicioso no puede ejecutar código;

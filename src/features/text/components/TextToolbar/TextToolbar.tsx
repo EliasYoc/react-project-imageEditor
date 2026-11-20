@@ -1,4 +1,5 @@
 import {
+  CircleQuestionMark,
   EllipsisVertical,
   ImagePlus,
   PaintRoller,
@@ -24,7 +25,7 @@ import {
   selectSelectedElement,
   selectSelectedText,
 } from "../../../../editor/store/selectors";
-import { useInsertImage } from "../../../images";
+import { InsertHelpDialog, useInsertImage } from "../../../images";
 import { SHORTCUT_LABELS } from "../../../shortcuts";
 import FontPicker from "../FontPicker/FontPicker";
 import TextStylePanel from "../TextStylePanel/TextStylePanel";
@@ -51,8 +52,8 @@ type Sheet = "font" | "style";
 
 /**
  * Barra del modo Texto: añadir texto, fuente, estilo, color, eliminar y el
- * menú "Más opciones" (insertar una imagen o un sticker). Fuente, estilo y color
- * se aplican al texto seleccionado.
+ * menú "Más opciones" (qué se puede insertar e insertar un archivo). Fuente,
+ * estilo y color se aplican al texto seleccionado.
  */
 const TextToolbar = () => {
   const selectedText = useEditorStore(selectSelectedText);
@@ -61,6 +62,7 @@ const TextToolbar = () => {
   const removeElement = useEditorStore((state) => state.removeElement);
   // Panel abierto: el de fuentes o el de estilo (uno a la vez).
   const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
+  const [isInsertHelpOpen, setIsInsertHelpOpen] = useState(false);
 
   const { pickImage, fileInput } = useInsertImage();
 
@@ -68,6 +70,12 @@ const TextToolbar = () => {
   const closeSheet = (open: boolean) => !open && setOpenSheet(null);
 
   const moreOptions: MenuItem[] = [
+    {
+      label: "¿Qué puedo insertar?",
+      icon: CircleQuestionMark,
+      onSelect: () => setIsInsertHelpOpen(true),
+      hasSeparatorAfter: true,
+    },
     {
       label: "Insertar archivo",
       icon: ImagePlus,
@@ -129,6 +137,10 @@ const TextToolbar = () => {
         items={moreOptions}
       />
       {fileInput}
+      <InsertHelpDialog
+        open={isInsertHelpOpen}
+        onOpenChange={setIsInsertHelpOpen}
+      />
       <Panel
         open={openSheet === "font" && selectedText !== null}
         onOpenChange={closeSheet}

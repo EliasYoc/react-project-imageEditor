@@ -1,0 +1,43 @@
+/* Como la lista de atajos: secciones con título, con scroll si no caben. */
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  max-height: min(70dvh, 600px);
+  overflow-y: auto;
+  /* Barra de desplazamiento oscura, a juego con el diálogo. */
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  scrollbar-width: thin;
+}
+
+.title {
+  margin-bottom: var(--space-1);
+  color: var(--color-text-strong);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+
+.text {
+  color: var(--color-text-active);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.link {
+  color: var(--color-text-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:focus-visible {
+  border-radius: 2px;
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* Aviso al final, más discreto. */
+.note {
+  color: var(--color-text);
+  font-size: 12px;
+  line-height: 1.5;
+}
