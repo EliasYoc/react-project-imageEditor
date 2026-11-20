@@ -93,7 +93,7 @@ El modelo de la conversación lo elige el dueño (`/model`). Antes de empezar un
 
 - **Pequeño o mecánico** (renombrar, mover archivos, sacar una función repetida, ordenar imports): **Sonnet** con esfuerzo _medium_.
 - **Mediano** (reorganizar una feature, cambiar cómo se comunica un componente con el store): **Sonnet** con esfuerzo _high_, u **Opus** si toca código delicado (el lienzo, los pinceles, la exportación).
-- **Grande o de arquitectura** (el store, el motor de pinceles, una versión mayor de TypeScript): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
+- **Grande o de arquitectura** (el store, el motor de pinceles, una versión mayor de TypeScript): **Opus** con esfuerzo _high_ para el plan. Para ejecutarlo se sigue lo mismo que en una tarea grande (regla 8): Opus si toca código delicado; si no, `/clear` y **Sonnet**, paso a paso desde el archivo del plan.
 
 Un refactor no cambia lo que hace la app: lo vigilan los tests que ya existen y normalmente no necesita tests nuevos.
 
@@ -103,7 +103,11 @@ El modelo de la conversación lo elige el dueño (`/model`). Cuando pida un camb
 
 - **Pequeño** (un texto, un estilo, un error ya localizado): **Sonnet** con esfuerzo _medium_.
 - **Mediano** (una feature acotada, un error que hay que investigar): **Sonnet** con esfuerzo _high_, u **Opus** si toca código delicado (el lienzo, los pinceles, la exportación, el video).
-- **Grande** (una feature que cruza varias partes de la app): **Opus** con esfuerzo _high_ para el plan. Después, con el plan aprobado, se hace `/clear`, se cambia a **Sonnet** y se ejecuta el plan paso a paso (queda guardado en un archivo).
+- **Grande** (una feature que cruza varias partes de la app): **Opus** con esfuerzo _high_ para el plan, que queda guardado en un archivo. Con el plan aprobado, se ejecuta paso a paso:
+  - **Si toca código delicado** (el lienzo, los pinceles, la exportación, el video), lo ejecuta también **Opus**: ahí los errores son sutiles, y encontrarlos y corregirlos pide pensar más.
+  - **Si es mecánico**, se hace `/clear`, se cambia a **Sonnet** y se ejecuta desde el archivo.
+  - Un plan puede mezclar los dos: los pasos delicados con Opus y los mecánicos con Sonnet.
+  - No hace falta `/clear` si la conversación ya tiene leídos los archivos de los pasos que quedan: volver a leerlos también gasta.
 
 Si el modelo actual ya es el adecuado, basta con decirlo y seguir. Si no lo es, Claude espera a que el dueño cambie de modelo o le diga que siga con el actual.
 
