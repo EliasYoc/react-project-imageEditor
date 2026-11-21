@@ -105,3 +105,65 @@ sale nítida a 1080 × 1080 y el video de 15 s se exporta en 4,5 s.
 - **e2e:** insertar dos veces la misma imagen y una que no se puede leer (un
   archivo `.png` que no es una imagen): la segunda muestra el aviso de error y
   la app sigue funcionando.
+
+## Un solo panel «Fuente y estilo»
+
+Comprobado a mano en Edge (390, 320 y 1280 px de ancho) con un script de
+Playwright: grosor y alineación quedan en la misma fila en los tres.
+
+- **e2e (móvil):** a 320 px de ancho, Normal/Negrita y la alineación siguen en
+  la misma fila y el panel no tiene scroll horizontal.
+- **e2e (escritorio):** con el panel abierto (no modal), elegir otro texto
+  actualiza el grosor, la alineación y la fuente marcada.
+- **Decisión sin tomar:** al abrir el panel se descargan las 18 fuentes aunque
+  solo se quiera cambiar la sombra. Si pesa, retrasar la descarga hasta que la
+  lista se vea (y entonces, un test que lo compruebe).
+
+## Vista previa del texto en «Fuente y estilo»
+
+Comprobado a mano en Edge (390 y 1280 px de ancho): la vista previa queda fija
+al hacer scroll y no asoma nada por encima. Konva no crea un lienzo en jsdom:
+los tests de componentes la sustituyen por un marcador.
+
+- **e2e (móvil):** a 320 px de ancho, la vista previa cabe y el texto se ve
+  entero.
+- **e2e:** un texto largo (más de 3 líneas, o una línea de más de 40 letras)
+  muestra las primeras líneas con «…» y se encoge para caber.
+- **e2e:** con la sombra al máximo y un contorno grueso, la sombra no se
+  recorta por los bordes de la vista previa (`textBleed`).
+- **e2e:** al cambiar a una fuente que aún no se ha descargado, la vista
+  previa conserva el dibujo anterior y se actualiza al llegar la fuente.
+- **Decisión sin tomar:** el color de la sombra no cuenta para elegir el fondo
+  (una sombra blanca sobre el fondo blanco no se ve). Si molesta, añadirla a
+  `previewBackdrop`.
+
+## El editor de texto sale horizontal y centrado
+
+Comprobado a mano en Edge (390 px) con un texto corto y con uno largo de una
+sola línea (se encoge hasta caber, a un 15 % de su tamaño).
+
+- **e2e:** un texto girado (con las asas de la selección) se edita horizontal.
+  Hoy el e2e solo mueve el texto, no lo gira.
+- **e2e:** un texto más ancho que la pantalla se edita encogido, sin salirse
+  por los lados.
+- **e2e:** al hacer zoom con el editor abierto, el editor cambia de tamaño y
+  sigue centrado.
+- **Decisión sin tomar:** en un documento muy apaisado o con una foto de otra
+  proporción, el editor puede caer fuera del lienzo, sobre el fondo gris, y un
+  texto oscuro no se ve. Una caja de fondo (blanca o gris, como la de la vista
+  previa) detrás del editor lo arreglaría.
+
+## Ancho máximo del texto (90 % del lienzo)
+
+Comprobado en el e2e con una sola frase larga (móvil y escritorio).
+
+- **e2e:** exportar una imagen con un texto largo: en el archivo exportado el
+  texto también se reparte en líneas y no pasa del 90 % del ancho (la
+  exportación y el lienzo comparten `applyTextMaxWidth`, pero hoy ningún e2e
+  exporta un texto).
+- **e2e:** un lienzo de otra proporción (apaisado o de 1920 px de ancho): el
+  tope sigue siendo el 90 % de su ancho.
+- **e2e:** acortar un texto largo ya confirmado (volver a editarlo) vuelve a
+  encoger su caja, en vez de dejarla al 90 %.
+- **Sin decidir:** una palabra más ancha que el 90 % se parte distinto en el
+  editor (se sale por el lado, oculta) y en Konva (se parte por letras).

@@ -1,7 +1,5 @@
 import { Layer } from "konva/lib/Layer";
 import { Image as KonvaImage } from "konva/lib/shapes/Image";
-import { Label, Tag } from "konva/lib/shapes/Label";
-import { Text } from "konva/lib/shapes/Text";
 import { Stage } from "konva/lib/Stage";
 import {
   canAnimateImages,
@@ -10,11 +8,9 @@ import {
 } from "../../../editor/elements/animatedImage";
 import { ensureFont } from "../../../editor/elements/fontLoader";
 import { loadImage } from "../../../editor/elements/imageCache";
-import {
-  imageNodeConfig,
-  textNodeConfig,
-} from "../../../editor/elements/nodeConfig";
-import { applyTextFill } from "../../../editor/elements/textGradient";
+import { imageNodeConfig } from "../../../editor/elements/nodeConfig";
+import { createTextLabel } from "../../../editor/elements/textShape";
+import { maxTextWidth } from "../../../editor/elements/textWidth";
 import type {
   EditorElement,
   ImageElement,
@@ -159,14 +155,7 @@ export const createElementsRenderer = async (
 
   for (const element of ordered) {
     if (element.whatTask === "text") {
-      const config = textNodeConfig(element);
-      const label = new Label(config.label);
-      const text = new Text(config.text);
-      // Igual que en el lienzo: el degradado se reparte en la caja ya medida.
-      applyTextFill(text, element.gradient);
-      label.add(new Tag(config.tag));
-      label.add(text);
-      layer.add(label);
+      layer.add(createTextLabel(element, maxTextWidth(docSize)).label);
     } else {
       const image = sources.get(element.id);
       if (image)

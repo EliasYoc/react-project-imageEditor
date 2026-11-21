@@ -36,12 +36,15 @@
 // - 120 / 144 / Video 119 / Stickers 59: la ayuda «¿Qué puedo insertar?»
 //   (el editor mide 142,4). Sus textos, el icono y el separador del menú
 //   suman 1 kB; cargarla bajo demanda no ayuda (seguiría contando en Editor).
+// - 120 / 146 / Video 119 / Stickers 59: la vista previa del texto en «Fuente
+//   y estilo» (el editor mide 144,4). Su lienzo de Konva, la elección del
+//   fondo y la colocación suman 1,6 kB.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 144, Video: 119, Stickers: 59 };
+const BUDGETS_KB = { Inicio: 120, Editor: 146, Video: 119, Stickers: 59 };
 /** Los trozos que solo se descargan para exportar un video. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
 /** Los trozos que solo se descargan con el primer sticker. */
