@@ -75,9 +75,6 @@ const InsertHelpDialog = ({ open, onOpenChange }: InsertHelpDialogProps) => (
         conseguirlos, envía el sticker a un bot de Telegram que lo convierta a
         .tgs (algunos también a .json) y descarga el archivo que te devuelve.
       </Section>
-      <p className={styles.note}>
-        Usa solo GIFs y stickers con permiso de su autor.
-      </p>
     </div>
   </Dialog>
 );
