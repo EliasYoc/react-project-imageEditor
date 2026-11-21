@@ -28,7 +28,9 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     if (!textarea) return;
     // preventScroll: en el móvil, el navegador no debe desplazar la página.
     textarea.focus({ preventScroll: true });
-    textarea.select();
+    // El cursor va al final y no se selecciona el texto: escribir no lo borra.
+    const end = textarea.value.length;
+    textarea.setSelectionRange(end, end);
   }, []);
 
   useLayoutEffect(

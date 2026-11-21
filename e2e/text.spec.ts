@@ -59,9 +59,15 @@ test.describe("Texto", () => {
     } else {
       await page.mouse.dblclick(center.x, center.y);
     }
-    await expect(page.getByRole("textbox", { name: "Texto" })).toHaveValue(
-      "Hola"
-    );
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toHaveValue("Hola");
+    // El cursor queda al final y no se selecciona el texto.
+    expect(
+      await editor.evaluate((element: HTMLTextAreaElement) => [
+        element.selectionStart,
+        element.selectionEnd,
+      ])
+    ).toEqual([4, 4]);
   });
 
   test("aplica un degradado al texto", async ({ page, isMobile }) => {
