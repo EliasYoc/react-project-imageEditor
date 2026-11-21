@@ -2,7 +2,6 @@ import {
   CircleQuestionMark,
   EllipsisVertical,
   ImagePlus,
-  PaintRoller,
   Trash2,
   Type,
 } from "lucide-react";
@@ -27,31 +26,25 @@ import {
 } from "../../../../editor/store/selectors";
 import { InsertHelpDialog, useInsertImage } from "../../../images";
 import { SHORTCUT_LABELS } from "../../../shortcuts";
-import FontPicker from "../FontPicker/FontPicker";
-import TextStylePanel from "../TextStylePanel/TextStylePanel";
+import TextPanel from "../TextPanel/TextPanel";
 import styles from "./TextToolbar.module.css";
 
 /** Color que se ve en el botón cuando no hay texto seleccionado. */
 const NO_COLOR: Rgba = { r: 0, g: 0, b: 0, a: 0 };
 
-/** Crea un texto en el centro de lo que se ve y abre el editor para escribirlo. */
+/**
+ * Crea un texto y abre el editor para escribirlo. La posición de partida es
+ * el centro de lo que se ve, pero no cuenta: al terminar de escribir, el texto
+ * se queda donde estaba el editor (ver `newTextPosition`).
+ */
 const addTextAtViewCenter = () => {
   const { addText, startTextEditing, canvasSize } = editorStore.getState();
-  const fontSize = defaultFontSize(canvasSize);
-  const center = documentPointAtViewCenter();
-  // La esquina queda un poco a la izquierda y arriba del centro: el texto
-  // crece hacia la derecha al escribir.
-  const id = addText(
-    { x: center.x - fontSize, y: center.y - fontSize / 2 },
-    fontSize
-  );
+  const id = addText(documentPointAtViewCenter(), defaultFontSize(canvasSize));
   startTextEditing(id);
 };
 
-type Sheet = "font" | "style";
-
 /**
- * Barra del modo Texto: añadir texto, fuente, estilo, color, eliminar y el
+ * Barra del modo Texto: añadir texto, fuente y estilo, color, eliminar y el
  * menú "Más opciones" (qué se puede insertar e insertar un archivo). Fuente,
  * estilo y color se aplican al texto seleccionado.
  */
@@ -60,14 +53,12 @@ const TextToolbar = () => {
   const selectedElement = useEditorStore(selectSelectedElement);
   const editElement = useEditorStore((state) => state.editElement);
   const removeElement = useEditorStore((state) => state.removeElement);
-  // Panel abierto: el de fuentes o el de estilo (uno a la vez).
-  const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
+  const [isTextPanelOpen, setIsTextPanelOpen] = useState(false);
   const [isInsertHelpOpen, setIsInsertHelpOpen] = useState(false);
 
   const { pickImage, fileInput } = useInsertImage();
 
   const font = getFont(selectedText?.fontId ?? "normal");
-  const closeSheet = (open: boolean) => !open && setOpenSheet(null);
 
   const moreOptions: MenuItem[] = [
     {
@@ -90,7 +81,7 @@ const TextToolbar = () => {
         aria-label="Agregar texto"
         onClick={addTextAtViewCenter}
       />
-      <Tooltip label="Fuente y grosor">
+      <Tooltip label="Fuente y estilo">
         <Button
           size="sm"
           className={styles.fontButton}
@@ -98,18 +89,11 @@ const TextToolbar = () => {
           disabled={!selectedText}
           aria-haspopup="dialog"
           aria-label={`Fuente: ${font.label}`}
-          onClick={() => setOpenSheet("font")}
+          onClick={() => setIsTextPanelOpen(true)}
         >
           {font.label}
         </Button>
       </Tooltip>
-      <IconButton
-        icon={PaintRoller}
-        aria-label="Estilo del texto"
-        aria-haspopup="dialog"
-        disabled={!selectedText}
-        onClick={() => setOpenSheet("style")}
-      />
       <ColorControl
         label="Color del texto"
         color={selectedText?.color ?? NO_COLOR}
@@ -142,19 +126,11 @@ const TextToolbar = () => {
         onOpenChange={setIsInsertHelpOpen}
       />
       <Panel
-        open={openSheet === "font" && selectedText !== null}
-        onOpenChange={closeSheet}
-        title="Fuente"
+        open={isTextPanelOpen && selectedText !== null}
+        onOpenChange={setIsTextPanelOpen}
+        title="Fuente y estilo"
       >
-        {selectedText && <FontPicker text={selectedText} />}
-      </Panel>
-      <Panel
-        open={openSheet === "style" && selectedText !== null}
-        onOpenChange={closeSheet}
-        title="Estilo del texto"
-        icon={PaintRoller}
-      >
-        {selectedText && <TextStylePanel text={selectedText} />}
+        {selectedText && <TextPanel text={selectedText} />}
       </Panel>
     </>
   );

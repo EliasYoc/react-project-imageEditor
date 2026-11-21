@@ -1,8 +1,10 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getFont } from "../elements/fonts";
 import { textPadding } from "../elements/nodeConfig";
-import { textEditorBox } from "../elements/textEditorBox";
+import { newTextPosition, textEditingBox } from "../elements/textEditorBox";
 import { textEditorPaint } from "../elements/textGradient";
+import { maxTextWidth } from "../elements/textWidth";
+import { visibleArea } from "../engine/viewport";
 import { isTextElement, type TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
@@ -10,16 +12,26 @@ import styles from "./EditorStage.module.css";
 import { useViewStore } from "./viewStore";
 
 /**
- * Textarea para escribir un texto, colocado exactamente encima de su nodo de
- * Konva (mismo tamaño de letra, fuente, color, giro y escala). Mientras se
- * edita, el nodo se oculta.
+ * Textarea para escribir un texto, con el mismo tamaño de letra, fuente y
+ * color que el nodo de Konva. Mientras se edita, el nodo se oculta y el
+ * textarea no se pone encima: sale horizontal, centrado y un poco arriba
+ * (`textEditingBox`), para leerlo aunque el texto esté girado o lejos. Al
+ * terminar, el texto sigue donde estaba; uno recién escrito se queda donde
+ * estaba el editor.
  *
  * Se confirma al salir (tocar fuera) o con Ctrl/⌘ + Enter; Escape cancela.
  * Un texto nuevo que se deja vacío se descarta sin dejar rastro.
  */
 const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
+  const stageSize = useViewStore((state) => state.stageSize);
+  const insets = useViewStore((state) => state.insets);
+  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
+  // Un texto nuevo se crea vacío: ese es el único momento en que lo está.
+  const isNewText = element.text === "";
   const [draft, setDraft] = useState(element.text);
+  // Ancho del textarea sin escalar: si no cabe en pantalla, se encoge.
+  const [contentWidth, setContentWidth] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isFinishedRef = useRef(false);
 
@@ -28,25 +40,36 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     if (!textarea) return;
     // preventScroll: en el móvil, el navegador no debe desplazar la página.
     textarea.focus({ preventScroll: true });
-    textarea.select();
+    // El cursor va al final y no se selecciona el texto: escribir no lo borra.
+    const end = textarea.value.length;
+    textarea.setSelectionRange(end, end);
   }, []);
 
   useLayoutEffect(
     function fitToContent() {
       const textarea = textareaRef.current;
       if (!textarea) return;
-      // Ancho automático: crece con la línea más larga (como el texto en Konva).
+      // Ancho automático: crece con la línea más larga (como el texto en
+      // Konva), hasta el máximo; desde ahí se reparte en líneas.
       if (element.width === null) {
+        // Sin saltos de línea automáticos, para medir lo que ocuparía en una.
+        textarea.style.whiteSpace = "";
         textarea.style.width = "0px";
-        textarea.style.width = `${Math.max(
-          textarea.scrollWidth,
-          element.fontSize
-        )}px`;
+        const naturalWidth = Math.max(textarea.scrollWidth, element.fontSize);
+        textarea.style.whiteSpace = naturalWidth > maxWidth ? "pre-wrap" : "";
+        textarea.style.width = `${Math.min(naturalWidth, maxWidth)}px`;
       }
       textarea.style.height = "0px";
       textarea.style.height = `${textarea.scrollHeight}px`;
+      setContentWidth(textarea.offsetWidth);
     },
-    [draft, element.width, element.fontSize]
+    [draft, element.width, element.fontSize, maxWidth]
+  );
+
+  const { scale, ...position } = textEditingBox(
+    contentWidth,
+    view.scale * element.scale,
+    visibleArea(stageSize, insets)
   );
 
   const finish = (save: boolean) => {
@@ -59,11 +82,22 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     if (!text.trim()) {
       // Vacío: un texto nuevo desaparece; uno que ya existía se elimina
       // (se puede deshacer).
-      if (element.text) removeElement(element.id);
-      else discardNewText(element.id);
+      if (isNewText) discardNewText(element.id);
+      else removeElement(element.id);
       return;
     }
-    if (text !== element.text) editElement(element.id, { text });
+    if (text === element.text) return;
+    // Un texto nuevo se queda donde estaba el editor, no donde se creó; en el
+    // mismo cambio, así que no añade un paso al historial.
+    editElement(
+      element.id,
+      isNewText
+        ? {
+            text,
+            ...newTextPosition(position, contentWidth, element.scale, view),
+          }
+        : { text }
+    );
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -85,7 +119,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       wrap={element.width === null ? "off" : "soft"}
       spellCheck={false}
       style={{
-        ...textEditorBox(element, view),
+        ...position,
         width: element.width ?? undefined,
         padding: textPadding(element),
         font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
@@ -97,7 +131,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
           borderRadius: element.fontSize * element.background.radius,
         }),
         // Se quita el escalado del borde: siempre 1 px en pantalla.
-        outlineWidth: `${1 / (view.scale * element.scale)}px`,
+        outlineWidth: `${1 / scale}px`,
       }}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={() => finish(true)}

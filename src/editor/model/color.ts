@@ -4,6 +4,27 @@ import type { Rgba } from "./types";
 export const rgbaToCss = ({ r, g, b, a }: Rgba): string =>
   `rgba(${r}, ${g}, ${b}, ${a})`;
 
+/** Un canal sRGB (0–255) en luz lineal, como pide la fórmula de WCAG. */
+const toLinearChannel = (value: number) => {
+  const channel = value / 255;
+  return channel <= 0.03928
+    ? channel / 12.92
+    : ((channel + 0.055) / 1.055) ** 2.4;
+};
+
+/**
+ * Luminosidad relativa de un color, de 0 (negro) a 1 (blanco), según WCAG.
+ * Ignora la transparencia.
+ */
+export const relativeLuminance = ({
+  r,
+  g,
+  b,
+}: Pick<Rgba, "r" | "g" | "b">): number =>
+  0.2126 * toLinearChannel(r) +
+  0.7152 * toLinearChannel(g) +
+  0.0722 * toLinearChannel(b);
+
 const toHexByte = (value: number) =>
   Math.min(255, Math.max(0, Math.round(value)))
     .toString(16)

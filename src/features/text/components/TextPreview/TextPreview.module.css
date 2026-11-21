@@ -1,0 +1,32 @@
+/* Fija arriba del panel mientras se hace scroll, con el fondo del panel para
+   que lo que pasa por debajo no asome por la separación. También cubre el
+   margen de arriba del cuerpo del panel (--space-1, ver Panel.module.css):
+   el sticky se pega pasado ese margen y por él asomaría lo que se desplaza.
+   El margen de abajo negativo deja la separación con la fila siguiente igual
+   que entre el resto de bloques. */
+.bar {
+  position: sticky;
+  top: calc(-1 * var(--space-1));
+  z-index: 1;
+  margin: calc(-1 * var(--space-1)) 0 calc(-1 * var(--space-2));
+  padding: var(--space-1) 0 var(--space-2);
+  background: var(--color-surface-strong);
+}
+
+.preview {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: background-color 0.15s ease;
+}
+
+/* Konva pone su lienzo dentro; el alto lo pone el componente (PREVIEW_HEIGHT). */
+.canvas {
+  display: flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .preview {
+    transition: none;
+  }
+}
