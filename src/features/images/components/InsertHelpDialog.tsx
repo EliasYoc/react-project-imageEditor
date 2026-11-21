@@ -54,10 +54,8 @@ const InsertHelpDialog = ({ open, onOpenChange }: InsertHelpDialogProps) => (
     <div className={styles.sections}>
       <Section title="Imágenes (PNG, JPG, WebP…)">Se insertan quietas.</Section>
       <Section title="GIFs (.gif, y también WebP o PNG animados)">
-        Se mueven en el lienzo y al exportar como video. Para guardarlos: en el
-        móvil, mantén pulsado el GIF y elige «Guardar imagen»; en el ordenador,
-        clic derecho → «Guardar imagen como…». En Safari (iPhone y Mac) se ven
-        quietos.
+        En Safari (iPhone y Mac) se ven quietos y algunos navegadores móviles no
+        permiten insertarlos.
       </Section>
       <Section title="Stickers Lottie (.json)">
         Animaciones vectoriales, nítidas a cualquier tamaño. Hay gratis en{" "}
@@ -71,9 +69,10 @@ const InsertHelpDialog = ({ open, onOpenChange }: InsertHelpDialogProps) => (
         .
       </Section>
       <Section title="Stickers de Telegram (.tgs)">
-        Son stickers Lottie comprimidos y se insertan tal cual. Para
-        conseguirlos, envía el sticker a un bot de Telegram que lo convierta a
-        .tgs (algunos también a .json) y descarga el archivo que te devuelve.
+        Son stickers Lottie comprimidos. Para conseguirlos, en Telegram busca un
+        bot que se encargue de convertir los stickers animados a .tgs (algunos
+        bots también convierten Stickers a .json). Descarga el archivo .tgs y en
+        este editor lo puedes insertar.
       </Section>
     </div>
   </Dialog>
