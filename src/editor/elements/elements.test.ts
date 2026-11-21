@@ -9,7 +9,7 @@ import {
   type TextNodeInput,
 } from "./nodeConfig";
 import { snapToDocument } from "./snapping";
-import { textEditingBox } from "./textEditorBox";
+import { newTextPosition, textEditingBox } from "./textEditorBox";
 
 const text = (extra: Partial<TextNodeInput> = {}): TextNodeInput => ({
   ...createDefaultTextStyle(),
@@ -214,6 +214,28 @@ describe("textEditingBox", () => {
   it("sin zona medida (ancho 0) o sin ancho de texto, no lo encoge", () => {
     expect(textEditingBox(1000, 0.4, { ...area, width: 0 }).scale).toBe(0.4);
     expect(textEditingBox(0, 0.4, area).scale).toBe(0.4);
+  });
+});
+
+describe("newTextPosition", () => {
+  const view = { x: 50, y: 20, scale: 0.5 };
+
+  it("lleva la esquina del texto a donde estaba el editor, para que no salte al terminar", () => {
+    // El editor, de 120 de ancho, centrado en la pantalla en x = 200 y con su
+    // borde de arriba en y = 100.
+    const { x, y } = newTextPosition({ left: 200, top: 100 }, 120, 1, view);
+    expect(x).toBe(240);
+    expect(y).toBe(160);
+    // Vuelto a la pantalla, el texto ocupa el mismo sitio que el editor.
+    expect(x * view.scale + view.x).toBe(170);
+    expect(170 + (120 * view.scale) / 2).toBe(200);
+    expect(y * view.scale + view.y).toBe(100);
+  });
+
+  it("con la escala del elemento, el texto sigue centrado donde estaba el editor", () => {
+    const { x } = newTextPosition({ left: 200, top: 100 }, 120, 2, view);
+    // Ocupa 120 × 2 × 0,5 = 120 en pantalla: de 140 a 260.
+    expect(x * view.scale + view.x).toBe(140);
   });
 });
 

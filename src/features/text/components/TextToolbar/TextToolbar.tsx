@@ -32,17 +32,14 @@ import styles from "./TextToolbar.module.css";
 /** Color que se ve en el botón cuando no hay texto seleccionado. */
 const NO_COLOR: Rgba = { r: 0, g: 0, b: 0, a: 0 };
 
-/** Crea un texto en el centro de lo que se ve y abre el editor para escribirlo. */
+/**
+ * Crea un texto y abre el editor para escribirlo. La posición de partida es
+ * el centro de lo que se ve, pero no cuenta: al terminar de escribir, el texto
+ * se queda donde estaba el editor (ver `newTextPosition`).
+ */
 const addTextAtViewCenter = () => {
   const { addText, startTextEditing, canvasSize } = editorStore.getState();
-  const fontSize = defaultFontSize(canvasSize);
-  const center = documentPointAtViewCenter();
-  // La esquina queda un poco a la izquierda y arriba del centro: el texto
-  // crece hacia la derecha al escribir.
-  const id = addText(
-    { x: center.x - fontSize, y: center.y - fontSize / 2 },
-    fontSize
-  );
+  const id = addText(documentPointAtViewCenter(), defaultFontSize(canvasSize));
   startTextEditing(id);
 };
 

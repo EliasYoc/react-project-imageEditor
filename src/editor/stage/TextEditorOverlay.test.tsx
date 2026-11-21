@@ -1,10 +1,29 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
+import { NO_INSETS } from "../engine/viewport";
+import type { TextElement } from "../model/types";
 import { createInitialState, editorStore } from "../store/editorStore";
+import { selectElements } from "../store/selectors";
 import TextEditorOverlay from "./TextEditorOverlay";
+import { viewStore } from "./viewStore";
+
+const element = (id: string) =>
+  selectElements(editorStore.getState()).find(
+    (candidate) => candidate.id === id
+  ) as TextElement;
+
+const textarea = () =>
+  screen.getByRole<HTMLTextAreaElement>("textbox", { name: "Texto" });
 
 beforeEach(() => {
   editorStore.setState({ ...createInitialState(), mode: "text" });
+  // Un lienzo de 400 × 800 con el documento a media escala y sin desplazar.
+  viewStore.setState({
+    stageSize: { width: 400, height: 800 },
+    insets: NO_INSETS,
+    view: { x: 0, y: 0, scale: 0.5 },
+  });
 });
 
 describe("TextEditorOverlay", () => {
@@ -15,11 +34,41 @@ describe("TextEditorOverlay", () => {
     startTextEditing(id);
 
     render(<TextEditorOverlay />);
-    const textarea = screen.getByRole<HTMLTextAreaElement>("textbox", {
-      name: "Texto",
+    expect(textarea()).toHaveFocus();
+    expect(textarea().selectionStart).toBe("Hola mundo".length);
+    expect(textarea().selectionEnd).toBe("Hola mundo".length);
+  });
+
+  it("un texto nuevo queda donde se escribió: en el sitio del editor, no donde se creó", async () => {
+    const { addText, startTextEditing } = editorStore.getState();
+    const id = addText({ x: 500, y: 500 }, 100);
+    startTextEditing(id);
+
+    render(<TextEditorOverlay />);
+    await userEvent.type(textarea(), "Hola");
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+
+    // El editor está centrado (x = 200 en pantalla) y a un 40 % del alto (y =
+    // 320); en el documento, con la vista a media escala, es (400, 640). En
+    // jsdom el editor no mide ancho, así que no se resta su mitad.
+    expect(element(id)).toMatchObject({ text: "Hola", x: 400, y: 640 });
+  });
+
+  it("un texto que ya existía vuelve a su sitio, con su giro, al terminar de editarlo", async () => {
+    const { addText, editElement, startTextEditing } = editorStore.getState();
+    const id = addText({ x: 500, y: 500 }, 100);
+    editElement(id, { text: "Hola", rotation: 30 });
+    startTextEditing(id);
+
+    render(<TextEditorOverlay />);
+    await userEvent.type(textarea(), " mundo");
+    await userEvent.keyboard("{Control>}{Enter}{/Control}");
+
+    expect(element(id)).toMatchObject({
+      text: "Hola mundo",
+      x: 500,
+      y: 500,
+      rotation: 30,
     });
-    expect(textarea).toHaveFocus();
-    expect(textarea.selectionStart).toBe("Hola mundo".length);
-    expect(textarea.selectionEnd).toBe("Hola mundo".length);
   });
 });

@@ -1,4 +1,5 @@
-import type { ScreenRect } from "../engine/viewport";
+import type { ScreenRect, View } from "../engine/viewport";
+import type { Point } from "../model/types";
 
 /**
  * El editor queda a esta fracción del alto libre, contando desde arriba: un
@@ -43,3 +44,22 @@ export const textEditingBox = (
     transformOrigin: "50% 0",
   };
 };
+
+/**
+ * Dónde queda un texto recién escrito: en el sitio del editor, para que no
+ * salte al terminar (un texto que ya existía vuelve a donde estaba). Es la
+ * esquina de arriba a la izquierda, en píxeles del documento, y el texto
+ * queda centrado donde estaba el editor aunque este se encogiera.
+ *
+ * `editor` es el `left` (centro) y el `top` de `textEditingBox`, y
+ * `contentWidth` el ancho del editor sin escalar.
+ */
+export const newTextPosition = (
+  editor: Pick<ReturnType<typeof textEditingBox>, "left" | "top">,
+  contentWidth: number,
+  elementScale: number,
+  view: View
+): Point => ({
+  x: (editor.left - view.x) / view.scale - (contentWidth * elementScale) / 2,
+  y: (editor.top - view.y) / view.scale,
+});

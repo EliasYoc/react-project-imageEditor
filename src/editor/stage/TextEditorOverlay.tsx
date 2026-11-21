@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getFont } from "../elements/fonts";
 import { textPadding } from "../elements/nodeConfig";
-import { textEditingBox } from "../elements/textEditorBox";
+import { newTextPosition, textEditingBox } from "../elements/textEditorBox";
 import { textEditorPaint } from "../elements/textGradient";
 import { visibleArea } from "../engine/viewport";
 import { isTextElement, type TextElement } from "../model/types";
@@ -15,7 +15,8 @@ import { useViewStore } from "./viewStore";
  * color que el nodo de Konva. Mientras se edita, el nodo se oculta y el
  * textarea no se pone encima: sale horizontal, centrado y un poco arriba
  * (`textEditingBox`), para leerlo aunque el texto esté girado o lejos. Al
- * terminar, el texto sigue donde estaba.
+ * terminar, el texto sigue donde estaba; uno recién escrito se queda donde
+ * estaba el editor.
  *
  * Se confirma al salir (tocar fuera) o con Ctrl/⌘ + Enter; Escape cancela.
  * Un texto nuevo que se deja vacío se descarta sin dejar rastro.
@@ -24,6 +25,8 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
   const stageSize = useViewStore((state) => state.stageSize);
   const insets = useViewStore((state) => state.insets);
+  // Un texto nuevo se crea vacío: ese es el único momento en que lo está.
+  const isNewText = element.text === "";
   const [draft, setDraft] = useState(element.text);
   // Ancho del textarea sin escalar: si no cabe en pantalla, se encoge.
   const [contentWidth, setContentWidth] = useState(0);
@@ -75,11 +78,22 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     if (!text.trim()) {
       // Vacío: un texto nuevo desaparece; uno que ya existía se elimina
       // (se puede deshacer).
-      if (element.text) removeElement(element.id);
-      else discardNewText(element.id);
+      if (isNewText) discardNewText(element.id);
+      else removeElement(element.id);
       return;
     }
-    if (text !== element.text) editElement(element.id, { text });
+    if (text === element.text) return;
+    // Un texto nuevo se queda donde estaba el editor, no donde se creó; en el
+    // mismo cambio, así que no añade un paso al historial.
+    editElement(
+      element.id,
+      isNewText
+        ? {
+            text,
+            ...newTextPosition(position, contentWidth, element.scale, view),
+          }
+        : { text }
+    );
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
