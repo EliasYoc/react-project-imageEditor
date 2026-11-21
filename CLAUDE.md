@@ -25,6 +25,7 @@ Antes de escribir código propio en JavaScript o TypeScript para resolver algo, 
 | Lienzo, nodos, transformaciones y exportación de elementos                                               | `konva` + `react-konva` |
 | Trazos de tinta                                                                                          | `perfect-freehand`      |
 | Abrir, leer y exportar video (decodificar y codificar con WebCodecs)                                     | `mediabunny`            |
+| Animaciones Lottie (stickers `.json` y `.tgs`), solo con `build/player/lottie_light_canvas` (sin `eval`) | `lottie-web`            |
 | Estado global                                                                                            | `zustand`               |
 | Fuentes                                                                                                  | `@fontsource/*`         |
 

@@ -11,6 +11,7 @@ import type {
   BrushSettings,
   BrushState,
   Backdrop,
+  ImageAnimation,
   ImageElement,
   Point,
   Rgba,
@@ -146,7 +147,7 @@ export const createImageElement = ({
   width,
   height,
   center,
-  isAnimated,
+  animation,
 }: {
   id: string;
   zIndex: number;
@@ -154,7 +155,7 @@ export const createImageElement = ({
   width: number;
   height: number;
   center: Point;
-  isAnimated: boolean;
+  animation: ImageAnimation;
 }): ImageElement => ({
   whatTask: "image",
   id,
@@ -162,7 +163,7 @@ export const createImageElement = ({
   src,
   width,
   height,
-  isAnimated,
+  animation,
   x: center.x - width / 2,
   y: center.y - height / 2,
   rotation: 0,

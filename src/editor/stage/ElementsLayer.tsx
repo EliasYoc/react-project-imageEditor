@@ -103,14 +103,21 @@ const ImageNode = ({
   element,
   isInteractive,
   handlers,
-}: NodeProps<ImageElement>) => {
+  viewScale,
+}: NodeProps<ImageElement> & { viewScale: number }) => {
   const nodeRef = useRef<KonvaImageNode>(null);
-  const image = useLoadedImage(element.src);
-  // Un GIF pinta su fotograma actual; mientras se abre, la imagen quieta.
-  const frame = useImageAnimation(
-    element.isAnimated ? element.src : null,
-    nodeRef
+  // Un sticker no es una imagen: solo lo dibuja su animación.
+  const image = useLoadedImage(
+    element.animation === "lottie" ? null : element.src
   );
+  // Lo que mide en la pantalla (lado mayor, en píxeles del dispositivo).
+  const screenPixels =
+    Math.max(element.width, element.height) *
+    element.scale *
+    viewScale *
+    window.devicePixelRatio;
+  // Un GIF pinta su fotograma actual; mientras se abre, la imagen quieta.
+  const frame = useImageAnimation(element, nodeRef, screenPixels);
   const shown = frame ?? image;
   if (!shown) return null;
   return (
@@ -300,6 +307,7 @@ const ElementsLayer = ({
               isInteractive={isInteractive}
               isEditing={false}
               handlers={handlers}
+              viewScale={view.scale}
             />
           )
         )}

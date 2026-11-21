@@ -159,6 +159,7 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
         open={isBackdropOpen}
         onOpenChange={setIsBackdropOpen}
         title="Fondo"
+        icon={Layers}
       >
         <BackdropPanel />
       </Panel>

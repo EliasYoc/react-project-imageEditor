@@ -1,6 +1,6 @@
 import { AlertDialog, Dialog as RadixDialog } from "radix-ui";
 import type { ReactNode } from "react";
-import { Button } from "../Button";
+import { Button, type IconComponent } from "../Button";
 import { useReturnFocus } from "../useReturnFocus";
 import styles from "./Dialog.module.css";
 
@@ -8,6 +8,11 @@ export interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
+  /**
+   * Delante del título: el icono del botón o la opción de menú que lo abre
+   * (solo a la vista; el nombre del diálogo es el título).
+   */
+  icon?: IconComponent;
   description?: string;
   children: ReactNode;
 }
@@ -20,6 +25,7 @@ export function Dialog({
   open,
   onOpenChange,
   title,
+  icon: Icon,
   description,
   children,
 }: DialogProps) {
@@ -34,6 +40,7 @@ export function Dialog({
           {...returnFocus}
         >
           <RadixDialog.Title className={styles.title}>
+            {Icon && <Icon aria-hidden="true" />}
             {title}
           </RadixDialog.Title>
           {description && (

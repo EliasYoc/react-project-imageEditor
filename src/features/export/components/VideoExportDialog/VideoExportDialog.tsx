@@ -1,3 +1,4 @@
+import { Download } from "lucide-react";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { ProgressBar } from "../../../../components/ui/ProgressBar";
 import { Button } from "../../../../components/ui/Button";
@@ -46,6 +47,7 @@ const VideoExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
         if (next || !isWorking) onOpenChange(next);
       }}
       title="Exportar video"
+      icon={Download}
       description={`Se guarda en MP4 a ${width} × ${height} px, con su sonido.`}
     >
       {/* Se monta al abrir: cada vez empieza con el nombre sugerido. */}

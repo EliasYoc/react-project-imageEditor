@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_TEXT_STYLE, createStroke } from "../model/factories";
-import type { Backdrop, StrokeEntry, TextElement } from "../model/types";
+import type {
+  Backdrop,
+  ImageAnimation,
+  StrokeEntry,
+  TextElement,
+} from "../model/types";
 import {
   MAX_HISTORY,
   createEditorStore,
@@ -44,13 +49,13 @@ const red: Backdrop = {
 };
 
 const addText = (x = 0) => state().addText({ x, y: 0 }, 50);
-const addImage = (isAnimated = false) =>
+const addImage = (animation: ImageAnimation = "none") =>
   state().addImage({
     src: "blob:imagen",
     width: 100,
     height: 50,
     center: { x: 500, y: 400 },
-    isAnimated,
+    animation,
   });
 
 let store: ReturnType<typeof createEditorStore>;
@@ -317,13 +322,13 @@ describe("elementos", () => {
       y: 375,
       width: 100,
       height: 50,
-      isAnimated: false,
+      animation: "none",
     });
   });
 
-  it("addImage guarda si la imagen es animada (un GIF)", () => {
-    addImage(true);
-    expect(selectElements(state())[0]).toMatchObject({ isAnimated: true });
+  it("addImage guarda cómo se mueve la imagen (un GIF, un sticker)", () => {
+    addImage("lottie");
+    expect(selectElements(state())[0]).toMatchObject({ animation: "lottie" });
   });
 
   it("editElement cambia solo ese elemento, sin mutar el anterior, y crea un paso", () => {
