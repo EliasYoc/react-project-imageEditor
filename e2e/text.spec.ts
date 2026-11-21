@@ -7,9 +7,11 @@ import {
   isDark,
   openBlankCanvas,
   pointIn,
+  screenColor,
   tapAt,
   type Point,
   type Rect,
+  type Rgba,
 } from "./helpers";
 
 /**
@@ -22,6 +24,8 @@ const textArea = (doc: Rect, center: Point): Rect => ({
   width: doc.width * 0.42,
   height: doc.height * 0.16,
 });
+
+const isLight = ({ r, g, b }: Rgba) => r > 200 && g > 200 && b > 200;
 
 /** Añade un texto con lo escrito y toca fuera para terminar. */
 const addText = async (page: Page, doc: Rect, touch: boolean) => {
@@ -81,6 +85,43 @@ test.describe("Texto", () => {
 
     await expect
       .poll(() => countPixels(page, area, isColorful))
+      .toBeGreaterThan(50);
+  });
+
+  test("la vista previa del panel muestra el texto y su estilo, y el fondo se oscurece", async ({
+    page,
+    isMobile,
+  }) => {
+    const doc = await documentRect(page);
+    await addText(page, doc, isMobile);
+    await tapAt(page, pointIn(doc, 0.5, 0.5), isMobile);
+    await page.getByRole("button", { name: /^Fuente:/ }).click();
+    const panel = page.getByRole("dialog", { name: "Fuente y estilo" });
+    const preview = panel.getByRole("img", { name: "Vista previa del texto" });
+    const previewRect = async () => (await preview.boundingBox()) as Rect;
+    // Un punto del fondo, sin letras y dentro de las esquinas redondeadas.
+    const backdrop = async () => {
+      const { x, y } = await previewRect();
+      return screenColor(page, { x: x + 24, y: y + 10 });
+    };
+
+    // Texto negro: se ve sobre blanco.
+    await expect
+      .poll(async () => countPixels(page, await previewRect(), isDark))
+      .toBeGreaterThan(50);
+    expect(isLight(await backdrop())).toBe(true);
+
+    // El contorno por defecto es blanco: el fondo pasa a gris oscuro y el
+    // contorno se ve. La vista previa sigue a la vista al bajar a «Contorno».
+    await panel.getByRole("checkbox", { name: "Contorno" }).check();
+    await expect.poll(async () => isDark(await backdrop())).toBe(true);
+    await expect
+      .poll(async () => countPixels(page, await previewRect(), isLight))
+      .toBeGreaterThan(50);
+
+    await panel.getByRole("checkbox", { name: "Degradado" }).check();
+    await expect
+      .poll(async () => countPixels(page, await previewRect(), isColorful))
       .toBeGreaterThan(50);
   });
 

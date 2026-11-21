@@ -7,6 +7,7 @@ import type { TextAlign, TextElement } from "../../../../editor/model/types";
 import { useEditorStore } from "../../../../editor/store/editorStore";
 import { BOLD_WEIGHT, NORMAL_WEIGHT, isBold } from "../../utils/fontWeight";
 import FontPicker from "../FontPicker/FontPicker";
+import TextPreview from "../TextPreview/TextPreview";
 import TextStylePanel from "../TextStylePanel/TextStylePanel";
 import styles from "./TextPanel.module.css";
 
@@ -22,15 +23,16 @@ const ALIGNMENTS: readonly SegmentedItem<TextAlign>[] = [
 ];
 
 /**
- * Panel "Fuente y estilo" del texto seleccionado, de arriba abajo: grosor y
- * alineación en una fila, la lista de fuentes y la sección «Estilo»
- * (interlineado y efectos).
+ * Panel "Fuente y estilo" del texto seleccionado, de arriba abajo: la vista
+ * previa (fija al hacer scroll), grosor y alineación en una fila, la lista de
+ * fuentes y la sección «Estilo» (interlineado y efectos).
  */
 const TextPanel = ({ text }: { text: TextElement }) => {
   const editElement = useEditorStore((state) => state.editElement);
 
   return (
     <div className={styles.panel}>
+      <TextPreview text={text} />
       <div className={styles.basics}>
         <Segmented
           label="Grosor"

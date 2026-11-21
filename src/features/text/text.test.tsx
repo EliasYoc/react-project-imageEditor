@@ -19,6 +19,19 @@ vi.mock("../../editor/elements/fontLoader", () => ({
   isFontReady: () => true,
 }));
 
+// Konva no puede crear un lienzo en jsdom: la vista previa se sustituye por un
+// marcador (lo que dibuja se comprueba en el e2e).
+vi.mock("./components/TextPreview/TextPreview", async () => {
+  const { createElement } = await import("react");
+  return {
+    default: () =>
+      createElement("div", {
+        role: "img",
+        "aria-label": "Vista previa del texto",
+      }),
+  };
+});
+
 const text = () => selectSelectedText(editorStore.getState()) as TextElement;
 
 beforeEach(() => {
@@ -60,9 +73,15 @@ describe("TextPanel", () => {
     expect(text().align).toBe("center");
   });
 
-  it("junta fuente y estilo: grosor y alineación, fuentes y la sección «Estilo»", () => {
+  it("junta fuente y estilo: vista previa arriba, grosor y alineación, fuentes y la sección «Estilo»", () => {
     render(<TextPanel text={text()} />);
-    expect(screen.getByRole("radiogroup", { name: "Grosor" })).toBeVisible();
+    const preview = screen.getByRole("img", { name: "Vista previa del texto" });
+    const weights = screen.getByRole("radiogroup", { name: "Grosor" });
+    expect(
+      preview.compareDocumentPosition(weights) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(weights).toBeVisible();
     expect(
       screen.getByRole("radiogroup", { name: "Alineación" })
     ).toBeVisible();

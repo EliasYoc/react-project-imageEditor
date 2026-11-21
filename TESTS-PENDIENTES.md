@@ -118,3 +118,21 @@ Playwright: grosor y alineación quedan en la misma fila en los tres.
 - **Decisión sin tomar:** al abrir el panel se descargan las 18 fuentes aunque
   solo se quiera cambiar la sombra. Si pesa, retrasar la descarga hasta que la
   lista se vea (y entonces, un test que lo compruebe).
+
+## Vista previa del texto en «Fuente y estilo»
+
+Comprobado a mano en Edge (390 y 1280 px de ancho): la vista previa queda fija
+al hacer scroll y no asoma nada por encima. Konva no crea un lienzo en jsdom:
+los tests de componentes la sustituyen por un marcador.
+
+- **e2e (móvil):** a 320 px de ancho, la vista previa cabe y el texto se ve
+  entero.
+- **e2e:** un texto largo (más de 3 líneas, o una línea de más de 40 letras)
+  muestra las primeras líneas con «…» y se encoge para caber.
+- **e2e:** con la sombra al máximo y un contorno grueso, la sombra no se
+  recorta por los bordes de la vista previa (`textBleed`).
+- **e2e:** al cambiar a una fuente que aún no se ha descargado, la vista
+  previa conserva el dibujo anterior y se actualiza al llegar la fuente.
+- **Decisión sin tomar:** el color de la sombra no cuenta para elegir el fondo
+  (una sombra blanca sobre el fondo blanco no se ve). Si molesta, añadirla a
+  `previewBackdrop`.
