@@ -2,9 +2,11 @@ import { Layer } from "konva/lib/Layer";
 import { Stage } from "konva/lib/Stage";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { createTextLabel } from "../../../../editor/elements/textShape";
+import { maxTextWidth } from "../../../../editor/elements/textWidth";
 import { rgbaToCss } from "../../../../editor/model/color";
 import type { TextElement } from "../../../../editor/model/types";
 import { useFontReady } from "../../../../editor/stage/elementHooks";
+import { useEditorStore } from "../../../../editor/store/editorStore";
 import { PREVIEW_HEIGHT, PREVIEW_PADDING } from "../../constants/textPreview";
 import {
   previewBackdrop,
@@ -26,6 +28,8 @@ const TextPreview = ({ text }: { text: TextElement }) => {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<{ stage: Stage; layer: Layer } | null>(null);
   const isFontReady = useFontReady(text.fontId, text.fontWeight);
+  // El mismo tope de ancho que en el lienzo: se reparte en las mismas líneas.
+  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
 
   useLayoutEffect(function createScene() {
     const host = hostRef.current;
@@ -56,14 +60,17 @@ const TextPreview = ({ text }: { text: TextElement }) => {
 
     const { stage, layer } = scene;
     // Sin posición, giro ni escala propios: solo importa el estilo.
-    const { label, text: node } = createTextLabel({
-      ...text,
-      text: previewText(text.text),
-      x: 0,
-      y: 0,
-      rotation: 0,
-      scale: 1,
-    });
+    const { label, text: node } = createTextLabel(
+      {
+        ...text,
+        text: previewText(text.text),
+        x: 0,
+        y: 0,
+        rotation: 0,
+        scale: 1,
+      },
+      maxWidth
+    );
     const { scale, x, y } = previewLayout(
       { width: node.width(), height: node.height() },
       text.fontSize,
@@ -76,7 +83,7 @@ const TextPreview = ({ text }: { text: TextElement }) => {
     layer.add(label);
     stage.size(area);
     layer.draw();
-  }, [text, isFontReady]);
+  }, [text, isFontReady, maxWidth]);
 
   useLayoutEffect(
     function drawOnChange() {

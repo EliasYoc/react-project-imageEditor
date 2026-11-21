@@ -133,6 +133,66 @@ test.describe("Texto", () => {
     }
   });
 
+  test("un texto largo no pasa del 90 % del lienzo: se reparte en líneas, escribiéndolo y ya confirmado", async ({
+    page,
+    isMobile,
+  }) => {
+    const doc = await documentRect(page);
+    const maxWidth = doc.width * 0.9;
+    await page.getByRole("button", { name: "Agregar texto" }).click();
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toBeFocused();
+    await page.keyboard.type(
+      "Un texto largo que debe repartirse en varias líneas al llegar al noventa por ciento del ancho del lienzo"
+    );
+
+    // Escribiéndolo, el editor llega al máximo (no lo pasa) y ocupa varias
+    // líneas. Un margen de 3 píxeles: `documentRect` mide el documento un par
+    // de píxeles más estrecho de lo que es (sus bordes salen suavizados).
+    const box = (await editor.boundingBox()) as Rect;
+    expect(box.width).toBeLessThanOrEqual(maxWidth + 3);
+    expect(box.width).toBeGreaterThan(maxWidth - 2);
+    expect(box.height).toBeGreaterThan(0.2 * Math.min(doc.width, doc.height));
+
+    // Ya confirmado, el texto del lienzo ocupa el mismo sitio: nada fuera del
+    // 90 % (a los lados), letras hasta cerca de su borde derecho y en varias
+    // líneas. Se miran franjas finas: contar píxeles en todo el documento
+    // tarda unos 10 s en escritorio.
+    await tapAt(page, pointIn(doc, 0.1, 0.97), isMobile);
+    await expect(editor).toBeHidden();
+    const rows = { y: box.y, height: box.height };
+    const innerRight: Rect = {
+      x: box.x + box.width * 0.75,
+      width: box.width * 0.25,
+      ...rows,
+    };
+    await expect
+      .poll(() => countPixels(page, innerRight, isDark))
+      .toBeGreaterThan(20);
+    const outsideLeft: Rect = {
+      x: doc.x,
+      width: box.x - 3 - doc.x,
+      ...rows,
+    };
+    const outsideRight: Rect = {
+      x: box.x + box.width + 3,
+      width: doc.x + doc.width - (box.x + box.width + 3),
+      ...rows,
+    };
+    expect(await countPixels(page, outsideLeft, isDark)).toBe(0);
+    expect(await countPixels(page, outsideRight, isDark)).toBe(0);
+    // Varias líneas: hay letras en la franja de la izquierda a lo alto de
+    // casi toda la caja.
+    const firstLetters = await darkBounds(page, {
+      x: box.x,
+      width: 30,
+      ...rows,
+    });
+    expect(firstLetters.bottom - firstLetters.top).toBeGreaterThan(
+      0.2 * Math.min(doc.width, doc.height)
+    );
+  });
+
   test("al editar un texto lejos, el editor sale centrado y arriba, y el texto vuelve a su sitio", async ({
     page,
     isMobile,

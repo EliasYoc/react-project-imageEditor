@@ -152,3 +152,18 @@ sola línea (se encoge hasta caber, a un 15 % de su tamaño).
   proporción, el editor puede caer fuera del lienzo, sobre el fondo gris, y un
   texto oscuro no se ve. Una caja de fondo (blanca o gris, como la de la vista
   previa) detrás del editor lo arreglaría.
+
+## Ancho máximo del texto (90 % del lienzo)
+
+Comprobado en el e2e con una sola frase larga (móvil y escritorio).
+
+- **e2e:** exportar una imagen con un texto largo: en el archivo exportado el
+  texto también se reparte en líneas y no pasa del 90 % del ancho (la
+  exportación y el lienzo comparten `applyTextMaxWidth`, pero hoy ningún e2e
+  exporta un texto).
+- **e2e:** un lienzo de otra proporción (apaisado o de 1920 px de ancho): el
+  tope sigue siendo el 90 % de su ancho.
+- **e2e:** acortar un texto largo ya confirmado (volver a editarlo) vuelve a
+  encoger su caja, en vez de dejarla al 90 %.
+- **Sin decidir:** una palabra más ancha que el 90 % se parte distinto en el
+  editor (se sale por el lado, oculta) y en Konva (se parte por letras).

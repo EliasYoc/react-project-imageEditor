@@ -10,6 +10,7 @@ import { ensureFont } from "../../../editor/elements/fontLoader";
 import { loadImage } from "../../../editor/elements/imageCache";
 import { imageNodeConfig } from "../../../editor/elements/nodeConfig";
 import { createTextLabel } from "../../../editor/elements/textShape";
+import { maxTextWidth } from "../../../editor/elements/textWidth";
 import type {
   EditorElement,
   ImageElement,
@@ -154,7 +155,7 @@ export const createElementsRenderer = async (
 
   for (const element of ordered) {
     if (element.whatTask === "text") {
-      layer.add(createTextLabel(element).label);
+      layer.add(createTextLabel(element, maxTextWidth(docSize)).label);
     } else {
       const image = sources.get(element.id);
       if (image)

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { NO_INSETS } from "../engine/viewport";
 import type { TextElement } from "../model/types";
 import { createInitialState, editorStore } from "../store/editorStore";
@@ -23,6 +23,42 @@ beforeEach(() => {
     stageSize: { width: 400, height: 800 },
     insets: NO_INSETS,
     view: { x: 0, y: 0, scale: 0.5 },
+  });
+});
+
+describe("TextEditorOverlay: ancho máximo", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  /** jsdom no mide: se simula lo que ocuparía el texto escrito en una línea. */
+  const typeTextOfWidth = (contentWidth: number) => {
+    vi.spyOn(Element.prototype, "scrollWidth", "get").mockReturnValue(
+      contentWidth
+    );
+    const { addText, startTextEditing } = editorStore.getState();
+    startTextEditing(addText({ x: 0, y: 0 }, 100));
+    render(<TextEditorOverlay />);
+  };
+
+  // El lienzo por defecto mide 1440 de ancho: el máximo es 1296.
+  it("un texto que cabe mide lo que ocupa, sin repartirse en líneas", () => {
+    typeTextOfWidth(500);
+    expect(textarea().style.width).toBe("500px");
+    expect(textarea().style.whiteSpace).toBe("");
+  });
+
+  it("un texto más ancho que el 90 % del lienzo se limita a él y se reparte en líneas", () => {
+    typeTextOfWidth(3000);
+    expect(textarea().style.width).toBe("1296px");
+    expect(textarea().style.whiteSpace).toBe("pre-wrap");
+  });
+
+  it("un texto con ancho fijado conserva el suyo, aunque pase del máximo", () => {
+    const { addText, editElement, startTextEditing } = editorStore.getState();
+    const id = addText({ x: 0, y: 0 }, 100);
+    editElement(id, { text: "Hola", width: 2000 });
+    startTextEditing(id);
+    render(<TextEditorOverlay />);
+    expect(textarea().style.width).toBe("2000px");
   });
 });
 

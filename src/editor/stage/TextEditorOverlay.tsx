@@ -3,6 +3,7 @@ import { getFont } from "../elements/fonts";
 import { textPadding } from "../elements/nodeConfig";
 import { newTextPosition, textEditingBox } from "../elements/textEditorBox";
 import { textEditorPaint } from "../elements/textGradient";
+import { maxTextWidth } from "../elements/textWidth";
 import { visibleArea } from "../engine/viewport";
 import { isTextElement, type TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
@@ -25,6 +26,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
   const stageSize = useViewStore((state) => state.stageSize);
   const insets = useViewStore((state) => state.insets);
+  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
   // Un texto nuevo se crea vacío: ese es el único momento en que lo está.
   const isNewText = element.text === "";
   const [draft, setDraft] = useState(element.text);
@@ -47,19 +49,21 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     function fitToContent() {
       const textarea = textareaRef.current;
       if (!textarea) return;
-      // Ancho automático: crece con la línea más larga (como el texto en Konva).
+      // Ancho automático: crece con la línea más larga (como el texto en
+      // Konva), hasta el máximo; desde ahí se reparte en líneas.
       if (element.width === null) {
+        // Sin saltos de línea automáticos, para medir lo que ocuparía en una.
+        textarea.style.whiteSpace = "";
         textarea.style.width = "0px";
-        textarea.style.width = `${Math.max(
-          textarea.scrollWidth,
-          element.fontSize
-        )}px`;
+        const naturalWidth = Math.max(textarea.scrollWidth, element.fontSize);
+        textarea.style.whiteSpace = naturalWidth > maxWidth ? "pre-wrap" : "";
+        textarea.style.width = `${Math.min(naturalWidth, maxWidth)}px`;
       }
       textarea.style.height = "0px";
       textarea.style.height = `${textarea.scrollHeight}px`;
       setContentWidth(textarea.offsetWidth);
     },
-    [draft, element.width, element.fontSize]
+    [draft, element.width, element.fontSize, maxWidth]
   );
 
   const { scale, ...position } = textEditingBox(
