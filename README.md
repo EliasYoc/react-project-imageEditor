@@ -283,7 +283,7 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
 - **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
 - **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
   - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga para exportar un video, el de un video abierto o el de un lienzo con GIFs: el diálogo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`), el de los **stickers** (lo que solo se descarga con el primer sticker: lottie-web y la lectura del archivo, `lottieSticker-*` y `lottieFile-*`) y el del **editor** (el resto);
-  - falla si pasan de **120 kB**, **119 kB**, **59 kB** y **144 kB**: hoy son unos 119, 114, 57 y 142;
+  - falla si pasan de **120 kB**, **119 kB**, **59 kB** y **146 kB**: hoy son unos 119, 114, 57 y 144;
   - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
 - **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
 - **Coste:** gratis en repos públicos. En privados, el plan gratuito incluye unos 2.000 minutos al mes, y cada ejecución tarda unos 5. Un push nuevo a la misma PR cancela la ejecución anterior.
