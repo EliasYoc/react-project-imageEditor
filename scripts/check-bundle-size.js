@@ -9,6 +9,9 @@
 //   y el codificador (encodeVideo-*.js, con mediabunny), que llega al
 //   exportar. Va aparte para que Editor siga midiendo lo que tarda en cargar
 //   el editor cuando no se usa video.
+// - Stickers: lo que solo se descarga con el primer sticker Lottie: lottie-web
+//   (lottieSticker-*.js) y la lectura del archivo (lottieFile-*.js). Va aparte
+//   por lo mismo que Video.
 //
 // Se mide comprimido con gzip, como lo envía el servidor. Si un cambio
 // necesita de verdad más espacio, se sube el límite aquí, en la misma PR,
@@ -27,14 +30,22 @@
 //   en el lienzo y en la exportación añade 1,2 kB, y elegir imagen o video al
 //   exportar un poco más. Cargar el código de exportar bajo demanda no
 //   ayuda: solo ahorraba 1 kB al abrir el editor y cada trozo aparte suma.
+// - 120 / 142 / Video 119 / Stickers 59: stickers Lottie (miden 118,7, 141,2,
+//   114,0 y 56,5). El límite de Stickers es lo que mide más un 5 %; casi todo
+//   es lottie-web en su versión "light" para canvas (54,5 kB).
+// - 120 / 144 / Video 119 / Stickers 59: la ayuda «¿Qué puedo insertar?»
+//   (el editor mide 142,4). Sus textos, el icono y el separador del menú
+//   suman 1 kB; cargarla bajo demanda no ayuda (seguiría contando en Editor).
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 142, Video: 119 };
-/** Los trozos que solo se descargan con un video abierto. */
+const BUDGETS_KB = { Inicio: 120, Editor: 144, Video: 119, Stickers: 59 };
+/** Los trozos que solo se descargan para exportar un video. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
+/** Los trozos que solo se descargan con el primer sticker. */
+const STICKER_CHUNK = /^assets\/(lottieSticker|lottieFile)-/;
 
 const gzipKb = (file) =>
   gzipSync(readFileSync(join(BUILD_DIR, file)), { level: 9 }).length / 1000;
@@ -55,15 +66,20 @@ const allAssets = readdirSync(join(BUILD_DIR, "assets"))
   .map((name) => `assets/${name}`);
 const lazyFiles = allAssets.filter((file) => !homeFiles.includes(file));
 const videoFiles = lazyFiles.filter((file) => VIDEO_CHUNK.test(file));
-// Todo lo demás cuenta como Editor: si el codificador cambiara de nombre,
-// engordaría esta línea y el presupuesto fallaría, en vez de no medirse.
-const editorFiles = lazyFiles.filter((file) => !VIDEO_CHUNK.test(file));
+const stickerFiles = lazyFiles.filter((file) => STICKER_CHUNK.test(file));
+// Todo lo demás cuenta como Editor: si el codificador o lottie-web cambiaran
+// de nombre, engordaría esta línea y el presupuesto fallaría, en vez de no
+// medirse.
+const editorFiles = lazyFiles.filter(
+  (file) => !VIDEO_CHUNK.test(file) && !STICKER_CHUNK.test(file)
+);
 
 const sum = (files) => files.reduce((total, file) => total + gzipKb(file), 0);
 const sizes = {
   Inicio: sum(homeFiles),
   Editor: sum(editorFiles),
   Video: sum(videoFiles),
+  Stickers: sum(stickerFiles),
 };
 
 console.log("Presupuesto de tamaño (JS con gzip):");
@@ -73,7 +89,7 @@ for (const [name, limit] of Object.entries(BUDGETS_KB)) {
   const ok = size <= limit;
   failed ||= !ok;
   console.log(
-    `  ${ok ? "✓" : "✗"} ${name.padEnd(7)} ${size.toFixed(1).padStart(6)} kB de ${limit} kB`
+    `  ${ok ? "✓" : "✗"} ${name.padEnd(8)} ${size.toFixed(1).padStart(6)} kB de ${limit} kB`
   );
 }
 

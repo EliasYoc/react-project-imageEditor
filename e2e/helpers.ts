@@ -326,6 +326,41 @@ export async function openPhoto(page: Page) {
   ).toBeVisible();
 }
 
+/**
+ * Inserta un archivo (una imagen, un GIF o un sticker) con «Insertar archivo»,
+ * del menú «Más opciones» del modo Texto.
+ */
+export async function insertFile(page: Page, path: string) {
+  await page.getByRole("radio", { name: "Texto" }).click();
+  const chooser = page.waitForEvent("filechooser");
+  // El «Más opciones» de la barra de herramientas, no el de la cabecera.
+  await page
+    .getByRole("contentinfo")
+    .getByRole("button", { name: "Más opciones", exact: true })
+    .click();
+  await page.getByRole("menuitem", { name: "Insertar archivo" }).click();
+  await (await chooser).setFiles(path);
+}
+
+/**
+ * Mira el punto una y otra vez hasta ver los dos colores de los archivos
+ * animados de prueba (el GIF y el sticker: rojo y azul, 200 ms cada uno).
+ */
+export const expectBothColorsAt = (page: Page, point: Point) => {
+  const seen = new Set<string>();
+  return expect
+    .poll(
+      async () => {
+        const color = await screenColor(page, point);
+        if (isRed(color)) seen.add("rojo");
+        if (isBlue(color)) seen.add("azul");
+        return [...seen].sort();
+      },
+      { intervals: [50], message: "la animación cambia de fotograma" }
+    )
+    .toEqual(["azul", "rojo"]);
+};
+
 /** Abre el video de prueba con el botón "Agregar video". */
 export async function openVideo(page: Page) {
   await page.goto("/");
@@ -485,7 +520,9 @@ export async function exportImage(
  */
 export async function exportVideo(page: Page, isMobile: boolean) {
   await openMenuItem(page, "Exportar");
-  const dialog = page.getByRole("dialog", { name: "Exportar video" });
+  // «Exportar video» con un video abierto; solo «Exportar» en un lienzo con
+  // GIFs o stickers, que deja elegir entre imagen y video.
+  const dialog = page.getByRole("dialog", { name: /^Exportar( video)?$/ });
   const submit = dialog.getByRole("button", { name: "Exportar" });
   if (!isMobile) {
     const download = page.waitForEvent("download");
@@ -591,4 +628,121 @@ export function pngSize(bytes: Uint8Array) {
   const signature = [137, 80, 78, 71, 13, 10, 26, 10];
   expect(Array.from(bytes.slice(0, 8))).toEqual(signature);
   return { width: view.getUint32(16), height: view.getUint32(20) };
+}
+
+/** Un fotograma de un video: su momento y el color de un punto. */
+export interface FrameColor {
+  time: number;
+  color: Rgba;
+}
+
+/**
+ * Recorre los fotogramas de un video de `frameRate` fotogramas por segundo,
+ * hasta `untilSeconds`, y apunta de cada uno su momento exacto y el color de
+ * `point`.
+ *
+ * Con el video en pausa, salta a la mitad de cada fotograma y lo pinta en el
+ * aviso de `requestVideoFrameCallback`, que llega con ese fotograma ya en
+ * pantalla y dice su momento. Hay que hacerlo así:
+ * - tras un salto, sin esperar ese aviso, el `<video>` a veces aún muestra el
+ *   fotograma anterior (`readVideo`);
+ * - reproduciendo, con mucha carga, al pintar a veces ya muestra el siguiente.
+ */
+export const readEveryFrame = (
+  page: Page,
+  bytes: Uint8Array,
+  point: Point,
+  { frameRate, untilSeconds }: { frameRate: number; untilSeconds: number }
+): Promise<FrameColor[]> =>
+  page.evaluate(
+    async ({ bytes, point, frameRate, untilSeconds }) => {
+      const video = document.createElement("video");
+      video.muted = true;
+      // En la página, para que el navegador pinte cada fotograma.
+      video.style.cssText = "position: fixed; top: 0; left: 0; width: 64px";
+      document.body.append(video);
+      const url = URL.createObjectURL(
+        new Blob([new Uint8Array(bytes)], { type: "video/mp4" })
+      );
+      video.src = url;
+      await new Promise((resolve, reject) => {
+        video.onloadeddata = resolve;
+        video.onerror = () =>
+          reject(new Error("El navegador no puede reproducir el video"));
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      if (!ctx) throw new Error("Sin contexto 2D");
+
+      const frames: { time: number; color: Rgba }[] = [];
+      const frameCount = Math.round(untilSeconds * frameRate);
+      for (let index = 0; index < frameCount; index++) {
+        const frame = new Promise<{ time: number; color: Rgba }>((resolve) =>
+          video.requestVideoFrameCallback((_now, { mediaTime }) => {
+            ctx.drawImage(video, 0, 0);
+            const [r, g, b, a] = ctx.getImageData(point.x, point.y, 1, 1).data;
+            resolve({ time: mediaTime, color: { r, g, b, a } });
+          })
+        );
+        video.currentTime = (index + 0.5) / frameRate;
+        frames.push(await frame);
+      }
+      video.remove();
+      URL.revokeObjectURL(url);
+      return frames;
+    },
+    { bytes: Array.from(bytes), point, frameRate, untilSeconds }
+  );
+
+/**
+ * El color de los archivos animados de prueba (el GIF y el sticker) en un
+ * momento de un video de 30 fps: cambian cada 200 ms, es decir, cada 6
+ * fotogramas.
+ */
+const testAnimationColorAt = (seconds: number) =>
+  Math.floor(Math.round(seconds * 30) / 6) % 2 === 0 ? "rojo" : "azul";
+
+/**
+ * Exporta como video un lienzo de 1080 × 1080 con un archivo animado de prueba
+ * (el GIF o el sticker) en el centro, y comprueba el MP4: 15 s, sin sonido y,
+ * en cada fotograma de los dos primeros segundos, el color que toca.
+ */
+export async function expectCanvasExportsAnimation(
+  page: Page,
+  isMobile: boolean
+) {
+  await openMenuItem(page, "Exportar");
+  const dialog = page.getByRole("dialog", { name: "Exportar", exact: true });
+  await expect(dialog).toContainText(
+    "Se guarda en MP4 a 1080 × 1080 px, 15 segundos, sin sonido."
+  );
+  await expect(dialog.getByRole("radio", { name: "Video" })).toBeChecked();
+  await page.keyboard.press("Escape");
+
+  const { name, bytes } = await exportVideo(page, isMobile);
+  expect(name).toMatch(/^dibujo-\d{4}-\d{2}-\d{2}\.mp4$/);
+  const exported = await readVideo(page, bytes, { times: [], points: [] });
+  expect(exported.width).toBe(1080);
+  expect(exported.height).toBe(1080);
+  expect(exported.duration).toBeCloseTo(15, 0);
+  expect(exported.soundSeconds).toBe(0);
+
+  // El archivo animado está en el centro del documento. En cada fotograma de
+  // los dos primeros segundos sale el color que le toca en ese momento.
+  const frames = await readEveryFrame(
+    page,
+    bytes,
+    { x: 540, y: 540 },
+    {
+      frameRate: 30,
+      untilSeconds: 2,
+    }
+  );
+  expect(frames).toHaveLength(60);
+  const wrong = frames.filter(({ time, color }) =>
+    testAnimationColorAt(time) === "rojo" ? !isRed(color) : !isBlue(color)
+  );
+  expect(wrong).toEqual([]);
 }

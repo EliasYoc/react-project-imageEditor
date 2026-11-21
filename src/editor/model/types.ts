@@ -195,13 +195,19 @@ export interface ImageElement extends BaseElement {
   /** Tamaño sin escalar, en píxeles del documento. */
   width: number;
   height: number;
-  /**
-   * Es un GIF (o WebP/PNG animado) que el navegador sabe animar. Se mira una
-   * vez, al insertarla: en un navegador sin `ImageDecoder` (Safari) es false
-   * y la imagen se queda quieta.
-   */
-  isAnimated: boolean;
+  /** Cómo se mueve. Se mira una vez, al insertarla. */
+  animation: ImageAnimation;
 }
+
+/**
+ * Cómo se mueve una imagen del documento:
+ * - "none": quieta. También un GIF en un navegador que no sabe animarlo
+ *   (sin `ImageDecoder`, como Safari);
+ * - "frames": un GIF (o WebP/PNG animado), fotograma a fotograma;
+ * - "lottie": un sticker Lottie (.json, o .tgs de Telegram), que se dibuja
+ *   con lottie-web en el fotograma de cada momento.
+ */
+export type ImageAnimation = "none" | "frames" | "lottie";
 
 export type EditorElement = TextElement | ImageElement;
 

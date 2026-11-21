@@ -26,9 +26,19 @@
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   color: var(--color-text-strong);
   font-size: 17px;
   font-weight: 600;
+}
+
+/* El icono del botón que lo abrió, delante del título. */
+.title svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
 }
 
 .description {

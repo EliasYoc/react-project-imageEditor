@@ -173,16 +173,37 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
 
 ## GIFs animados
 
-Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «Insertar una imagen») y **se mueve** en el lienzo, la foto o el video. También los WebP y PNG animados.
+Un GIF se inserta como cualquier imagen (modo Texto → **Más opciones** → «Insertar archivo») y **se mueve** en el lienzo, la foto o el video. También los WebP y PNG animados.
 
 - **Decodificar** (`editor/elements/animatedImage.ts`): con `ImageDecoder` (WebCodecs, del propio navegador; Edge, Chrome y Firefox 133 o posterior). Un canvas solo sabe pintar el primer fotograma de un GIF, así que cada fotograma se decodifica, se pinta en un canvas propio de la imagen, y ese canvas es el que pinta Konva.
 - **Memoria:** nunca se abren todos los fotogramas a la vez (un GIF de 480 × 270 con 50 fotogramas serían unos 26 MB). Se guarda el archivo comprimido y un solo canvas; cada fotograma se decodifica al necesitarlo y se suelta enseguida. Dos elementos con el mismo GIF comparten ambos.
-- **Si es animada** se mira una vez, al insertarla (`isAnimated` en el elemento).
+- **Si es animada** se mira una vez, al insertarla (`animation` del elemento: `"none"`, `"frames"` para un GIF o `"lottie"` para un sticker). Las animaciones se abren una vez por archivo (`editor/elements/imageAnimations.ts`).
+- **El mismo archivo, la misma animación:** al insertar, se calcula una huella del contenido (SHA-256) y, si ese archivo ya estaba, se reutiliza su URL (`features/images/utils/objectUrlFor.ts`). Así 30 copias de un GIF o de un sticker se pintan una sola vez por fotograma. Sin HTTPS no hay `crypto.subtle` y cada inserción lleva su URL.
 - **El tiempo** (`editor/stage/animationClock.ts`): con un video de fondo, el del video (los GIFs se paran en pausa y saltan con la barra de tiempo, como saldrán al exportar); si no, el reloj de la página. El fotograma de cada momento sale de su línea de tiempo (`animationTimeline.ts`): los fotogramas de 10 ms o menos duran 100 ms, como en `<img>`. Solo se repinta al cambiar de fotograma, y nada con el editor oculto.
 - **Al exportar** (`features/export/utils/renderElements.ts`): la imagen lleva el fotograma que se ve en el lienzo, y el video de un documento de video lleva los GIFs moviéndose, con el fotograma de cada momento del video. Los GIFs se vuelven a abrir aparte (otro decodificador y otro canvas), así la animación de la pantalla no les cambia el fotograma a medias. La escena de Konva de los elementos se crea una vez y, con GIFs, se vuelve a pintar en cada fotograma, en el mismo canvas (a la resolución de salida con `setPixelRatio`).
 - **Un lienzo o una foto con GIFs** se exportan **como imagen o como video**: el diálogo deja elegir (empieza en video). El video es un **MP4 sin sonido de 15 s** a 30 fotogramas por segundo, del tamaño del documento reducido a Full HD si es mayor (`fitVideoSize` en `lib/videoSize.ts`, el mismo que al abrir un video). Lo compone `exportAnimation` (`exportVideo.ts`) y lo codifica `encodeFrames` (`encodeVideo.ts`) con el `CanvasSource` de mediabunny. Va en el mismo archivo de JavaScript que exportar un video, así que solo se descarga al usarlo. El fondo (la foto) se reduce una vez al tamaño del video; los GIFs se repiten, cada uno a su ritmo, hasta el final. Medido en Edge: 1080 × 1080 con un GIF, unos 5 s.
 - **Mientras se exporta un video**, la animación del lienzo se para: no le quita tiempo a la exportación.
 - **Safari** no tiene `ImageDecoder`: allí el GIF se queda quieto en su primer fotograma, como una imagen normal, y el diálogo de exportar es el de siempre (solo imagen).
+
+## Stickers animados (Lottie)
+
+Un sticker **Lottie** se inserta igual que una imagen: «Insertar archivo» acepta también `.json` y `.tgs` (el formato de Telegram: el mismo JSON comprimido con gzip). Se mueve, se transforma y sigue al video como un GIF, y **también en Safari** (no usa `ImageDecoder`).
+
+**«¿Qué puedo insertar?»**, encima de «Insertar archivo» en el mismo menú (separada por una línea, `hasSeparatorAfter` en `Menu`), abre una ayuda (`features/images/components/InsertHelpDialog.tsx`). Explica cada tipo de archivo (imágenes, GIFs, stickers Lottie y de Telegram) y cómo conseguirlos: guardar un GIF desde el navegador, LottieFiles y los emojis animados de Google para `.json`, y los bots de Telegram que convierten stickers a `.tgs`.
+
+- **Biblioteca:** [lottie-web](https://github.com/airbnb/lottie-web) 5.13.0 (MIT), en su versión **`lottie_light_canvas`** (54,5 kB con gzip). Se descarga solo con el primer sticker (`editor/elements/lottieSticker.ts`, cargado bajo demanda).
+- **Seguridad:**
+  - la versión "light" no ejecuta las expresiones de After Effects (las versiones completas lo hacen con `eval`): un archivo malicioso no puede ejecutar código;
+  - al insertarlo, `editor/elements/lottieFile.ts` comprueba que sea un Lottie con medidas razonables (como mucho 4096 px y 120 fps; el archivo hasta 5 MB y, descomprimido, hasta 20 MB, contra las "bombas" gzip);
+  - rechaza imágenes que no vayan incrustadas y fuentes con ruta, porque lottie-web las descargaría de la dirección que diga el archivo (añadiendo un `<link>` o un `<style>` a la página).
+- **Cómo se pinta:** lottie-web dibuja el fotograma de cada momento (`goToAndStop`, al ritmo del reloj de la animación) en un canvas propio, sin contenedor en el DOM, y ese canvas es el que pinta Konva, como con los GIFs. El fotograma de cada momento sale de `lottieFrameAt` (`animationTimeline.ts`).
+- **Rendimiento con muchos stickers:**
+  - un reproductor por archivo: las copias del mismo sticker se pintan una sola vez por fotograma;
+  - resolución según cómo se ve en pantalla, por escalones (potencias de 2 entre 64 y 1024 px, `stickerResolution.ts`);
+  - en pantalla, como mucho 30 fotogramas por segundo;
+  - **pintado por turnos**: como mucho 8 ms de stickers por frame de pantalla; los que no caben esperan al siguiente, así un teléfono lento no se traba (sus animaciones van más despacio).
+  - Medido en Edge con stickers reales (512 × 512, de 36 a 136 capas), móvil emulado con la CPU 4 veces más lenta: 30 copias del mismo, 144 fps; 9 distintos, 62 fps (peor frame 35 ms; antes de pintar por turnos, 24 fps con frames de 110 ms).
+- **Al exportar** (`features/export/utils/renderElements.ts`), cada sticker usa un lector aparte del lienzo (`openLottieReader`), con su propio canvas al **tamaño con que sale en el archivo** (como mucho 2048 px): es vectorial, así que sale nítido. Se pinta en el momento exacto de cada fotograma, sin turnos ni límite de 30 fps. Como con los GIFs, la imagen lleva el fotograma visible y el video de un lienzo dura 15 s. Medido en Edge: un lienzo de 1080 × 1080 con tres stickers reales se exporta como video en 4,5 s.
 
 ## Rendimiento
 
@@ -230,6 +251,7 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
   - los pinceles: las figuras de Formas y su menú, y el Desenfoque sobre una foto y sobre la pintura (en pantalla y exportado);
   - los textos: escribir, editar, el degradado y moverlos;
   - los GIFs: que uno insertado se mueve en el lienzo, y que un lienzo con un GIF se exporta como un MP4 de 15 s en el que el GIF se mueve;
+  - los stickers: que uno `.json` y uno `.tgs` insertados se mueven en el lienzo, y que un lienzo con un sticker se exporta como un MP4 de 15 s en el que el sticker se mueve;
   - el fondo de color y de degradado;
   - exportar: el nombre y el tamaño del PNG, y su contenido;
   - el teclado y la PWA sin conexión.
@@ -240,7 +262,8 @@ Los tests de `e2e/` usan la app como una persona, en un navegador real, con [Pla
 - **Archivos de prueba** (`e2e/fixtures/`):
   - `foto.png`: 400 × 300, negra a la izquierda y blanca a la derecha;
   - `video.mp4`: 320 × 240, 2 segundos, H.264 con sonido AAC (un tono). También es negro a la izquierda y blanco a la derecha, y su franja de arriba es roja el primer segundo y azul el segundo: así un test sabe en qué momento del video está. Se generó una vez en Edge, dibujando en un canvas y codificándolo con mediabunny;
-  - `animado.gif`: 64 × 64, un fotograma rojo y otro azul de 200 ms, en bucle. Se generó una vez escribiendo los bytes del GIF con un script de Node (sin comprimir: los navegadores no codifican GIF).
+  - `animado.gif`: 64 × 64, un fotograma rojo y otro azul de 200 ms, en bucle. Se generó una vez escribiendo los bytes del GIF con un script de Node (sin comprimir: los navegadores no codifican GIF);
+  - `sticker.json` y `sticker.tgs`: un Lottie hecho a mano de 64 × 64, 30 fps y 12 fotogramas, rojo los 6 primeros y azul los 6 últimos (200 ms cada color, como el GIF). El `.tgs` es el mismo JSON comprimido con gzip.
 - **Si un test falla:** Playwright guarda una traza (capturas, DOM y red de cada paso) en `test-results/`. Se abre con `npx playwright show-trace <ruta>/trace.zip`. El informe HTML queda en `playwright-report/`.
 
 ## CI (GitHub Actions)
@@ -258,8 +281,8 @@ En cada PR y cada push a `dev` y `main`, GitHub ejecuta `.github/workflows/ci.ym
   - **Si al repetirlo pasa, era "flaky":** un fallo intermitente que conviene investigar.
 - **Por qué en Linux:** distingue mayúsculas en los nombres de archivo y Windows no. Un import `./button` hacia `Button.tsx` funciona en Windows y falla aquí, como fallaría en muchos servidores.
 - **Presupuesto de tamaño** (`scripts/check-bundle-size.js`):
-  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga para exportar un video, el de un video abierto o el de un lienzo con GIFs: el diálogo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`) y el del **editor** (el resto);
-  - falla si pasan de **120 kB**, **119 kB** y **142 kB**: hoy son unos 119, 114 y 140;
+  - mide con gzip el JS del **inicio** (lo que enlaza `build/index.html`), el del **video** (lo que solo se descarga para exportar un video, el de un video abierto o el de un lienzo con GIFs: el diálogo y el codificador, `VideoExportDialog-*` y `encodeVideo-*`), el de los **stickers** (lo que solo se descarga con el primer sticker: lottie-web y la lectura del archivo, `lottieSticker-*` y `lottieFile-*`) y el del **editor** (el resto);
+  - falla si pasan de **120 kB**, **119 kB**, **59 kB** y **144 kB**: hoy son unos 119, 114, 57 y 142;
   - si un cambio necesita más, se sube el límite en ese archivo, en la misma PR, explicando por qué.
 - **Acciones fijadas por commit (SHA):** el comentario indica la versión (`# v7.0.1`). **Dependabot** (`.github/dependabot.yml`) abre una vez al mes una PR a `dev` para actualizarlas, solo con versiones de más de 14 días. Empieza a funcionar cuando el archivo llega a `main`.
 - **Coste:** gratis en repos públicos. En privados, el plan gratuito incluye unos 2.000 minutos al mes, y cada ejecución tarda unos 5. Un push nuevo a la misma PR cancela la ejecución anterior.
@@ -279,10 +302,11 @@ Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.r
 
 - **`Panel`**: en el móvil es una **hoja inferior modal** (se cierra con ✕, Escape, tocando fuera o deslizándola hacia abajo); en escritorio (≥ 900 px) es un **panel lateral no modal**: el lienzo sigue a la vista y se puede dibujar o elegir otro texto con él abierto. Al cerrarse, el foco vuelve al botón que lo abrió (`useReturnFocus`).
 - **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`ChoiceMenu`** (un menú para elegir una opción entre varias, con la elegida marcada: la figura del pincel Formas), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
+- **Iconos en los títulos:** `Panel` y `Dialog` aceptan `icon`, el del botón o la opción de menú que los abre (Fondo, Pinceles con el pincel activo, Estilo del texto, Exportar, Atajos de teclado, ¿Qué puedo insertar?). Es solo visual: el nombre accesible sigue siendo el título. Los que se abren desde un botón sin icono (Fuente, el color) y las confirmaciones no llevan. En la lista de atajos, cada atajo lleva también el icono de su botón o, si no tiene, uno de lucide que lo explique.
 - **`Tooltip`**: solo con ratón o teclado, con el atajo de cada botón. No aparece cuando un panel devuelve el foco a su botón.
 - Con un video: **`Slider`** de Radix en la barra de tiempo y **`ProgressBar`** (Radix Progress) en el avance de la exportación.
 - Los atajos de teclado no actúan sobre la selección (Supr, Escape) si el foco está dentro de un panel o un menú.
 
 ## Stack
 
-React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · mediabunny (video) · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier
+React 19 · Vite · Konva (react-konva) · Zustand · TypeScript · Radix UI · lucide-react · mediabunny (video) · lottie-web (stickers) · CSS Modules · Vitest + Testing Library · Playwright · ESLint + Prettier

@@ -33,14 +33,24 @@ export const isAnimatedImage = async (file: Blob) => {
   }
 };
 
-/** Una imagen animada del lienzo, que pinta su fotograma actual en un canvas. */
+/**
+ * Una imagen animada del lienzo (un GIF o un sticker Lottie), que pinta su
+ * fotograma actual en un canvas. La comparten todos los elementos con el
+ * mismo archivo: van al mismo tiempo.
+ */
 export interface AnimatedImage {
-  /** Del tamaño de la imagen, con el fotograma que toca: es lo que pinta Konva. */
+  /** Con el fotograma que toca: es lo que pinta Konva. */
   readonly canvas: HTMLCanvasElement;
-  /** Pide el fotograma del segundo `seconds`; se pinta en cuanto se decodifica. */
+  /** Pide el fotograma del segundo `seconds`; se pinta en cuanto está listo. */
   showFrameAt: (seconds: number) => void;
-  /** Avisa cada vez que el canvas cambia de fotograma. Devuelve cómo parar. */
+  /** Avisa cada vez que el canvas cambia. Devuelve cómo parar. */
   onFrame: (listener: () => void) => () => void;
+  /**
+   * Un elemento la muestra con `pixels` píxeles de pantalla de lado mayor.
+   * Un sticker se pinta a la mayor resolución que se le pida (es vectorial);
+   * un GIF tiene la suya y no hace nada. Devuelve cómo dejar de pedirla.
+   */
+  showAtSize: (pixels: number) => () => void;
 }
 
 /**
@@ -95,8 +105,10 @@ const drawFrame = async (
   }
 };
 
-/** Una imagen animada que se mueve en el lienzo. */
-const createAnimatedImage = async (src: string): Promise<AnimatedImage> => {
+/** Un GIF (o WebP/PNG animado) que se mueve en el lienzo. */
+export const openFramesAnimation = async (
+  src: string
+): Promise<AnimatedImage> => {
   const { decoder, canvas, timeline } = await openAnimation(src);
   const listeners = new Set<() => void>();
   let shownIndex = 0;
@@ -139,6 +151,8 @@ const createAnimatedImage = async (src: string): Promise<AnimatedImage> => {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    // Un GIF se pinta a su tamaño: no depende de cómo se vea.
+    showAtSize: () => () => {},
   };
 };
 
@@ -173,30 +187,3 @@ export const openAnimationReader = async (
     close: () => decoder.close(),
   };
 };
-
-// Una por `src`, como `imageCache`: dos elementos con el mismo GIF comparten
-// el decodificador y el canvas (los dos van al mismo tiempo).
-const loading = new Map<string, Promise<AnimatedImage>>();
-const ready = new Map<string, AnimatedImage>();
-
-/** Abre la imagen animada de `src` una sola vez. */
-export const loadAnimatedImage = (src: string): Promise<AnimatedImage> => {
-  const cached = loading.get(src);
-  if (cached) return cached;
-  const promise = createAnimatedImage(src).then(
-    (animation) => {
-      ready.set(src, animation);
-      return animation;
-    },
-    (error: unknown) => {
-      // Un fallo no se guarda: la próxima vez se vuelve a intentar.
-      loading.delete(src);
-      throw error;
-    }
-  );
-  loading.set(src, promise);
-  return promise;
-};
-
-/** La imagen animada si ya está abierta (sin esperar). */
-export const getLoadedAnimatedImage = (src: string) => ready.get(src) ?? null;

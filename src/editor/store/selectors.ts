@@ -76,12 +76,12 @@ export const selectCanUndo = (state: EditorStore) => state.past.length > 0;
 export const selectVideo = (state: EditorStore) => state.photo.video;
 
 /**
- * Hay algún GIF que se mueve: un lienzo o una foto se pueden exportar como
- * video. Siempre false en un navegador que no anima GIFs (Safari).
+ * Hay algún GIF o sticker que se mueve: un lienzo o una foto se pueden
+ * exportar como video. En Safari, solo con stickers (los GIFs no se mueven).
  */
 export const selectHasAnimatedElements = (state: EditorStore) =>
   selectElements(state).some(
-    (element) => element.whatTask === "image" && element.isAnimated
+    (element) => element.whatTask === "image" && element.animation !== "none"
   );
 
 /** El documento tiene de fondo una foto o un video (no es un lienzo en blanco). */
