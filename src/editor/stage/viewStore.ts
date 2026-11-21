@@ -7,6 +7,7 @@ import {
   fitView,
   panBy,
   screenToDocument,
+  visibleArea,
   zoomAt,
   zoomLimits,
   type Insets,
@@ -59,10 +60,10 @@ export const selectZoomLimits = (state: ViewState) =>
   zoomLimits(state.stageSize, documentSize(), state.insets);
 
 /** Centro de la pantalla del área del lienzo que no tapan los `insets`. */
-const visibleCenter = ({ stageSize, insets }: ViewState): Point => ({
-  x: (insets.left + stageSize.width - insets.right) / 2,
-  y: (insets.top + stageSize.height - insets.bottom) / 2,
-});
+const visibleCenter = ({ stageSize, insets }: ViewState): Point => {
+  const area = visibleArea(stageSize, insets);
+  return { x: area.x + area.width / 2, y: area.y + area.height / 2 };
+};
 
 export const createViewStore = () =>
   createStore<ViewState>()((set, get) => {

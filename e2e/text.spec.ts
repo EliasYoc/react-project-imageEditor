@@ -8,6 +8,7 @@ import {
   openBlankCanvas,
   pointIn,
   screenColor,
+  stageRect,
   tapAt,
   type Point,
   type Rect,
@@ -68,6 +69,46 @@ test.describe("Texto", () => {
         element.selectionEnd,
       ])
     ).toEqual([4, 4]);
+  });
+
+  test("al editar un texto lejos, el editor sale centrado y arriba, y el texto vuelve a su sitio", async ({
+    page,
+    isMobile,
+  }) => {
+    const doc = await documentRect(page);
+    const center = pointIn(doc, 0.5, 0.5);
+    const far = pointIn(doc, 0.75, 0.8);
+    await addText(page, doc, isMobile);
+    await drag(page, [center, far], isMobile);
+    await expect
+      .poll(() => countPixels(page, textArea(doc, far), isDark))
+      .toBeGreaterThan(50);
+
+    // Se edita desde donde está. Tras arrastrarlo ya está seleccionado: en el
+    // móvil basta un toque (un segundo caería fuera del editor y lo cerraría).
+    if (isMobile) {
+      await tapAt(page, far, true);
+    } else {
+      await page.mouse.dblclick(far.x, far.y);
+    }
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toBeFocused();
+
+    // Sale centrado en horizontal y por encima de donde estaba el texto.
+    const stage = await stageRect(page);
+    const box = (await editor.boundingBox()) as Rect;
+    expect(
+      Math.abs(box.x + box.width / 2 - (stage.x + stage.width / 2))
+    ).toBeLessThan(3);
+    expect(box.y + box.height).toBeLessThan(far.y);
+
+    // Al terminar, el texto sigue donde estaba (y no en el centro).
+    await tapAt(page, pointIn(doc, 0.15, 0.15), isMobile);
+    await expect(editor).toBeHidden();
+    await expect
+      .poll(() => countPixels(page, textArea(doc, far), isDark))
+      .toBeGreaterThan(50);
+    expect(await countPixels(page, textArea(doc, center), isDark)).toBe(0);
   });
 
   test("aplica un degradado al texto", async ({ page, isMobile }) => {

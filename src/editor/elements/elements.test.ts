@@ -9,7 +9,7 @@ import {
   type TextNodeInput,
 } from "./nodeConfig";
 import { snapToDocument } from "./snapping";
-import { textEditorBox } from "./textEditorBox";
+import { textEditingBox } from "./textEditorBox";
 
 const text = (extra: Partial<TextNodeInput> = {}): TextNodeInput => ({
   ...createDefaultTextStyle(),
@@ -175,14 +175,45 @@ describe("snapToDocument", () => {
   });
 });
 
-describe("textEditorBox", () => {
-  it("coloca el textarea sobre el nodo con el giro y la escala de vista × elemento", () => {
-    expect(textEditorBox(text(), { x: 50, y: 60, scale: 0.5 })).toEqual({
-      left: 55,
-      top: 70,
-      transform: "rotate(30deg) scale(1)",
-      transformOrigin: "0 0",
+describe("textEditingBox", () => {
+  const area = { x: 0, y: 100, width: 400, height: 600 };
+
+  it("coloca el editor horizontal, centrado y un poco por encima del centro de la zona libre", () => {
+    const { scale, ...position } = textEditingBox(100, 0.5, area);
+    expect(scale).toBe(0.5);
+    expect(position).toEqual({
+      left: 200,
+      // A un 40 % del alto libre (600), contando desde donde empieza (100).
+      top: 340,
+      transform: "translateX(-50%) scale(0.5)",
+      transformOrigin: "50% 0",
     });
+  });
+
+  it("centra en la parte libre cuando algo tapa los lados", () => {
+    const { left } = textEditingBox(100, 1, {
+      x: 50,
+      y: 0,
+      width: 300,
+      height: 500,
+    });
+    expect(left).toBe(200);
+  });
+
+  it("se encoge si es más ancho que la zona libre (con su margen)", () => {
+    // 400 de ancho menos 16 de margen por lado = 368 para un texto de 1000.
+    const { scale } = textEditingBox(1000, 1, area);
+    expect(scale).toBeCloseTo(0.368);
+    expect(1000 * scale).toBeLessThanOrEqual(400 - 2 * 16);
+  });
+
+  it("no lo agranda: un texto que cabe se ve con su tamaño", () => {
+    expect(textEditingBox(100, 0.3, area).scale).toBe(0.3);
+  });
+
+  it("sin zona medida (ancho 0) o sin ancho de texto, no lo encoge", () => {
+    expect(textEditingBox(1000, 0.4, { ...area, width: 0 }).scale).toBe(0.4);
+    expect(textEditingBox(0, 0.4, area).scale).toBe(0.4);
   });
 });
 

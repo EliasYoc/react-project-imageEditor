@@ -136,3 +136,19 @@ los tests de componentes la sustituyen por un marcador.
 - **Decisión sin tomar:** el color de la sombra no cuenta para elegir el fondo
   (una sombra blanca sobre el fondo blanco no se ve). Si molesta, añadirla a
   `previewBackdrop`.
+
+## El editor de texto sale horizontal y centrado
+
+Comprobado a mano en Edge (390 px) con un texto corto y con uno largo de una
+sola línea (se encoge hasta caber, a un 15 % de su tamaño).
+
+- **e2e:** un texto girado (con las asas de la selección) se edita horizontal.
+  Hoy el e2e solo mueve el texto, no lo gira.
+- **e2e:** un texto más ancho que la pantalla se edita encogido, sin salirse
+  por los lados.
+- **e2e:** al hacer zoom con el editor abierto, el editor cambia de tamaño y
+  sigue centrado.
+- **Decisión sin tomar:** en un documento muy apaisado o con una foto de otra
+  proporción, el editor puede caer fuera del lienzo, sobre el fondo gris, y un
+  texto oscuro no se ve. Una caja de fondo (blanca o gris, como la de la vista
+  previa) detrás del editor lo arreglaría.

@@ -9,10 +9,31 @@ import {
   panBy,
   pinchView,
   screenToDocument,
+  visibleArea,
   zoomAt,
   zoomLimits,
   type View,
 } from "./viewport";
+
+describe("visibleArea", () => {
+  it("sin nada que tape, es todo el área del lienzo", () => {
+    expect(visibleArea({ width: 400, height: 800 })).toEqual({
+      x: 0,
+      y: 0,
+      width: 400,
+      height: 800,
+    });
+  });
+
+  it("quita lo que tapan los bordes", () => {
+    expect(
+      visibleArea(
+        { width: 400, height: 800 },
+        { top: 100, right: 20, bottom: 50, left: 10 }
+      )
+    ).toEqual({ x: 10, y: 100, width: 370, height: 650 });
+  });
+});
 
 // Los mismos casos que fijaban el comportamiento del lienzo legacy
 // (getCalculatedCoordsOfContainCanvas): el resultado no debe cambiar.

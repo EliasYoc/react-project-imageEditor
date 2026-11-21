@@ -1,8 +1,9 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getFont } from "../elements/fonts";
 import { textPadding } from "../elements/nodeConfig";
-import { textEditorBox } from "../elements/textEditorBox";
+import { textEditingBox } from "../elements/textEditorBox";
 import { textEditorPaint } from "../elements/textGradient";
+import { visibleArea } from "../engine/viewport";
 import { isTextElement, type TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
@@ -10,16 +11,22 @@ import styles from "./EditorStage.module.css";
 import { useViewStore } from "./viewStore";
 
 /**
- * Textarea para escribir un texto, colocado exactamente encima de su nodo de
- * Konva (mismo tamaño de letra, fuente, color, giro y escala). Mientras se
- * edita, el nodo se oculta.
+ * Textarea para escribir un texto, con el mismo tamaño de letra, fuente y
+ * color que el nodo de Konva. Mientras se edita, el nodo se oculta y el
+ * textarea no se pone encima: sale horizontal, centrado y un poco arriba
+ * (`textEditingBox`), para leerlo aunque el texto esté girado o lejos. Al
+ * terminar, el texto sigue donde estaba.
  *
  * Se confirma al salir (tocar fuera) o con Ctrl/⌘ + Enter; Escape cancela.
  * Un texto nuevo que se deja vacío se descarta sin dejar rastro.
  */
 const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
+  const stageSize = useViewStore((state) => state.stageSize);
+  const insets = useViewStore((state) => state.insets);
   const [draft, setDraft] = useState(element.text);
+  // Ancho del textarea sin escalar: si no cabe en pantalla, se encoge.
+  const [contentWidth, setContentWidth] = useState(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isFinishedRef = useRef(false);
 
@@ -47,8 +54,15 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       }
       textarea.style.height = "0px";
       textarea.style.height = `${textarea.scrollHeight}px`;
+      setContentWidth(textarea.offsetWidth);
     },
     [draft, element.width, element.fontSize]
+  );
+
+  const { scale, ...position } = textEditingBox(
+    contentWidth,
+    view.scale * element.scale,
+    visibleArea(stageSize, insets)
   );
 
   const finish = (save: boolean) => {
@@ -87,7 +101,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       wrap={element.width === null ? "off" : "soft"}
       spellCheck={false}
       style={{
-        ...textEditorBox(element, view),
+        ...position,
         width: element.width ?? undefined,
         padding: textPadding(element),
         font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
@@ -99,7 +113,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
           borderRadius: element.fontSize * element.background.radius,
         }),
         // Se quita el escalado del borde: siempre 1 px en pantalla.
-        outlineWidth: `${1 / (view.scale * element.scale)}px`,
+        outlineWidth: `${1 / scale}px`,
       }}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={() => finish(true)}

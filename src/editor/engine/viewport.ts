@@ -29,6 +29,20 @@ export interface Insets {
 
 export const NO_INSETS: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
 
+/** Un rectángulo en píxeles de pantalla (relativos al área del lienzo). */
+export interface ScreenRect extends Point, Size {}
+
+/** Lo que queda del área del lienzo sin lo que tapan los `insets`. */
+export const visibleArea = (
+  stage: Size,
+  insets: Insets = NO_INSETS
+): ScreenRect => ({
+  x: insets.left,
+  y: insets.top,
+  width: stage.width - insets.left - insets.right,
+  height: stage.height - insets.top - insets.bottom,
+});
+
 /**
  * Vista que muestra el documento completo y centrado (como `object-fit:
  * contain`) en el área del lienzo menos `insets`. Antes este cálculo se
@@ -40,16 +54,15 @@ export const fitView = (
   doc: Size,
   insets: Insets = NO_INSETS
 ): View => {
-  const width = stage.width - insets.left - insets.right;
-  const height = stage.height - insets.top - insets.bottom;
-  if (width <= 0 || height <= 0 || !doc.width || !doc.height) {
+  const area = visibleArea(stage, insets);
+  if (area.width <= 0 || area.height <= 0 || !doc.width || !doc.height) {
     return IDENTITY_VIEW;
   }
-  const scale = Math.min(width / doc.width, height / doc.height);
+  const scale = Math.min(area.width / doc.width, area.height / doc.height);
   return {
     scale,
-    x: insets.left + (width - doc.width * scale) / 2,
-    y: insets.top + (height - doc.height * scale) / 2,
+    x: area.x + (area.width - doc.width * scale) / 2,
+    y: area.y + (area.height - doc.height * scale) / 2,
   };
 };
 
