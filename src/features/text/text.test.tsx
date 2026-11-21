@@ -8,6 +8,7 @@ import {
 } from "../../editor/store/editorStore";
 import { selectSelectedText } from "../../editor/store/selectors";
 import FontPicker from "./components/FontPicker/FontPicker";
+import TextPanel from "./components/TextPanel/TextPanel";
 import TextToolbar from "./components/TextToolbar/TextToolbar";
 import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
@@ -40,9 +41,11 @@ describe("FontPicker", () => {
       "true"
     );
   });
+});
 
+describe("TextPanel", () => {
   it("cambia el grosor entre normal y negrita", async () => {
-    render(<FontPicker text={text()} />);
+    render(<TextPanel text={text()} />);
     // Grosor es un grupo de radio (hay otro "Normal": la fuente del sistema).
     const weights = screen.getByRole("radiogroup", { name: "Grosor" });
     await userEvent.click(
@@ -50,15 +53,33 @@ describe("FontPicker", () => {
     );
     expect(text().fontWeight).toBe(900);
   });
-});
 
-describe("TextStylePanel", () => {
   it("alinea el texto", async () => {
-    render(<TextStylePanel text={text()} />);
+    render(<TextPanel text={text()} />);
     await userEvent.click(screen.getByRole("radio", { name: "Centrar" }));
     expect(text().align).toBe("center");
   });
 
+  it("junta fuente y estilo: grosor y alineación, fuentes y la sección «Estilo»", () => {
+    render(<TextPanel text={text()} />);
+    expect(screen.getByRole("radiogroup", { name: "Grosor" })).toBeVisible();
+    expect(
+      screen.getByRole("radiogroup", { name: "Alineación" })
+    ).toBeVisible();
+    expect(screen.getByRole("group", { name: "Fuentes" })).toBeVisible();
+    const style = screen.getByRole("region", { name: "Estilo" });
+    expect(
+      within(style).getByRole("slider", { name: "Interlineado" })
+    ).toBeVisible();
+    for (const effect of ["Degradado", "Contorno", "Sombra", "Caja de fondo"]) {
+      expect(
+        within(style).getByRole("checkbox", { name: effect })
+      ).toBeVisible();
+    }
+  });
+});
+
+describe("TextStylePanel", () => {
   it("activar el contorno muestra sus ajustes; el grosor es un solo paso del historial", async () => {
     const { rerender } = render(<TextStylePanel text={text()} />);
     expect(screen.queryByRole("slider", { name: "Grosor" })).toBeNull();
@@ -170,6 +191,20 @@ describe("TextStylePanel", () => {
 });
 
 describe("TextToolbar", () => {
+  it("un solo botón abre «Fuente y estilo»; ya no hay un botón aparte de estilo", async () => {
+    const user = userEvent.setup();
+    render(<TextToolbar />);
+    expect(
+      screen.queryByRole("button", { name: "Estilo del texto" })
+    ).toBeNull();
+
+    await user.click(screen.getByRole("button", { name: /^Fuente:/ }));
+    const panel = await screen.findByRole("dialog", {
+      name: "Fuente y estilo",
+    });
+    expect(within(panel).getByRole("region", { name: "Estilo" })).toBeVisible();
+  });
+
   it("«Insertar archivo» está en el menú «Más opciones» y abre el selector de archivos", async () => {
     const user = userEvent.setup();
     const { container } = render(<TextToolbar />);

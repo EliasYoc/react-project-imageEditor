@@ -105,3 +105,16 @@ sale nítida a 1080 × 1080 y el video de 15 s se exporta en 4,5 s.
 - **e2e:** insertar dos veces la misma imagen y una que no se puede leer (un
   archivo `.png` que no es una imagen): la segunda muestra el aviso de error y
   la app sigue funcionando.
+
+## Un solo panel «Fuente y estilo»
+
+Comprobado a mano en Edge (390, 320 y 1280 px de ancho) con un script de
+Playwright: grosor y alineación quedan en la misma fila en los tres.
+
+- **e2e (móvil):** a 320 px de ancho, Normal/Negrita y la alineación siguen en
+  la misma fila y el panel no tiene scroll horizontal.
+- **e2e (escritorio):** con el panel abierto (no modal), elegir otro texto
+  actualiza el grosor, la alineación y la fuente marcada.
+- **Decisión sin tomar:** al abrir el panel se descargan las 18 fuentes aunque
+  solo se quiera cambiar la sombra. Si pesa, retrasar la descarga hasta que la
+  lista se vea (y entonces, un test que lo compruebe).

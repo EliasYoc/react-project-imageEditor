@@ -1,15 +1,9 @@
-import { AlignCenter, AlignLeft, AlignRight } from "lucide-react";
 import { useState } from "react";
-import {
-  Segmented,
-  type SegmentedItem,
-} from "../../../../components/ui/Segmented";
 import { Slider } from "../../../../components/ui/Slider";
 import { ToggleSection } from "../../../../components/ui/ToggleSection";
 import { ColorField } from "../../../../components/ui/ColorField";
 import type {
   Gradient,
-  TextAlign,
   TextElement,
   TextStyle,
 } from "../../../../editor/model/types";
@@ -18,19 +12,13 @@ import TextGradientEditor from "../TextGradientEditor/TextGradientEditor";
 import styles from "./TextStylePanel.module.css";
 import { DEFAULT_TEXT_GRADIENT } from "../../constants/textGradientPresets";
 
-const ALIGNMENTS: readonly SegmentedItem<TextAlign>[] = [
-  { value: "left", label: "Alinear a la izquierda", icon: AlignLeft },
-  { value: "center", label: "Centrar", icon: AlignCenter },
-  { value: "right", label: "Alinear a la derecha", icon: AlignRight },
-];
-
 type ColorTarget = "gradient" | "stroke" | "shadow" | "background";
 
 const percent = (value: number) => `${Math.round(value)} %`;
 
 /**
- * Estilo del texto seleccionado: alineación, interlineado, degradado,
- * contorno, sombra y caja de fondo. Las medidas van en % del tamaño de letra.
+ * Sección «Estilo» del texto seleccionado: interlineado, degradado, contorno,
+ * sombra y caja de fondo. Las medidas van en % del tamaño de letra.
  *
  * Arrastrar un slider o un selector de color crea un solo paso del historial
  * (mergeKey por ajuste).
@@ -56,13 +44,6 @@ const TextStylePanel = ({ text }: { text: TextElement }) => {
 
   return (
     <div className={styles.panel}>
-      <Segmented
-        label="Alineación"
-        value={text.align}
-        onChange={(align) => edit({ align })}
-        items={ALIGNMENTS}
-        isIconOnly
-      />
       <Slider
         label="Interlineado"
         min={80}

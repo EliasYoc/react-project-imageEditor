@@ -1,4 +1,4 @@
-/* Contenido del panel "Estilo del texto" (el Panel pone el margen y el scroll). */
+/* Sección «Estilo» del panel "Fuente y estilo". */
 .panel {
   display: flex;
   flex-direction: column;

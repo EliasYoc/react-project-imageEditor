@@ -101,7 +101,7 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 | Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)                                          | Botones de la cabecera              |
 | Editar un texto       | Doble clic, o clic en un texto ya seleccionado                                        | Tocar un texto ya seleccionado      |
 | Eliminar un elemento  | Supr / Retroceso (modo Texto)                                                         | Botón de la papelera                |
-| Negrita               | Ctrl/⌘ + B (modo Texto)                                                               | Panel "Fuente"                      |
+| Negrita               | Ctrl/⌘ + B (modo Texto)                                                               | Panel "Fuente y estilo"             |
 | Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                                 | Barra inferior                      |
 | Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                                   | Igual                               |
 | Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón)               | Tocar el slider del borde izquierdo |
@@ -168,7 +168,7 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
 ## Textos
 
 - **Fuentes propias** con [@fontsource](https://fontsource.org) (WOFF2), registradas en `editor/elements/fonts.ts`. Cada una se carga **bajo demanda** (import dinámico de su CSS) cuando un texto la usa o al abrir el selector, y solo se descarga el subconjunto latino: no hay peticiones a Google Fonts. Konva espera a que la fuente esté lista (`fontLoader.ts`) antes de medir el texto.
-- **Estilos**: alineación, interlineado, degradado, contorno, sombra y caja de fondo. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
+- **Estilos**: grosor, alineación, interlineado, degradado, contorno, sombra y caja de fondo, todos en un solo panel («Fuente y estilo») junto con la lista de fuentes. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
 - **Degradado en el texto** (lineal o radial, `editor/elements/textGradient.ts`): se reparte en la caja del texto ya medida, sin el margen interior, y abarca todas las líneas, como `background-clip: text`. El radial es un círculo hasta la esquina más lejana, porque Konva no deforma el degradado en elipse y no tiene cónico para las formas.
 
 ## GIFs animados
@@ -227,7 +227,7 @@ Un sticker **Lottie** se inserta igual que una imagen: «Insertar archivo» acep
 - **Plugin:** `vite-plugin-pwa` (configuración en `vite.config.js`) genera el `manifest.webmanifest` y el service worker (`sw.js`, con Workbox). El navegador ofrece instalar la app con su icono (`public/pwa-*.png`, `maskable-512x512.png`, `favicon.svg`).
 - **Sin conexión:**
   - toda la app (también el editor y el codificador de video, que se cargan aparte) queda en caché al instalarse el service worker, unos 1,3 MB (de ellos, unos 440 KB son el codificador de video). Así también se puede exportar un video sin conexión;
-  - las **fuentes** se guardan la primera vez que se usan, o al abrir la lista de fuentes, y desde ahí también funcionan sin conexión.
+  - las **fuentes** se guardan la primera vez que se usan, o al abrir el panel «Fuente y estilo», y desde ahí también funcionan sin conexión.
 - **Actualizaciones** (`features/update`): una versión nueva se descarga en segundo plano y se aplica **sin cerrar las pestañas**. El dibujo vive en memoria y recargar lo perdería, así que:
   - si no hay nada que perder (inicio sin documento), la app se recarga sola con la versión nueva; si se está eligiendo una foto, espera a que termine;
   - si hay algo abierto, la cabecera muestra **Actualizar**; con un dibujo, pide confirmación antes de recargar;
@@ -302,7 +302,7 @@ Las piezas interactivas de `components/ui` se apoyan en [Radix UI](https://www.r
 
 - **`Panel`**: en el móvil es una **hoja inferior modal** (se cierra con ✕, Escape, tocando fuera o deslizándola hacia abajo); en escritorio (≥ 900 px) es un **panel lateral no modal**: el lienzo sigue a la vista y se puede dibujar o elegir otro texto con él abierto. Al cerrarse, el foco vuelve al botón que lo abrió (`useReturnFocus`).
 - **`Dialog`** y **`ConfirmDialog`** (exportar, borrar el dibujo), **`Menu`** (⋮), **`ChoiceMenu`** (un menú para elegir una opción entre varias, con la elegida marcada: la figura del pincel Formas), **`Segmented`** (opciones excluyentes: un grupo de radio que se recorre con flechas) y **`ColorControl`** (globo en escritorio, hoja en el móvil, con campo hex).
-- **Iconos en los títulos:** `Panel` y `Dialog` aceptan `icon`, el del botón o la opción de menú que los abre (Fondo, Pinceles con el pincel activo, Estilo del texto, Exportar, Atajos de teclado, ¿Qué puedo insertar?). Es solo visual: el nombre accesible sigue siendo el título. Los que se abren desde un botón sin icono (Fuente, el color) y las confirmaciones no llevan. En la lista de atajos, cada atajo lleva también el icono de su botón o, si no tiene, uno de lucide que lo explique.
+- **Iconos en los títulos:** `Panel` y `Dialog` aceptan `icon`, el del botón o la opción de menú que los abre (Fondo, Pinceles con el pincel activo, Exportar, Atajos de teclado, ¿Qué puedo insertar?). Es solo visual: el nombre accesible sigue siendo el título. Los que se abren desde un botón sin icono (Fuente y estilo, el color) y las confirmaciones no llevan. En la lista de atajos, cada atajo lleva también el icono de su botón o, si no tiene, uno de lucide que lo explique.
 - **`Tooltip`**: solo con ratón o teclado, con el atajo de cada botón. No aparece cuando un panel devuelve el foco a su botón.
 - Con un video: **`Slider`** de Radix en la barra de tiempo y **`ProgressBar`** (Radix Progress) en el avance de la exportación.
 - Los atajos de teclado no actúan sobre la selección (Supr, Escape) si el foco está dentro de un panel o un menú.

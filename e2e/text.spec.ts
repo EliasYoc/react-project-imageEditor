@@ -72,8 +72,8 @@ test.describe("Texto", () => {
     expect(await countPixels(page, area, isColorful)).toBeLessThan(10);
 
     await tapAt(page, center, isMobile);
-    await page.getByRole("button", { name: "Estilo del texto" }).click();
-    const panel = page.getByRole("dialog", { name: "Estilo del texto" });
+    await page.getByRole("button", { name: /^Fuente:/ }).click();
+    const panel = page.getByRole("dialog", { name: "Fuente y estilo" });
     await panel.getByRole("checkbox", { name: "Degradado" }).check();
     await panel.getByRole("button", { name: "Cerrar" }).click();
     // Sin selección: el marco azul no cuenta como color del texto.
