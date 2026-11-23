@@ -1,8 +1,11 @@
-import { useState } from "react";
 import { Button } from "../../../../components/ui/Button";
 import { AngleDial } from "../../../../components/ui/AngleDial";
 import { ColorField } from "../../../../components/ui/ColorField";
-import { GradientStopsBar } from "../../../../components/ui/GradientStopsBar";
+import {
+  GradientStopsBar,
+  useSelectedStop,
+} from "../../../../components/ui/GradientStopsBar";
+import { GradientPresets } from "../../../../components/ui/GradientPresets";
 import { Segmented } from "../../../../components/ui/Segmented";
 import {
   MIN_STOPS,
@@ -37,12 +40,7 @@ const TextGradientEditor = ({
   isColorOpen,
   onToggleColor,
 }: TextGradientEditorProps) => {
-  const [selectedStopId, setSelectedStopId] = useState<string | null>(
-    gradient.stops[0]?.id ?? null
-  );
-  const selectedStop =
-    gradient.stops.find((stop) => stop.id === selectedStopId) ??
-    gradient.stops[0];
+  const { selectedStop, selectStop } = useSelectedStop(gradient);
 
   return (
     <>
@@ -76,7 +74,7 @@ const TextGradientEditor = ({
       <GradientStopsBar
         gradient={gradient}
         selectedId={selectedStop?.id ?? null}
-        onSelect={setSelectedStopId}
+        onSelect={selectStop}
         onChange={onChange}
       />
 
@@ -105,22 +103,15 @@ const TextGradientEditor = ({
         </div>
       )}
 
-      <div className={styles.presets} role="group" aria-label="Degradados">
-        {TEXT_GRADIENT_PRESETS.map((preset) => (
-          <button
-            key={preset.id}
-            type="button"
-            className={styles.preset}
-            style={{ backgroundImage: textGradientCss(preset.gradient) }}
-            aria-label={preset.label}
-            title={preset.label}
-            onClick={() => {
-              onChange(preset.gradient);
-              setSelectedStopId(preset.gradient.stops[0].id);
-            }}
-          />
-        ))}
-      </div>
+      <GradientPresets
+        presets={TEXT_GRADIENT_PRESETS}
+        toCss={textGradientCss}
+        minSize={40}
+        onSelect={(preset) => {
+          onChange(preset);
+          selectStop(preset.stops[0].id);
+        }}
+      />
     </>
   );
 };

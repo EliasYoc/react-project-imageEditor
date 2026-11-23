@@ -10,6 +10,7 @@ import { Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hexToRgb, rgbaToHex } from "../../editor/model/color";
+import { GRADIENT_PRESETS } from "../../editor/engine/fill/presets";
 import type { Rgba } from "../../editor/model/types";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 import { mockMediaQueries } from "../../test/media";
@@ -20,6 +21,7 @@ import { Panel } from "./Panel";
 import { Segmented } from "./Segmented";
 import { CardSection } from "./CardSection";
 import { ColorField } from "./ColorField";
+import { GradientPresets } from "./GradientPresets";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -426,5 +428,28 @@ describe("color", () => {
     );
     await user.click(screen.getByRole("button", { name: "Color del texto" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("GradientPresets", () => {
+  it("cada casilla es un botón con el nombre del degradado y lo entrega al pulsarla", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const [first, second] = GRADIENT_PRESETS;
+    render(
+      <GradientPresets
+        presets={GRADIENT_PRESETS}
+        toCss={() => "none"}
+        minSize={48}
+        onSelect={onSelect}
+      />
+    );
+    const group = screen.getByRole("group", { name: "Degradados" });
+    expect(within(group).getAllByRole("button")).toHaveLength(
+      GRADIENT_PRESETS.length
+    );
+    await user.click(screen.getByRole("button", { name: second.label }));
+    expect(onSelect).toHaveBeenCalledWith(second.gradient);
+    expect(onSelect).not.toHaveBeenCalledWith(first.gradient);
   });
 });
