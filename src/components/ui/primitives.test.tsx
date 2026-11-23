@@ -22,6 +22,7 @@ import { Segmented } from "./Segmented";
 import { CardSection } from "./CardSection";
 import { ColorField } from "./ColorField";
 import { GradientPresets } from "./GradientPresets";
+import { Section } from "./Section";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -451,5 +452,20 @@ describe("GradientPresets", () => {
     await user.click(screen.getByRole("button", { name: second.label }));
     expect(onSelect).toHaveBeenCalledWith(second.gradient);
     expect(onSelect).not.toHaveBeenCalledWith(first.gradient);
+  });
+});
+
+describe("Section", () => {
+  it("el título es un h3 y da nombre a la región", () => {
+    render(
+      <Section title="Atajos">
+        <p>Contenido</p>
+      </Section>
+    );
+    const region = screen.getByRole("region", { name: "Atajos" });
+    expect(
+      within(region).getByRole("heading", { level: 3, name: "Atajos" })
+    ).toBeTruthy();
+    expect(within(region).getByText("Contenido")).toBeTruthy();
   });
 });

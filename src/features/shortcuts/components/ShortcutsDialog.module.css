@@ -9,11 +9,10 @@
   scrollbar-width: thin;
 }
 
-.groupTitle {
-  margin-bottom: var(--space-1);
-  color: var(--color-text-strong);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .list {

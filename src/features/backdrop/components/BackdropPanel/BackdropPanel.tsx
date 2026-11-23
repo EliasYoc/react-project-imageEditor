@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { Button } from "../../../../components/ui/Button";
 import { ColorPicker } from "../../../../components/ui/ColorControl";
+import { Section } from "../../../../components/ui/Section";
 import { Segmented } from "../../../../components/ui/Segmented";
 import { Slider } from "../../../../components/ui/Slider";
 import { gradientToCss } from "../../../../editor/engine/fill/css";
@@ -228,8 +229,7 @@ const BackdropPanel = () => {
       )}
 
       {fill && (
-        <section className={styles.section} aria-label={layerTitle}>
-          <h3 className={styles.title}>{layerTitle}</h3>
+        <Section title={layerTitle} variant="subtle" className={styles.section}>
           <Slider
             label="Opacidad"
             min={5}
@@ -257,7 +257,7 @@ const BackdropPanel = () => {
               </select>
             </div>
           )}
-        </section>
+        </Section>
       )}
     </div>
   );

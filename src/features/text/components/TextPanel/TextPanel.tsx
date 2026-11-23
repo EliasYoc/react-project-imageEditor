@@ -1,4 +1,5 @@
 import { AlignCenter, AlignLeft, AlignRight } from "lucide-react";
+import { Section } from "../../../../components/ui/Section";
 import {
   Segmented,
   type SegmentedItem,
@@ -55,10 +56,9 @@ const TextPanel = ({ text }: { text: TextElement }) => {
         />
       </div>
       <FontPicker text={text} />
-      <section className={styles.style} aria-label="Estilo">
-        <h3 className={styles.title}>Estilo</h3>
+      <Section title="Estilo" className={styles.style}>
         <TextStylePanel text={text} />
-      </section>
+      </Section>
     </div>
   );
 };
