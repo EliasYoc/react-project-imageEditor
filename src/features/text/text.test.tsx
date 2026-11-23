@@ -42,17 +42,26 @@ beforeEach(() => {
 describe("FontPicker", () => {
   it("muestra cada fuente en su tipo, marca la actual y la cambia", async () => {
     const { rerender } = render(<FontPicker text={text()} />);
-    expect(screen.getByRole("button", { name: "Sistema" })).toBeInTheDocument();
-    const pacifico = screen.getByRole("button", { name: "Pacifico" });
+    expect(screen.getByRole("radio", { name: "Sistema" })).toBeInTheDocument();
+    const pacifico = screen.getByRole("radio", { name: "Pacifico" });
     expect(pacifico.style.fontFamily).toContain("Pacifico");
 
     await userEvent.click(pacifico);
     expect(text().fontId).toBe("pacifico");
     rerender(<FontPicker text={text()} />);
-    expect(screen.getByRole("button", { name: "Pacifico" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
+    expect(screen.getByRole("radio", { name: "Pacifico" })).toBeChecked();
+  });
+
+  it("con el teclado, Tab entra en la fuente elegida y las flechas mueven el foco", async () => {
+    const user = userEvent.setup();
+    render(<FontPicker text={text()} />);
+    await user.tab();
+    expect(screen.getByRole("radio", { name: "Sistema" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    const next = document.activeElement as HTMLElement;
+    expect(next).not.toBe(screen.getByRole("radio", { name: "Sistema" }));
+    await user.keyboard("{Enter}");
+    expect(text().fontId).not.toBe("normal");
   });
 });
 
@@ -85,7 +94,7 @@ describe("TextPanel", () => {
     expect(
       screen.getByRole("radiogroup", { name: "Alineación" })
     ).toBeVisible();
-    expect(screen.getByRole("group", { name: "Fuentes" })).toBeVisible();
+    expect(screen.getByRole("radiogroup", { name: "Fuentes" })).toBeVisible();
     const style = screen.getByRole("region", { name: "Estilo" });
     expect(
       within(style).getByRole("slider", { name: "Interlineado" })

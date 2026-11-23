@@ -14,7 +14,9 @@
   text-align: left;
 }
 
-.fontList .font[aria-pressed="true"] {
+/* Radix marca la elegida con data-state (no con aria-pressed). */
+.fontList .font[data-state="on"] {
+  color: var(--color-text-active);
   border-color: var(--color-text-active);
   background: var(--color-surface-active);
 }
