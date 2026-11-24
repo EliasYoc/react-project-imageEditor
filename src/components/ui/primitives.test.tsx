@@ -14,6 +14,7 @@ import { GRADIENT_PRESETS } from "../../editor/engine/fill/presets";
 import type { Rgba } from "../../editor/model/types";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 import { mockMediaQueries } from "../../test/media";
+import { IconButton } from "./Button";
 import { ColorControl, ColorPicker } from "./ColorControl";
 import { ConfirmDialog } from "./Dialog";
 import { ChoiceMenu, Menu } from "./Menu";
@@ -23,6 +24,7 @@ import { CardSection } from "./CardSection";
 import { ColorField } from "./ColorField";
 import { GradientPresets } from "./GradientPresets";
 import { Section } from "./Section";
+import { Toolbar, ToolbarButton } from "./Toolbar";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -467,5 +469,38 @@ describe("Section", () => {
       within(region).getByRole("heading", { level: 3, name: "Atajos" })
     ).toBeTruthy();
     expect(within(region).getByText("Contenido")).toBeTruthy();
+  });
+});
+
+describe("Toolbar", () => {
+  it("Tab entra una sola vez y las flechas pasan de un botón a otro, saltando los deshabilitados", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button">Antes</button>
+        <Toolbar label="Herramientas">
+          <ToolbarButton>
+            <IconButton icon={Trash2} aria-label="Uno" />
+          </ToolbarButton>
+          <ToolbarButton>
+            <IconButton icon={Trash2} aria-label="Dos" disabled />
+          </ToolbarButton>
+          <ToolbarButton>
+            <IconButton icon={Trash2} aria-label="Tres" />
+          </ToolbarButton>
+        </Toolbar>
+        <button type="button">Después</button>
+      </>
+    );
+    expect(screen.getByRole("toolbar", { name: "Herramientas" })).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Antes" }));
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Uno" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Tres" })).toHaveFocus();
+    // Un solo Tab sale de la barra, sin recorrer cada botón.
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Después" })).toHaveFocus();
   });
 });

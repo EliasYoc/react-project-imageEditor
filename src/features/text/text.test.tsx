@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,9 +10,14 @@ import {
 import { selectSelectedText } from "../../editor/store/selectors";
 import FontPicker from "./components/FontPicker/FontPicker";
 import TextPanel from "./components/TextPanel/TextPanel";
+import { Toolbar } from "../../components/ui/Toolbar";
 import TextToolbar from "./components/TextToolbar/TextToolbar";
 import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
+
+// Los botones de la barra solo funcionan dentro de una Toolbar, como en la app.
+const renderInToolbar = (ui: ReactElement) =>
+  render(<Toolbar label="Herramientas de texto">{ui}</Toolbar>);
 
 // Las fuentes no se descargan en los tests.
 vi.mock("../../editor/elements/fontLoader", () => ({
@@ -221,7 +227,7 @@ describe("TextStylePanel", () => {
 describe("TextToolbar", () => {
   it("un solo botón abre «Fuente y estilo»; ya no hay un botón aparte de estilo", async () => {
     const user = userEvent.setup();
-    render(<TextToolbar />);
+    renderInToolbar(<TextToolbar />);
     expect(
       screen.queryByRole("button", { name: "Estilo del texto" })
     ).toBeNull();
@@ -235,7 +241,7 @@ describe("TextToolbar", () => {
 
   it("«Insertar archivo» está en el menú «Más opciones» y abre el selector de archivos", async () => {
     const user = userEvent.setup();
-    const { container } = render(<TextToolbar />);
+    const { container } = renderInToolbar(<TextToolbar />);
     expect(
       screen.queryByRole("button", { name: "Insertar archivo" })
     ).toBeNull();
@@ -255,7 +261,7 @@ describe("TextToolbar", () => {
 
   it("«¿Qué puedo insertar?», encima de «Insertar archivo», explica los tipos de archivo", async () => {
     const user = userEvent.setup();
-    render(<TextToolbar />);
+    renderInToolbar(<TextToolbar />);
     await user.click(screen.getByRole("button", { name: "Más opciones" }));
     const items = screen
       .getAllByRole("menuitem")

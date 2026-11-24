@@ -32,7 +32,9 @@ test.describe("Teclado", () => {
     // El foco vuelve al botón que abrió el panel.
     await expect(backdrop).toBeFocused();
 
-    await page.keyboard.press("Tab");
+    // «Fondo» y «Más opciones» son una sola barra: se pasa de uno a otro con
+    // las flechas, no con Tab.
+    await page.keyboard.press("ArrowRight");
     const more = page.getByRole("button", {
       name: "Más opciones",
       exact: true,
@@ -49,6 +51,27 @@ test.describe("Teclado", () => {
     await expect(exportDialog).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(exportDialog).toBeHidden();
+  });
+
+  test("la barra de herramientas es una sola parada de Tab y se recorre con flechas", async ({
+    page,
+  }) => {
+    const tools = page.getByRole("toolbar", { name: "Herramientas de dibujo" });
+    const brush = tools.getByRole("button", { name: /^Pincel:/ });
+    const eraser = tools.getByRole("button", { name: /^Borrador:/ });
+    const color = tools.getByRole("button", { name: "Color del pincel" });
+
+    await brush.focus();
+    await page.keyboard.press("ArrowRight");
+    await expect(eraser).toBeFocused();
+    await page.keyboard.press("ArrowRight");
+    await expect(color).toBeFocused();
+
+    // Tab sale de la barra: el borrador y el pincel no son paradas aparte.
+    await page.keyboard.press("Tab");
+    await expect(tools.locator(":focus")).toHaveCount(0);
+    await page.keyboard.press("Shift+Tab");
+    await expect(color).toBeFocused();
   });
 
   test("Ctrl+S abre Exportar y ? la lista de atajos", async ({ page }) => {

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Toolbar } from "../components/ui/Toolbar";
 import { NO_INSETS } from "../editor/engine/viewport";
 import EditorStage from "../editor/stage/EditorStage";
 import { viewStore } from "../editor/stage/viewStore";
@@ -109,10 +110,9 @@ const EditorShell = ({ isOpen }: { isOpen: boolean }) => {
           inert={areBarsHidden}
         >
           {video && <PlaybackBar video={video} />}
-          <div
+          <Toolbar
             className={styles.toolbar}
-            role="group"
-            aria-label={
+            label={
               mode === "draw"
                 ? "Herramientas de dibujo"
                 : "Herramientas de texto"
@@ -120,7 +120,7 @@ const EditorShell = ({ isOpen }: { isOpen: boolean }) => {
           >
             {mode === "draw" && <DrawingTools />}
             {mode === "text" && <TextToolbar />}
-          </div>
+          </Toolbar>
         </footer>
       )}
 
