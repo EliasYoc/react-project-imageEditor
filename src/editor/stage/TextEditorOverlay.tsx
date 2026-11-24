@@ -1,10 +1,15 @@
 import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { getFont } from "../elements/fonts";
 import { textPadding } from "../elements/nodeConfig";
-import { newTextPosition, textEditingBox } from "../elements/textEditorBox";
+import {
+  newTextPosition,
+  textEditingBox,
+  textEditingScale,
+} from "../elements/textEditorBox";
 import { textEditorPaint } from "../elements/textGradient";
 import { maxTextWidth } from "../elements/textWidth";
 import { visibleArea } from "../engine/viewport";
+import { defaultFontSize } from "../model/factories";
 import { isTextElement, type TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
@@ -12,12 +17,13 @@ import styles from "./EditorStage.module.css";
 import { useViewStore } from "./viewStore";
 
 /**
- * Textarea para escribir un texto, con el mismo tamaño de letra, fuente y
- * color que el nodo de Konva. Mientras se edita, el nodo se oculta y el
- * textarea no se pone encima: sale horizontal, centrado y un poco arriba
- * (`textEditingBox`), para leerlo aunque el texto esté girado o lejos. Al
- * terminar, el texto sigue donde estaba; uno recién escrito se queda donde
- * estaba el editor.
+ * Textarea para escribir un texto, con la misma fuente, color y forma que el
+ * nodo de Konva. Mientras se edita, el nodo se oculta y el textarea no se
+ * pone encima: sale horizontal, centrado y un poco arriba
+ * (`textEditingBox`), y al tamaño de un texto nuevo (`textEditingScale`),
+ * para leerlo aunque el texto esté girado, lejos, o sea muy grande o muy
+ * pequeño. Al terminar, el texto sigue donde estaba y con su tamaño; uno
+ * recién escrito se queda donde estaba el editor.
  *
  * Se confirma al salir (tocar fuera) o con Ctrl/⌘ + Enter; Escape cancela.
  * Un texto nuevo que se deja vacío se descarta sin dejar rastro.
@@ -26,7 +32,8 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
   const stageSize = useViewStore((state) => state.stageSize);
   const insets = useViewStore((state) => state.insets);
-  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
+  const canvasSize = useEditorStore((state) => state.canvasSize);
+  const maxWidth = maxTextWidth(canvasSize);
   // Un texto nuevo se crea vacío: ese es el único momento en que lo está.
   const isNewText = element.text === "";
   const [draft, setDraft] = useState(element.text);
@@ -68,7 +75,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
 
   const { scale, ...position } = textEditingBox(
     contentWidth,
-    view.scale * element.scale,
+    textEditingScale(element.fontSize, defaultFontSize(canvasSize), view.scale),
     visibleArea(stageSize, insets)
   );
 

@@ -73,6 +73,26 @@ const addText = async (page: Page, doc: Rect, touch: boolean) => {
   return where;
 };
 
+/** Ancho de lo oscuro (el texto) dentro del documento. */
+const textWidth = async (page: Page, doc: Rect) => {
+  const bounds = await darkBounds(page, doc);
+  return bounds.right - bounds.left;
+};
+
+/**
+ * No hubo zoom: el borde de arriba del documento sigue en su sitio (blanco
+ * justo debajo, el fondo de la app justo encima).
+ */
+const expectNoZoom = async (page: Page, doc: Rect) => {
+  const edgeX = doc.x + 10;
+  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y + 3 }))).toBe(
+    true
+  );
+  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y - 3 }))).toBe(
+    false
+  );
+};
+
 test.describe("Texto", () => {
   test.beforeEach(async ({ page }) => {
     await openBlankCanvas(page);
@@ -298,6 +318,48 @@ test.describe("Texto", () => {
       .toBeGreaterThan(50);
   });
 
+  test("un texto agrandado se edita al tamaño de uno nuevo y vuelve con su tamaño", async ({
+    page,
+    isMobile,
+  }) => {
+    // Lee muchos píxeles de pantalla: con toda la suite en paralelo, en
+    // escritorio no le bastan 30 s.
+    test.slow();
+    const doc = await documentRect(page);
+    const where = await addText(page, doc, isMobile);
+    const center = centerOf(where);
+    // Solo la franja del texto (crece hacia abajo y a la derecha): medir
+    // todo el documento es lento en escritorio.
+    const band = {
+      x: where.x,
+      width: doc.x + doc.width - where.x,
+      y: where.y,
+      height: Math.min(where.height * 3, doc.y + doc.height - where.y),
+    };
+    // El texto se pinta en el siguiente frame: sin él, el ancho sería NaN.
+    await expect.poll(() => textWidth(page, band)).toBeGreaterThan(0);
+    const original = await textWidth(page, band);
+    await tapAt(page, center, isMobile); // lo selecciona
+    const slider = page.getByRole("slider", { name: "Tamaño del texto" });
+    // Cada RePág sube un paso del slider (86 → 110 px con dos).
+    for (let press = 0; press < 4; press++) await slider.press("PageUp");
+    await expect
+      .poll(() => textWidth(page, band))
+      .toBeGreaterThan(original * 1.5);
+    const enlarged = await textWidth(page, band);
+
+    // Tocar el texto ya seleccionado abre su editor.
+    await tapAt(page, center, isMobile);
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toHaveValue("Hola");
+    const box = (await editor.boundingBox()) as Rect;
+    expect(box.height).toBeCloseTo(where.height, 0);
+
+    await tapAt(page, pointIn(doc, 0.5, 0.97), isMobile);
+    await expect(editor).toBeHidden();
+    await expect.poll(() => textWidth(page, band)).toBeCloseTo(enlarged, 0);
+  });
+
   test("mueve el texto arrastrándolo", async ({ page, isMobile }) => {
     const doc = await documentRect(page);
     const where = await addText(page, doc, isMobile);
@@ -311,26 +373,6 @@ test.describe("Texto", () => {
     expect(await countPixels(page, where, isDark)).toBe(0);
   });
 });
-
-/** Ancho de lo oscuro (el texto) dentro del documento. */
-const textWidth = async (page: Page, doc: Rect) => {
-  const bounds = await darkBounds(page, doc);
-  return bounds.right - bounds.left;
-};
-
-/**
- * No hubo zoom: el borde de arriba del documento sigue en su sitio (blanco
- * justo debajo, el fondo de la app justo encima).
- */
-const expectNoZoom = async (page: Page, doc: Rect) => {
-  const edgeX = doc.x + 10;
-  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y + 3 }))).toBe(
-    true
-  );
-  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y - 3 }))).toBe(
-    false
-  );
-};
 
 test.describe("Texto con dos dedos", () => {
   test.beforeEach(async ({ page, isMobile }) => {
