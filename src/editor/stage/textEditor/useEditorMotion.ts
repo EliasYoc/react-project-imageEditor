@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
+import { HOVER_QUERY } from "../../../lib/useMediaQuery";
 import {
   editorPose,
   transformToPose,
@@ -7,6 +8,8 @@ import {
 
 /** Duración de la transición entre el texto del lienzo y el editor. */
 const MOTION_MS = 220;
+/** En una pantalla táctil, el doble: en el móvil, 220 ms se ven demasiado rápidos. */
+const TOUCH_MOTION_MS = MOTION_MS * 2;
 /** Arranca rápido y frena al llegar. */
 const MOTION_EASING = "cubic-bezier(0.2, 0, 0, 1)";
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
@@ -30,6 +33,10 @@ interface MotionOptions {
    */
   enterFrom: ScreenPose | null;
 }
+
+/** Con ratón o trackpad, la duración normal; en una pantalla táctil, el doble. */
+const motionDuration = () =>
+  window.matchMedia(HOVER_QUERY).matches ? MOTION_MS : TOUCH_MOTION_MS;
 
 /** Sin `animate` (jsdom) o con el movimiento reducido, no hay transición. */
 const canAnimate = (element: Element) =>
@@ -76,7 +83,7 @@ export const useEditorMotion = ({
       animationsRef.current.push(
         textarea.animate(
           travel(enterFrom, editorPose(placement, contentWidth), placement),
-          { duration: MOTION_MS, easing: MOTION_EASING }
+          { duration: motionDuration(), easing: MOTION_EASING }
         )
       );
     },
@@ -104,7 +111,7 @@ export const useEditorMotion = ({
     for (const animation of animationsRef.current) animation.cancel();
     // fill "forwards": se queda en el lienzo hasta que se quita.
     const timing = {
-      duration: MOTION_MS,
+      duration: motionDuration(),
       easing: MOTION_EASING,
       fill: "forwards",
     } as const;

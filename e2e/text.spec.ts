@@ -591,8 +591,8 @@ test.describe("Transición del editor de texto", () => {
       .poll(() => countPixels(page, moved, isDark))
       .toBeGreaterThan(50);
 
-    // A cámara lenta (× 0,05): la transición dura 4,4 s y se puede mirar a
-    // mitad de camino, por lento que vaya el equipo.
+    // A cámara lenta (× 0,05, veinte veces más lenta): se puede mirar a mitad
+    // de camino, por lento que vaya el equipo.
     const cdp = await page.context().newCDPSession(page);
     await cdp.send("Animation.enable");
     const setSpeed = (playbackRate: number) =>
@@ -603,6 +603,12 @@ test.describe("Transición del editor de texto", () => {
     if (isMobile) await tapAt(page, far, true);
     else await page.mouse.dblclick(far.x, far.y);
     await expect(editor).toBeFocused();
+    // En el móvil dura el doble: allí la misma transición se ve muy rápida.
+    expect(
+      await editor.evaluate(
+        (element) => element.getAnimations()[0].effect?.getTiming().duration
+      )
+    ).toBe(isMobile ? 440 : 220);
     const stage = await stageRect(page);
     const restX = stage.x + stage.width / 2;
     // Empieza cerca del texto, no en su sitio (centrado).
