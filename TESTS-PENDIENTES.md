@@ -3,6 +3,20 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
+## Pellizcar un elemento lo agranda y lo gira
+
+- **e2e:** pellizcar un elemento que NO estaba seleccionado hace zoom del
+  lienzo (y no cambia el elemento).
+- **e2e:** girar los dos dedos sobre el texto seleccionado lo gira.
+- **e2e:** pellizcar una imagen, un GIF y un sticker seleccionados (no solo un
+  texto).
+- **e2e:** un pellizco del elemento se deshace con un solo "Deshacer", y un
+  toque con dos dedos sin moverlos no deja ningún paso en el historial.
+- **e2e:** al soltar los dedos después del pellizco no se abre el editor del
+  texto, y el texto se puede seguir arrastrando con un dedo.
+- **e2e:** el pellizco empieza con los dedos fuera del elemento pero cerca
+  (margen de 16 px) o con su punto medio encima.
+
 ## El selector de color del pincel ya no entra en bucle
 
 - **e2e:** arrastrar rápido por el selector de color del pincel con la página

@@ -35,6 +35,7 @@ import {
 } from "../store/selectors";
 import { createBackgroundBlur } from "./backgroundBlur";
 import styles from "./EditorStage.module.css";
+import { startElementPinch, type Touch } from "./elementPinch";
 import ElementsLayer from "./ElementsLayer";
 import type { LiveBlur } from "./strokeSession";
 import TextEditorOverlay from "./TextEditorOverlay";
@@ -238,6 +239,21 @@ const EditorStage = () => {
     }
   }, []);
 
+  // Pellizcar el elemento seleccionado lo escala y lo gira (en vez de zoom).
+  const pinchSelectedElement = useCallback(
+    (elementId: string, touches: [Touch, Touch]) => {
+      const stage = stageRef.current;
+      if (!stage) return null;
+      return startElementPinch(
+        stage,
+        elementId,
+        viewStore.getState().view,
+        touches
+      );
+    },
+    []
+  );
+
   useEffect(
     function paintBackdrop() {
       const ctx = get2dContext(fillCanvas);
@@ -283,6 +299,7 @@ const EditorStage = () => {
     requestDraw,
     liveBlur,
     onPinchStart: stopElementDrags,
+    startElementPinch: isEditingElements ? pinchSelectedElement : undefined,
   });
 
   // Tocar el fondo (fuera de cualquier elemento) quita la selección.

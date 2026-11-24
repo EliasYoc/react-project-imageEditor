@@ -5,7 +5,9 @@ import {
   drag,
   isColorful,
   isDark,
+  isWhite,
   openBlankCanvas,
+  pinch,
   pointIn,
   screenColor,
   screenPixels,
@@ -307,5 +309,42 @@ test.describe("Texto", () => {
       .poll(() => countPixels(page, shifted(where, start, target), isDark))
       .toBeGreaterThan(50);
     expect(await countPixels(page, where, isDark)).toBe(0);
+  });
+});
+
+test.describe("Texto con dos dedos", () => {
+  test.beforeEach(async ({ page }) => {
+    await openBlankCanvas(page);
+    await page.getByRole("radio", { name: "Texto" }).click();
+  });
+
+  test("pellizcar el texto seleccionado lo agranda, sin zoom ni abrir su editor", async ({
+    page,
+    isMobile,
+  }) => {
+    test.skip(!isMobile, "El pellizco con dos dedos es del móvil");
+    const doc = await documentRect(page);
+    const where = await addText(page, doc, true);
+    const center = centerOf(where);
+    await tapAt(page, center, true); // lo selecciona
+    const textWidth = async () => {
+      const bounds = await darkBounds(page, doc);
+      return bounds.right - bounds.left;
+    };
+    const before = await textWidth();
+
+    await pinch(page, center, 40, 120);
+
+    await expect.poll(textWidth).toBeGreaterThan(before * 2);
+    // No hubo zoom: el borde de arriba del documento sigue en su sitio
+    // (blanco justo debajo, el fondo de la app justo encima).
+    const edgeX = doc.x + 10;
+    expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y + 3 }))).toBe(
+      true
+    );
+    expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y - 3 }))).toBe(
+      false
+    );
+    await expect(page.getByRole("textbox", { name: "Texto" })).toBeHidden();
   });
 });
