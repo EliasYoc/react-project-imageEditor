@@ -6,7 +6,7 @@ import {
   type MouseEvent,
 } from "react";
 import { getFont } from "../elements/fonts";
-import { readableBackdrop } from "../elements/readableBackdrop";
+import { DARK_BACKDROP, readableBackdrop } from "../elements/readableBackdrop";
 import { textPadding } from "../elements/nodeConfig";
 import {
   newTextPosition,
@@ -28,11 +28,16 @@ import { useViewStore } from "./viewStore";
 const EDITING_BACKDROP_OPACITY = 0.45;
 
 /**
- * Color de esa capa: oscura para un texto claro y clara para uno oscuro
- * (`readableBackdrop`), para que el texto se lea sobre ella.
+ * Color de esa capa: oscura. Solo un texto sin caja de fondo que se leería
+ * mal sobre oscuro (p. ej. negro) la tiene clara (`readableBackdrop`); con
+ * caja, la caja ya hace que se lea.
  */
-const editingBackdropColor = (element: TextElement) =>
-  rgbaToCss({ ...readableBackdrop(element), a: EDITING_BACKDROP_OPACITY });
+const editingBackdropColor = (element: TextElement) => {
+  const color = element.background.isEnabled
+    ? DARK_BACKDROP
+    : readableBackdrop(element);
+  return rgbaToCss({ ...color, a: EDITING_BACKDROP_OPACITY });
+};
 
 /**
  * Textarea para escribir un texto, con la misma fuente, color y forma que el

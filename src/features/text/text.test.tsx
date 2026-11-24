@@ -133,15 +133,17 @@ describe("TextStylePanel", () => {
     expect(editorStore.getState().past.length).toBe(pastBefore + 1);
   });
 
-  it("caja de fondo: activarla y cambiar el margen", async () => {
+  it("caja de fondo: viene activada, se cambia el margen y se desactiva", async () => {
     const { rerender } = render(<TextStylePanel text={text()} />);
-    await userEvent.click(
-      screen.getByRole("checkbox", { name: "Caja de fondo" })
-    );
-    rerender(<TextStylePanel text={text()} />);
+    const toggle = screen.getByRole("checkbox", { name: "Caja de fondo" });
+    expect(toggle).toBeChecked();
     screen.getByRole("slider", { name: "Margen" }).focus();
     await userEvent.keyboard("{End}");
     expect(text().background).toMatchObject({ isEnabled: true, padding: 0.8 });
+
+    rerender(<TextStylePanel text={text()} />);
+    await userEvent.click(toggle);
+    expect(text().background.isEnabled).toBe(false);
   });
 
   it("degradado: activarlo, cambiar la forma y recuperarlo al reactivarlo", async () => {

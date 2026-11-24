@@ -12,11 +12,16 @@ const WHITE: Rgba = { r: 255, g: 255, b: 255, a: 1 };
 const RED: Rgba = { r: 255, g: 0, b: 0, a: 1 };
 const YELLOW: Rgba = { r: 255, g: 220, b: 0, a: 1 };
 
-const style = (extra: Partial<TextStyle> = {}) => ({
-  ...createDefaultTextStyle(),
-  fontSize: 100,
-  ...extra,
-});
+/** Un texto sin caja de fondo (con caja, solo cuenta la caja). */
+const style = (extra: Partial<TextStyle> = {}) => {
+  const defaults = createDefaultTextStyle();
+  return {
+    ...defaults,
+    background: { ...defaults.background, isEnabled: false },
+    fontSize: 100,
+    ...extra,
+  };
+};
 
 describe("readableBackdrop", () => {
   it("blanco para un texto oscuro o de color intenso", () => {

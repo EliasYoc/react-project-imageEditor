@@ -45,8 +45,9 @@ describe("TextEditorOverlay: ancho máximo", () => {
   // El lienzo por defecto mide 1440 de ancho: el máximo es 1296.
   it("un texto que cabe mide lo que ocupa más sus márgenes, sin repartirse en líneas", () => {
     typeTextOfWidth(500);
-    // Margen de un texto sin caja: el 15 % de su tamaño (100), a cada lado.
-    expect(textarea().style.width).toBe("530px");
+    // Margen de la caja de fondo (activada por defecto): el 25 % de su
+    // tamaño (100), a cada lado.
+    expect(textarea().style.width).toBe("550px");
     expect(textarea().style.whiteSpace).toBe("");
   });
 
