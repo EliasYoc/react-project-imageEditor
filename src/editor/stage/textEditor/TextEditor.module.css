@@ -1,0 +1,48 @@
+/* Textarea para escribir un texto (TextEditor). */
+.editor {
+  position: absolute;
+  box-sizing: border-box;
+  margin: 0;
+  border: none;
+  outline: 1px dashed rgb(68, 171, 255);
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  /* Si el texto no cabe a lo alto, se desplaza dentro del editor, sin barra:
+     ocuparía ancho y las líneas se cortarían distinto que en el lienzo. */
+  scrollbar-width: none;
+  white-space: pre;
+  user-select: text;
+  -webkit-user-select: text;
+  touch-action: manipulation;
+  caret-color: rgb(68, 171, 255);
+}
+
+.editor[wrap="soft"] {
+  white-space: pre-wrap;
+}
+
+/* Safari antes de la 18.2 no entiende scrollbar-width. */
+.editor::-webkit-scrollbar {
+  display: none;
+}
+
+/* Capa que tapa el lienzo mientras se escribe un texto (el color lo pone
+   TextEditor). Queda por debajo del textarea y de las barras. */
+.backdrop {
+  position: absolute;
+  inset: 0;
+  animation: backdropIn 0.15s ease;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    animation: none;
+  }
+}
