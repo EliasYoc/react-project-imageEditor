@@ -18,6 +18,10 @@ Mejoras opcionales e ideas guardadas al terminar el plan de 8 fases (15/11/2026)
 
    Se revisan cuando salgan versiones corregidas. En lo que llega al navegador hay 0.
 
+5. **El menú de la vista no se renderiza con cada paso del zoom.** `ViewMenu` lee el zoom para el texto «Zoom: N %» y para desactivar «Acercar» y «Alejar», que solo se ven con el menú abierto. Aun así se vuelve a renderizar en cada paso del zoom con el menú cerrado: unos 54 componentes por paso (sus dos botones, los tooltips y el menú de Radix), medido el 24/11/2026. No cambia nada en la pantalla.
+   - **Arreglo:** que `Menu` (`components/ui`) avise de cuándo se abre y se cierra (una prop opcional), y que `ViewMenu` lea el zoom solo con el menú abierto.
+   - **Ganancia pequeña:** son componentes HTML sencillos; no se ha medido el tiempo.
+
 ## Ideas de funciones nuevas
 
 Cada una necesita un plan propio, aprobado antes de empezar:

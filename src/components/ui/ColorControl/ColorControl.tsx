@@ -4,7 +4,7 @@ import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
 import { hexToRgb, rgbaToCss, rgbaToHex } from "../../../editor/model/color";
 import type { Rgba } from "../../../editor/model/types";
 import { classNames } from "../../../lib/classNames";
-import { DESKTOP_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { DESKTOP_QUERY, useMediaQuery } from "../../../hooks/useMediaQuery";
 import { Panel } from "../Panel";
 import { Tooltip } from "../Tooltip";
 import { ToolbarButton } from "../Toolbar";

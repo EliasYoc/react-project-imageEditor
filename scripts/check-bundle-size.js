@@ -43,12 +43,16 @@
 //   del teclado del móvil y hay transición entre el texto y su editor (el
 //   editor mide 146,8). Saber qué se ve con el teclado (visualViewport) y
 //   colocar el editor suman 0,4 kB; la transición, 0,6 kB.
+// - 120 / 148 / Video 119 / Stickers 59: los hooks del lienzo (el editor
+//   mide 147,1). Repartir EditorStage en hooks (usePaintRasters,
+//   useBackdropCanvas, useBackgroundBlur) suma 0,2 kB: los nombres de las
+//   opciones y de lo que devuelven no se acortan al minificar.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 147, Video: 119, Stickers: 59 };
+const BUDGETS_KB = { Inicio: 120, Editor: 148, Video: 119, Stickers: 59 };
 /** Los trozos que solo se descargan para exportar un video. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
 /** Los trozos que solo se descargan con el primer sticker. */

@@ -12,7 +12,11 @@ import {
 } from "../../../../components/ui/Segmented";
 import { toast } from "../../../../components/ui/Toast";
 import { useEditorStore } from "../../../../editor/store/editorStore";
-import { selectHasAnimatedElements } from "../../../../editor/store/selectors";
+import {
+  selectHasAnimatedElements,
+  selectHasPhoto,
+  selectHasVideo,
+} from "../../../../editor/store/selectors";
 import { fitVideoSize } from "../../../../lib/videoSize";
 import { ANIMATION_VIDEO_SECONDS } from "../../constants/animationVideo";
 import { exportImage } from "../../utils/exportImage";
@@ -45,7 +49,7 @@ export interface ExportDialogProps {
  * GIFs, a elegir entre imagen y video (`AnimatedExportDialog`).
  */
 const ExportDialog = (props: ExportDialogProps) => {
-  const isVideo = useEditorStore((state) => state.photo.video !== null);
+  const isVideo = useEditorStore(selectHasVideo);
   const hasAnimation = useEditorStore(selectHasAnimatedElements);
   if (isVideo) {
     return (
@@ -64,7 +68,7 @@ const ExportDialog = (props: ExportDialogProps) => {
 
 /** Cómo se guarda la imagen: a la resolución de la foto o del lienzo. */
 const useImageDescription = () => {
-  const hasPhoto = useEditorStore((state) => state.photo.source !== null);
+  const hasPhoto = useEditorStore(selectHasPhoto);
   const { width, height } = useEditorStore((state) => state.canvasSize);
   return hasPhoto
     ? "Se guarda a la resolución de la foto original."
@@ -155,7 +159,7 @@ const AnimatedExportDialog = ({ open, onOpenChange }: ExportDialogProps) => {
 };
 
 const ExportForm = ({ onDone }: { onDone: () => void }) => {
-  const hasPhoto = useEditorStore((state) => state.photo.source !== null);
+  const hasPhoto = useEditorStore(selectHasPhoto);
   const mimeType = useEditorStore((state) => state.photo.mimeType);
   const fileName = useEditorStore((state) => state.photo.fileName);
   const suggested = () => defaultExportName({ hasPhoto, fileName });

@@ -1,5 +1,4 @@
 import Konva from "konva/lib/Core";
-import type { KonvaEventObject } from "konva/lib/Node";
 import type { Layer as KonvaLayer } from "konva/lib/Layer";
 import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import type { Label as KonvaLabel } from "konva/lib/shapes/Label";
@@ -10,6 +9,7 @@ import "konva/lib/shapes/Line";
 import "konva/lib/shapes/Text";
 import "konva/lib/shapes/Transformer";
 import {
+  memo,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -27,10 +27,9 @@ import {
   Transformer,
 } from "react-konva/lib/ReactKonvaCore";
 import { imageNodeConfig, textNodeConfig } from "../elements/nodeConfig";
-import { snapToDocument } from "../elements/snapping";
+import { stickerResolution } from "../elements/stickerResolution";
 import { applyTextFill } from "../elements/textGradient";
-import { applyTextMaxWidth, maxTextWidth } from "../elements/textWidth";
-import type { View } from "../engine/viewport";
+import { applyTextMaxWidth } from "../elements/textWidth";
 import type { EditorElement, ImageElement, TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
@@ -38,16 +37,17 @@ import {
   useFontReady,
   useImageAnimation,
   useLoadedImage,
+  useMaxTextWidth,
 } from "./elementHooks";
+import { NO_GUIDES, useElementHandlers } from "./useElementHandlers";
+import { useViewTransform } from "./useViewTransform";
+import { useViewStore } from "./viewStore";
 
 /** Un arrastre empieza tras moverse unos píxeles: un toque sigue siendo un toque. */
 Konva.dragDistance = 4;
 
-/** Distancia (en píxeles de pantalla) a la que un elemento se "imanta". */
-const SNAP_SCREEN_PX = 8;
 const GUIDE_COLOR = "rgb(255, 59, 96)";
 const SELECTION_COLOR = "rgb(68, 171, 255)";
-const NO_GUIDES = { vertical: [] as number[], horizontal: [] as number[] };
 
 const TEXT_ANCHORS = [
   "top-left",
@@ -66,16 +66,16 @@ interface NodeProps<T extends EditorElement> {
   handlers: ReturnType<typeof useElementHandlers>;
 }
 
-const TextNode = ({
+const TextNode = memo(function TextNode({
   element,
   isInteractive,
   isEditing,
   handlers,
-}: NodeProps<TextElement>) => {
+}: NodeProps<TextElement>) {
   const fontReady = useFontReady(element.fontId, element.fontWeight);
   const config = textNodeConfig(element);
   const textRef = useRef<KonvaText>(null);
-  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
+  const maxWidth = useMaxTextWidth();
 
   // El tope de ancho y el degradado dependen del tamaño que Konva acaba de
   // medir: se aplican después de cada render, en este orden (barato: unos
@@ -101,27 +101,31 @@ const TextNode = ({
       <Text ref={textRef} {...config.text} />
     </Label>
   );
-};
+});
 
-const ImageNode = ({
+const ImageNode = memo(function ImageNode({
   element,
   isInteractive,
   handlers,
-  viewScale,
-}: NodeProps<ImageElement> & { viewScale: number }) => {
+}: NodeProps<ImageElement>) {
   const nodeRef = useRef<KonvaImageNode>(null);
   // Un sticker no es una imagen: solo lo dibuja su animación.
   const image = useLoadedImage(
     element.animation === "lottie" ? null : element.src
   );
-  // Lo que mide en la pantalla (lado mayor, en píxeles del dispositivo).
-  const screenPixels =
-    Math.max(element.width, element.height) *
-    element.scale *
-    viewScale *
-    window.devicePixelRatio;
+  // Lo que mide en la pantalla (lado mayor, en píxeles del dispositivo), por
+  // escalones: el nodo solo se vuelve a renderizar al pasar a otro escalón,
+  // no en cada paso del zoom.
+  const resolution = useViewStore((state) =>
+    stickerResolution(
+      Math.max(element.width, element.height) *
+        element.scale *
+        state.view.scale *
+        window.devicePixelRatio
+    )
+  );
   // Un GIF pinta su fotograma actual; mientras se abre, la imagen quieta.
-  const frame = useImageAnimation(element, nodeRef, screenPixels);
+  const frame = useImageAnimation(element, nodeRef, resolution);
   const shown = frame ?? image;
   if (!shown) return null;
   return (
@@ -133,67 +137,9 @@ const ImageNode = ({
       {...handlers.forElement(element)}
     />
   );
-};
-
-/**
- * Eventos de los elementos (solo en modo Texto): seleccionar, editar el texto
- * (tocar uno ya seleccionado o doble clic), arrastrar con imán a los bordes y
- * al centro del documento, y guardar en el historial al soltar.
- */
-const useElementHandlers = (
-  view: View,
-  setGuides: (guides: typeof NO_GUIDES) => void
-) => {
-  // ¿El elemento ya estaba seleccionado al apoyar el dedo? (tocar otra vez = editar)
-  const wasSelectedRef = useRef(false);
-
-  return {
-    forElement: (element: EditorElement) => {
-      const { id } = element;
-      const isText = element.whatTask === "text";
-      const edit = () => {
-        if (isText) editorStore.getState().startTextEditing(id);
-      };
-      return {
-        onPointerDown: (event: KonvaEventObject<PointerEvent>) => {
-          // El segundo dedo de un pellizco no cambia la selección: el
-          // pellizco es para el elemento que tocó el primero.
-          if (!event.evt.isPrimary) return;
-          const { selectedElementId, selectElement } = editorStore.getState();
-          wasSelectedRef.current = selectedElementId === id;
-          selectElement(id);
-        },
-        onClick: () => wasSelectedRef.current && edit(),
-        onTap: () => wasSelectedRef.current && edit(),
-        onDblClick: edit,
-        onDblTap: edit,
-        onDragMove: (event: KonvaEventObject<DragEvent>) => {
-          const node = event.target;
-          const layer = node.getLayer();
-          if (!layer) return;
-          const box = node.getClientRect({ relativeTo: layer });
-          const snap = snapToDocument(
-            box,
-            editorStore.getState().canvasSize,
-            SNAP_SCREEN_PX / view.scale
-          );
-          if (snap.dx || snap.dy) {
-            node.position({ x: node.x() + snap.dx, y: node.y() + snap.dy });
-          }
-          setGuides(snap);
-        },
-        onDragEnd: (event: KonvaEventObject<DragEvent>) => {
-          setGuides(NO_GUIDES);
-          const node = event.target;
-          editorStore.getState().editElement(id, { x: node.x(), y: node.y() });
-        },
-      };
-    },
-  };
-};
+});
 
 interface ElementsLayerProps {
-  view: View;
   /** Modo Texto: los elementos se pueden seleccionar, mover y transformar. */
   isInteractive: boolean;
   /**
@@ -210,18 +156,15 @@ interface ElementsLayerProps {
  * El Transformer (marco de selección) va en una capa aparte sin
  * transformar: así sus asas miden lo mismo con cualquier zoom.
  */
-const ElementsLayer = ({
-  view,
-  isInteractive,
-  overlay,
-}: ElementsLayerProps) => {
+const ElementsLayer = ({ isInteractive, overlay }: ElementsLayerProps) => {
   const elements = useEditorStore(selectElements);
   const selectedId = useEditorStore((state) => state.selectedElementId);
   const editingId = useEditorStore((state) => state.editingTextId);
   const layerRef = useRef<KonvaLayer>(null);
   const transformerRef = useRef<KonvaTransformer>(null);
   const [guides, setGuides] = useState(NO_GUIDES);
-  const handlers = useElementHandlers(view, setGuides);
+  const handlers = useElementHandlers(setGuides);
+  useViewTransform(layerRef);
 
   const ordered = useMemo(
     () => [...elements].sort((a, b) => a.zIndex - b.zIndex),
@@ -290,14 +233,7 @@ const ElementsLayer = ({
 
   return (
     <>
-      <Layer
-        ref={layerRef}
-        x={view.x}
-        y={view.y}
-        scaleX={view.scale}
-        scaleY={view.scale}
-        listening={isInteractive}
-      >
+      <Layer ref={layerRef} listening={isInteractive}>
         {ordered.map((element) =>
           element.whatTask === "text" ? (
             <TextNode
@@ -314,7 +250,6 @@ const ElementsLayer = ({
               isInteractive={isInteractive}
               isEditing={false}
               handlers={handlers}
-              viewScale={view.scale}
             />
           )
         )}

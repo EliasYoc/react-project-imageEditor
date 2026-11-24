@@ -1,5 +1,5 @@
 import { Download } from "lucide-react";
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useId, useState, type FormEvent } from "react";
 import { ProgressBar } from "../../../../components/ui/ProgressBar";
 import { Button } from "../../../../components/ui/Button";
 import {
@@ -7,10 +7,9 @@ import {
   DialogActions,
   DialogClose,
 } from "../../../../components/ui/Dialog";
-import { toast } from "../../../../components/ui/Toast";
 import { useEditorStore } from "../../../../editor/store/editorStore";
+import { selectHasPhoto } from "../../../../editor/store/selectors";
 import { getDownloadFileName } from "../../../../lib/helper";
-import { saveImage, sharesFile } from "../../../../lib/saveImage";
 import {
   VIDEO_EXTENSION,
   VIDEO_MIME_TYPE,
@@ -22,15 +21,10 @@ import {
   exportVideo,
   type ExportVideoOptions,
 } from "../../utils/exportVideo";
+import { useVideoExport } from "../../hooks/useVideoExport";
 import type { ExportDialogProps } from "../ExportDialog/ExportDialog";
 import styles from "./VideoExportDialog.module.css";
 import FileNameField from "../FileNameField/FileNameField";
-
-/** Un video ya exportado, a falta de entregarlo. */
-interface ReadyVideo {
-  blob: Blob;
-  fileName: string;
-}
 
 /**
  * Exporta el video del documento en MP4. A diferencia de una imagen, tarda:
@@ -85,7 +79,7 @@ const DocumentVideoExportBody = (props: ExportBodyProps) => {
  * que lo carga bajo demanda desde este archivo).
  */
 export const AnimationExportBody = (props: ExportBodyProps) => {
-  const hasPhoto = useEditorStore((state) => state.photo.source !== null);
+  const hasPhoto = useEditorStore(selectHasPhoto);
   const fileName = useEditorStore((state) => state.photo.fileName);
   return (
     <VideoExportBody
@@ -109,81 +103,19 @@ const VideoExportBody = ({
   runExport,
   suggestedName,
 }: VideoExportBodyProps) => {
-  const setStatus = useEditorStore((state) => state.setStatus);
   const [name, setName] = useState(suggestedName);
-  /** null = aún no se ha empezado; después, el avance de 0 a 100. */
-  const [percent, setPercent] = useState<number | null>(null);
-  const [ready, setReady] = useState<ReadyVideo | null>(null);
-  const controller = useRef<AbortController | null>(null);
   const progressId = useId();
+  const { percent, ready, exportAs, cancel, deliverReady } = useVideoExport({
+    runExport,
+    onDone,
+    onWorkingChange,
+  });
 
-  // Si el diálogo desaparece a media exportación, se cancela.
-  useEffect(() => () => controller.current?.abort(), []);
-
-  /** Entrega el video. `false` si el usuario cerró la hoja de compartir. */
-  const deliver = async ({ blob, fileName }: ReadyVideo) => {
-    const result = await saveImage(blob, fileName);
-    if (result === "cancelled") return false;
-    // Con la hoja de compartir del móvil, el sistema ya da su respuesta.
-    if (result === "downloaded") {
-      toast.success(`Video descargado: ${fileName}`);
-    }
-    return true;
-  };
-
-  const run = async () => {
-    const abort = new AbortController();
-    controller.current = abort;
-    setPercent(0);
-    onWorkingChange(true);
-    setStatus("exportingVideo");
-    try {
-      return await runExport({
-        onProgress: (progress) => setPercent(Math.round(progress * 100)),
-        signal: abort.signal,
-      });
-    } catch (error) {
-      console.error(error);
-      return null;
-    } finally {
-      controller.current = null;
-      setStatus("idle");
-      onWorkingChange(false);
-    }
-  };
-
-  const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const onSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const savedName = getDownloadFileName(
-      name.trim() || suggestedName,
-      VIDEO_MIME_TYPE
+    void exportAs(
+      getDownloadFileName(name.trim() || suggestedName, VIDEO_MIME_TYPE)
     );
-    const result = await run();
-    if (!result) {
-      toast.error("No se pudo exportar el video");
-      return onDone();
-    }
-    if (result.status === "canceled") return onDone();
-    if (result.status === "unsupported") {
-      toast.error("Este navegador no puede exportar este video");
-      return onDone();
-    }
-    if (result.hasLostSound) toast.error("El video se exportó sin sonido");
-
-    const video = { blob: result.blob, fileName: savedName };
-    // La hoja de compartir del móvil exige que el usuario acabe de tocar
-    // algo, y la exportación puede haber tardado más que eso: entonces se
-    // muestra un botón para abrirla con un toque nuevo.
-    const needsTap =
-      sharesFile(video.blob, video.fileName) &&
-      !navigator.userActivation?.isActive;
-    if (needsTap) {
-      setPercent(null);
-      setReady(video);
-      return;
-    }
-    await deliver(video);
-    onDone();
   };
 
   if (ready) {
@@ -194,13 +126,7 @@ const VideoExportBody = ({
           <DialogClose asChild>
             <Button size="sm">Cerrar</Button>
           </DialogClose>
-          <Button
-            size="sm"
-            variant="primary"
-            onClick={async () => {
-              if (await deliver(ready)) onDone();
-            }}
-          >
+          <Button size="sm" variant="primary" onClick={deliverReady}>
             Compartir o guardar
           </Button>
         </DialogActions>
@@ -216,7 +142,7 @@ const VideoExportBody = ({
         </p>
         <ProgressBar value={percent} aria-labelledby={progressId} />
         <DialogActions>
-          <Button size="sm" onClick={() => controller.current?.abort()}>
+          <Button size="sm" onClick={cancel}>
             Cancelar
           </Button>
         </DialogActions>

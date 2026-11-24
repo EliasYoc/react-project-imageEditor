@@ -12,7 +12,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { hexToRgb, rgbaToHex } from "../../editor/model/color";
 import { GRADIENT_PRESETS } from "../../editor/engine/fill/presets";
 import type { Rgba } from "../../editor/model/types";
-import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
+import { DESKTOP_QUERY } from "../../hooks/useMediaQuery";
 import { mockMediaQueries } from "../../test/media";
 import { IconButton } from "./Button";
 import { ColorControl, ColorPicker } from "./ColorControl";

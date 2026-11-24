@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useRef, type PointerEvent, type ReactNode } from "react";
-import { DESKTOP_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { DESKTOP_QUERY, useMediaQuery } from "../../../hooks/useMediaQuery";
 import { IconButton, type IconComponent } from "../Button";
 import { useReturnFocus } from "../useReturnFocus";
 import styles from "./Panel.module.css";

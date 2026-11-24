@@ -5,7 +5,7 @@ import { Menu, type MenuItem } from "../../../components/ui/Menu";
 import { zoomLimits } from "../../../editor/engine/viewport";
 import { ZOOM_STEP, useViewStore } from "../../../editor/stage/viewStore";
 import { useEditorStore } from "../../../editor/store/editorStore";
-import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { HOVER_QUERY, useMediaQuery } from "../../../hooks/useMediaQuery";
 import { SHORTCUT_LABELS } from "../../shortcuts";
 import styles from "./ViewMenu.module.css";
 

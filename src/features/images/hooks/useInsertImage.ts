@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { toast } from "../../../components/ui/Toast";
 import { IMAGE_OPEN_ERROR_MESSAGE } from "../../../lib/messages";
-import { useFilePicker } from "../../../lib/useFilePicker";
+import { useFilePicker } from "../../../hooks/useFilePicker";
 import { isAnimatedImage } from "../../../editor/elements/animatedImage";
 import { loadImage } from "../../../editor/elements/imageCache";
 import type { ImageAnimation, Size } from "../../../editor/model/types";

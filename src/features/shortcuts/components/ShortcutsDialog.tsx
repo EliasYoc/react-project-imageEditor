@@ -22,6 +22,7 @@ import { Dialog } from "../../../components/ui/Dialog";
 import { Kbd } from "../../../components/ui/Kbd";
 import { Section } from "../../../components/ui/Section";
 import { useEditorStore } from "../../../editor/store/editorStore";
+import { selectHasVideo } from "../../../editor/store/selectors";
 import { MOD_KEY, SHORTCUT_LABELS as KEYS } from "../constants/shortcutLabels";
 import styles from "./ShortcutsDialog.module.css";
 
@@ -83,7 +84,7 @@ const VIDEO_GROUP: ShortcutGroup = {
 const ShortcutsDialog = () => {
   const isOpen = useUiStore((state) => state.dialog === "shortcuts");
   const closeDialog = useUiStore((state) => state.closeDialog);
-  const hasVideo = useEditorStore((state) => state.photo.video !== null);
+  const hasVideo = useEditorStore(selectHasVideo);
   const groups = hasVideo ? [...GROUPS, VIDEO_GROUP] : GROUPS;
 
   return (

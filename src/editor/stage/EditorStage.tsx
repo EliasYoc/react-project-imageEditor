@@ -6,13 +6,7 @@ import type { Image as KonvaImageNode } from "konva/lib/shapes/Image";
 import "konva/lib/shapes/Circle";
 import "konva/lib/shapes/Image";
 import "konva/lib/shapes/Rect";
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-} from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 // Versión mínima de react-konva: solo se registran las formas que se usan
 // (Circle, Image y Rect, arriba) en lugar de todas las de Konva.
 import {
@@ -23,22 +17,21 @@ import {
   Rect,
   Stage,
 } from "react-konva/lib/ReactKonvaCore";
-import { createCanvas, get2dContext } from "../../lib/canvas";
-import { PaintRaster } from "../engine/PaintRaster";
-import { blurLayers, type BlurSource } from "../engine/brushes/blur";
-import { paintFill } from "../engine/fill/paintFill";
+import { useResizeObserver } from "../../hooks/useResizeObserver";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import {
   selectBackgroundImage,
   selectStrokeLayers,
   selectVideo,
 } from "../store/selectors";
-import { createBackgroundBlur } from "./backgroundBlur";
 import styles from "./EditorStage.module.css";
 import { startElementPinch, type Touch } from "./elementPinch";
 import ElementsLayer from "./ElementsLayer";
-import type { LiveBlur } from "./strokeSession";
 import TextEditorOverlay from "./textEditor/TextEditorOverlay";
+import { useBackdropCanvas } from "./useBackdropCanvas";
+import { useBackgroundBlur } from "./useBackgroundBlur";
+import { usePaintRasters } from "./usePaintRasters";
+import { useViewTransform } from "./useViewTransform";
 import { useStageInput } from "./useStageInput";
 import { onVideoFrame } from "./videoFrames";
 import { useViewStore, viewStore } from "./viewStore";
@@ -70,8 +63,6 @@ const EditorStage = () => {
   const backgroundLayerRef = useRef<KonvaLayer>(null);
   const liveNodeRef = useRef<KonvaImageNode>(null);
   const highlightLiveNodeRef = useRef<KonvaImageNode>(null);
-  const blurNodeRef = useRef<KonvaImageNode>(null);
-  const blurSnapshotRef = useRef<HTMLCanvasElement | null>(null);
   const cursorRef = useRef<KonvaGroup>(null);
 
   const canvasSize = useEditorStore((state) => state.canvasSize);
@@ -81,49 +72,25 @@ const EditorStage = () => {
   const isDrawing = useEditorStore((state) => state.mode === "draw");
   const isEditingElements = useEditorStore((state) => state.mode === "text");
   const stageSize = useViewStore((state) => state.stageSize);
-  const view = useViewStore((state) => state.view);
 
-  // Búfer de trazo (opacidad, fusión, máscaras) compartido por los rasters:
-  // se pintan de uno en uno. Se crea al usarse por primera vez.
-  const getScratch = useMemo(() => {
-    let scratch: HTMLCanvasElement | null = null;
-    return () => (scratch ??= createCanvas(canvasSize));
-  }, [canvasSize]);
-  // Un raster por capa de trazos y un canvas para el trazo en curso por cada
-  // tamaño de documento.
-  const raster = useMemo(
-    () => new PaintRaster(canvasSize, { getScratch }),
-    [canvasSize, getScratch]
+  const { getScratch, raster, highlightRaster, liveCanvas } =
+    usePaintRasters(canvasSize);
+  const fillCanvas = useBackdropCanvas(
+    canvasSize,
+    backdrop.fill,
+    backgroundLayerRef
   );
-  const highlightRaster = useMemo(
-    () => new PaintRaster(canvasSize, { getScratch }),
-    [canvasSize, getScratch]
-  );
-  const liveCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
-  // Capa de color o degradado: un canvas por tamaño de documento que se
-  // repinta al cambiar (no se crea uno nuevo en cada movimiento de un control).
-  const fillCanvas = useMemo(() => createCanvas(canvasSize), [canvasSize]);
-
-  // El fondo tal como se ve (lo mismo que pinta la capa de fondo, abajo): es
-  // lo que desenfoca el pincel de desenfoque.
-  const getBackground = useCallback((): BlurSource[] => {
-    const state = editorStore.getState();
-    const { backdrop } = state;
-    const image = selectBackgroundImage(state);
-    const sources: BlurSource[] = [image ? { image } : { color: "white" }];
-    if (backdrop.fill) {
-      sources.push({
-        image: fillCanvas,
-        opacity: backdrop.opacity,
-        blend: image ? backdrop.blend : "source-over",
-      });
-    }
-    return sources;
-  }, [fillCanvas]);
-  const backgroundBlur = useMemo(
-    () => createBackgroundBlur(canvasSize, { getBackground, getScratch }),
-    [canvasSize, getBackground, getScratch]
-  );
+  const { backgroundBlur, blurNodeRef, showBackgroundBlur, liveBlur } =
+    useBackgroundBlur({
+      canvasSize,
+      getScratch,
+      raster,
+      highlightRaster,
+      fillCanvas,
+      backgroundLayerRef,
+      background,
+      backdrop,
+    });
 
   // batchDraw agrupa las peticiones y pinta una sola vez por frame.
   const requestDraw = useCallback(() => {
@@ -136,50 +103,10 @@ const EditorStage = () => {
     highlightLayerRef.current?.batchDraw();
   }, [backgroundBlur]);
 
-  // El fondo desenfocado se muestra con un nodo que se rellena desde aquí,
-  // fuera de React, igual que los rasters.
-  const showBackgroundBlur = useCallback(() => {
-    const node = blurNodeRef.current;
-    if (!node) return;
-    const { view } = backgroundBlur;
-    const wasVisible = node.visible();
-    // Sin desenfoque no se queda con ningún canvas (p. ej. el del documento
-    // anterior) ni hay nada que repintar.
-    node.image(view ?? undefined);
-    node.visible(view !== null);
-    if (view || wasVisible) backgroundLayerRef.current?.batchDraw();
-  }, [backgroundBlur]);
-
-  const liveBlur = useMemo<LiveBlur>(
-    () => ({
-      // Todo lo que se ve bajo los textos, desenfocado: fondo, resaltador
-      // (multiplicado, como en pantalla) y pintura.
-      snapshot() {
-        // Esta copia es de un instante: con un video en marcha, el trazo
-        // mostraría un fotograma congelado. Se pausa al empezar a desenfocar.
-        selectVideo(editorStore.getState())?.element.pause();
-        const { highlight } = selectStrokeLayers(editorStore.getState());
-        const sources = getBackground();
-        if (backgroundBlur.view) sources.push({ image: backgroundBlur.view });
-        if (highlight.length > 0) {
-          sources.push({ image: highlightRaster.canvas, blend: "multiply" });
-        }
-        sources.push({ image: raster.canvas });
-        blurSnapshotRef.current = blurLayers(sources, canvasSize, {
-          into: blurSnapshotRef.current,
-        });
-        return blurSnapshotRef.current;
-      },
-      setLiveEraser(eraser) {
-        backgroundBlur.setLiveEraser(eraser);
-        // Al soltar el borrador, lo borrado ya no depende del trazo en curso.
-        if (!eraser && backgroundBlur.view) {
-          backgroundLayerRef.current?.batchDraw();
-        }
-      },
-    }),
-    [backgroundBlur, canvasSize, getBackground, highlightRaster, raster]
-  );
+  // Las capas del documento siguen la vista fuera de React.
+  useViewTransform(backgroundLayerRef);
+  useViewTransform(highlightLayerRef);
+  useViewTransform(paintLayerRef);
 
   useLayoutEffect(function multiplyHighlightLayer() {
     // El <canvas> de la capa se multiplica con lo que tiene debajo (el fondo):
@@ -188,16 +115,10 @@ const EditorStage = () => {
     if (canvas) canvas.style.mixBlendMode = "multiply";
   }, []);
 
-  useLayoutEffect(function measureStage() {
-    const container = containerRef.current;
-    if (!container) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      viewStore.getState().setStageSize({ width, height });
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
+  useResizeObserver(containerRef, function measureStage({ contentRect }) {
+    const { width, height } = contentRect;
+    viewStore.getState().setStageSize({ width, height });
+  });
 
   useEffect(
     function fitNewDocument() {
@@ -255,26 +176,6 @@ const EditorStage = () => {
   );
 
   useEffect(
-    function paintBackdrop() {
-      const ctx = get2dContext(fillCanvas);
-      ctx.clearRect(0, 0, fillCanvas.width, fillCanvas.height);
-      if (backdrop.fill) paintFill(ctx, backdrop.fill, canvasSize);
-      backgroundLayerRef.current?.batchDraw();
-    },
-    [fillCanvas, backdrop.fill, canvasSize]
-  );
-
-  // Después de `paintBackdrop` (los efectos van en orden): la capa de color
-  // ya está repintada cuando se vuelve a desenfocar el fondo.
-  useEffect(
-    function blurNewBackground() {
-      backgroundBlur.invalidateBackground();
-      showBackgroundBlur();
-    },
-    [backgroundBlur, showBackgroundBlur, backdrop, background]
-  );
-
-  useEffect(
     function followVideoFrames() {
       if (!video) return;
       // Fuera de React, como los trazos: en cada fotograma nuevo se repinta
@@ -311,14 +212,6 @@ const EditorStage = () => {
     }
   };
 
-  const documentTransform = {
-    x: view.x,
-    y: view.y,
-    scaleX: view.scale,
-    scaleY: view.scale,
-    listening: false,
-  };
-
   return (
     <div
       ref={containerRef}
@@ -332,7 +225,7 @@ const EditorStage = () => {
         listening={isEditingElements}
         onPointerDown={onStagePointerDown}
       >
-        <Layer ref={backgroundLayerRef} {...documentTransform}>
+        <Layer ref={backgroundLayerRef} listening={false}>
           {background ? (
             <KonvaImage
               image={background}
@@ -368,7 +261,7 @@ const EditorStage = () => {
             visible={false}
           />
         </Layer>
-        <Layer ref={highlightLayerRef} {...documentTransform}>
+        <Layer ref={highlightLayerRef} listening={false}>
           <KonvaImage
             image={highlightRaster.canvas}
             width={canvasSize.width}
@@ -382,7 +275,7 @@ const EditorStage = () => {
             visible={false}
           />
         </Layer>
-        <Layer ref={paintLayerRef} {...documentTransform}>
+        <Layer ref={paintLayerRef} listening={false}>
           <KonvaImage
             image={raster.canvas}
             width={canvasSize.width}
@@ -396,7 +289,6 @@ const EditorStage = () => {
           />
         </Layer>
         <ElementsLayer
-          view={view}
           isInteractive={isEditingElements}
           overlay={
             // Dos círculos (blanco y negro) para que se vea sobre cualquier color.

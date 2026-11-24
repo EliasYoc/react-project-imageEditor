@@ -78,6 +78,7 @@ Si ninguna lo cubre:
 - **Los tests de la feature** van en su raíz; un test unitario va junto al archivo que prueba.
 - **Cada feature tiene un `index.ts`** que reexporta solo lo que usa el resto de la app. Desde fuera de la feature se importa siempre ese `index.ts`, nunca un archivo interno. Dentro de la feature, los archivos se importan entre sí con rutas relativas, sin pasar por su propio `index.ts`.
 - El `index.ts` solo reexporta; no pongas código en él (en `vite.config.js` está marcado sin efectos secundarios para que no arrastre el editor al bundle del inicio).
+- **Los hooks genéricos** (no saben nada del editor ni de una feature, y los usan dos sitios o más) van en `src/hooks/`, uno por archivo. Un hook de una sola feature va en su `hooks/`. `src/lib/` queda para funciones que no son hooks.
 
 ## 7. Refactor
 
