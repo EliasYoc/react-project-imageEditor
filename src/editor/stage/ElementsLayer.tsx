@@ -30,7 +30,6 @@ import { imageNodeConfig, textNodeConfig } from "../elements/nodeConfig";
 import { stickerResolution } from "../elements/stickerResolution";
 import { applyTextFill } from "../elements/textGradient";
 import { applyTextMaxWidth } from "../elements/textWidth";
-import type { View } from "../engine/viewport";
 import type { EditorElement, ImageElement, TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
@@ -41,6 +40,7 @@ import {
   useMaxTextWidth,
 } from "./elementHooks";
 import { NO_GUIDES, useElementHandlers } from "./useElementHandlers";
+import { useViewTransform } from "./useViewTransform";
 import { useViewStore } from "./viewStore";
 
 /** Un arrastre empieza tras moverse unos píxeles: un toque sigue siendo un toque. */
@@ -140,7 +140,6 @@ const ImageNode = memo(function ImageNode({
 });
 
 interface ElementsLayerProps {
-  view: View;
   /** Modo Texto: los elementos se pueden seleccionar, mover y transformar. */
   isInteractive: boolean;
   /**
@@ -157,11 +156,7 @@ interface ElementsLayerProps {
  * El Transformer (marco de selección) va en una capa aparte sin
  * transformar: así sus asas miden lo mismo con cualquier zoom.
  */
-const ElementsLayer = ({
-  view,
-  isInteractive,
-  overlay,
-}: ElementsLayerProps) => {
+const ElementsLayer = ({ isInteractive, overlay }: ElementsLayerProps) => {
   const elements = useEditorStore(selectElements);
   const selectedId = useEditorStore((state) => state.selectedElementId);
   const editingId = useEditorStore((state) => state.editingTextId);
@@ -169,6 +164,7 @@ const ElementsLayer = ({
   const transformerRef = useRef<KonvaTransformer>(null);
   const [guides, setGuides] = useState(NO_GUIDES);
   const handlers = useElementHandlers(setGuides);
+  useViewTransform(layerRef);
 
   const ordered = useMemo(
     () => [...elements].sort((a, b) => a.zIndex - b.zIndex),
@@ -237,14 +233,7 @@ const ElementsLayer = ({
 
   return (
     <>
-      <Layer
-        ref={layerRef}
-        x={view.x}
-        y={view.y}
-        scaleX={view.scale}
-        scaleY={view.scale}
-        listening={isInteractive}
-      >
+      <Layer ref={layerRef} listening={isInteractive}>
         {ordered.map((element) =>
           element.whatTask === "text" ? (
             <TextNode

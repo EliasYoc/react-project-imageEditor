@@ -31,6 +31,7 @@ import TextEditorOverlay from "./textEditor/TextEditorOverlay";
 import { useBackdropCanvas } from "./useBackdropCanvas";
 import { useBackgroundBlur } from "./useBackgroundBlur";
 import { usePaintRasters } from "./usePaintRasters";
+import { useViewTransform } from "./useViewTransform";
 import { useStageInput } from "./useStageInput";
 import { onVideoFrame } from "./videoFrames";
 import { useViewStore, viewStore } from "./viewStore";
@@ -71,7 +72,6 @@ const EditorStage = () => {
   const isDrawing = useEditorStore((state) => state.mode === "draw");
   const isEditingElements = useEditorStore((state) => state.mode === "text");
   const stageSize = useViewStore((state) => state.stageSize);
-  const view = useViewStore((state) => state.view);
 
   const { getScratch, raster, highlightRaster, liveCanvas } =
     usePaintRasters(canvasSize);
@@ -102,6 +102,11 @@ const EditorStage = () => {
     paintLayerRef.current?.batchDraw();
     highlightLayerRef.current?.batchDraw();
   }, [backgroundBlur]);
+
+  // Las capas del documento siguen la vista fuera de React.
+  useViewTransform(backgroundLayerRef);
+  useViewTransform(highlightLayerRef);
+  useViewTransform(paintLayerRef);
 
   useLayoutEffect(function multiplyHighlightLayer() {
     // El <canvas> de la capa se multiplica con lo que tiene debajo (el fondo):
@@ -207,14 +212,6 @@ const EditorStage = () => {
     }
   };
 
-  const documentTransform = {
-    x: view.x,
-    y: view.y,
-    scaleX: view.scale,
-    scaleY: view.scale,
-    listening: false,
-  };
-
   return (
     <div
       ref={containerRef}
@@ -228,7 +225,7 @@ const EditorStage = () => {
         listening={isEditingElements}
         onPointerDown={onStagePointerDown}
       >
-        <Layer ref={backgroundLayerRef} {...documentTransform}>
+        <Layer ref={backgroundLayerRef} listening={false}>
           {background ? (
             <KonvaImage
               image={background}
@@ -264,7 +261,7 @@ const EditorStage = () => {
             visible={false}
           />
         </Layer>
-        <Layer ref={highlightLayerRef} {...documentTransform}>
+        <Layer ref={highlightLayerRef} listening={false}>
           <KonvaImage
             image={highlightRaster.canvas}
             width={canvasSize.width}
@@ -278,7 +275,7 @@ const EditorStage = () => {
             visible={false}
           />
         </Layer>
-        <Layer ref={paintLayerRef} {...documentTransform}>
+        <Layer ref={paintLayerRef} listening={false}>
           <KonvaImage
             image={raster.canvas}
             width={canvasSize.width}
@@ -292,7 +289,6 @@ const EditorStage = () => {
           />
         </Layer>
         <ElementsLayer
-          view={view}
           isInteractive={isEditingElements}
           overlay={
             // Dos círculos (blanco y negro) para que se vea sobre cualquier color.
