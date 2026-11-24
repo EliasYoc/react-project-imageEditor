@@ -51,7 +51,7 @@ Si ninguna lo cubre:
 - **Antes de cambiar nada, mira en qué rama estás** (`git branch --show-current`), al empezar cada tarea y no solo la primera vez. Si es `main` o `dev`, **no avances**: no edites archivos ni hagas commits. Recuérdale al dueño que sigue en esa rama y que necesita una rama de trabajo (por ejemplo `git switch -c feat/nombre`), y espera a que la cree. Leer código y responder preguntas sí se puede.
 - **Las ramas las crea el dueño, no tú.** Cuando esté en una rama que no sea `main` ni `dev`, haz los commits en ella.
 - **Trabaja solo con commits locales.** **Nunca hagas push** ni abras, edites o fusiones PR.
-- **Al terminar,** deja el texto de la PR en un archivo para que el dueño la abra.
+- **Al terminar,** deja el texto de la PR en `.pr/<rama>.md` (p. ej. `.pr/fix-ui-behavior.md`) para que el dueño la abra. La carpeta `.pr/` está en `.gitignore`: esos archivos nunca van en un commit ni en la raíz del proyecto.
 - **Cada commit** debe compilar y pasar `npm run check` por sí solo.
 - **Un commit por tarea.** Si el dueño pide varias tareas a la vez (p. ej. una lista numerada), cada una va en su propio commit y en ese orden, **aunque toquen los mismos archivos**. Así se pueden revisar y revertir por separado.
   - **Cuándo hacer el commit:** al terminar una tarea y comprobarla (`npm run check`, y los e2e si cambia algo que prueban), **antes de empezar la siguiente**.
