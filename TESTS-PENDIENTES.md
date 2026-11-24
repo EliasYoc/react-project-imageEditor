@@ -236,3 +236,19 @@ Comprobado en el e2e con una sola frase larga (móvil y escritorio).
   encoger su caja, en vez de dejarla al 90 %.
 - **Sin decidir:** una palabra más ancha que el 90 % se parte distinto en el
   editor (se sale por el lado, oculta) y en Konva (se parte por letras).
+
+## Hooks genéricos en `src/hooks` (`useResizeObserver`)
+
+- **unit:** llama a la última versión de `onResize` sin crear otro
+  observador, y lo desconecta al desmontar.
+
+## El lienzo no se vuelve a renderizar sin cambiar (zoom, trazos)
+
+- **e2e:** con un texto seleccionado (sin el panel abierto), al acercar,
+  alejar y desplazar, el marco de selección y sus asas siguen alrededor del
+  texto (`useViewTransform`).
+- **e2e:** un sticker se vuelve a pintar a más resolución al acercarse
+  (cambia de escalón de `stickerResolution`) y no en cada paso del zoom.
+- **e2e:** contar los renders de React al hacer zoom y al dibujar un trazo
+  (con el gancho de React DevTools, `__REACT_DEVTOOLS_GLOBAL_HOOK__`) y
+  comprobar que no se renderiza ningún componente del lienzo.
