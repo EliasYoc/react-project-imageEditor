@@ -3,6 +3,19 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
+## El teclado del móvil no tapa el texto que se escribe
+
+- **e2e:** con el teclado abierto, un texto corto no se mueve (no salta al
+  abrirse el teclado).
+- **e2e:** si el navegador desplaza la vista (como Safari en iOS,
+  `offsetTop` > 0), el editor queda dentro de lo que se ve.
+- **e2e:** al editar un texto largo que ya existía, con el teclado abierto,
+  se ve el final (donde está el cursor).
+- **e2e:** un texto nuevo escrito con el editor subido queda donde se
+  escribió.
+- **e2e (escritorio):** un texto muy largo, sin teclado, sube y se desplaza
+  por dentro en vez de salirse por abajo.
+
 ## Un texto nuevo es negro con caja de fondo blanca
 
 - **e2e:** un texto nuevo sobre una foto se ve: letras negras dentro de la

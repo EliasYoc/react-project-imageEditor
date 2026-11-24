@@ -37,6 +37,9 @@
   background: transparent;
   resize: none;
   overflow: hidden;
+  /* Si el texto no cabe a lo alto, se desplaza dentro del editor, sin barra:
+     ocuparía ancho y las líneas se cortarían distinto que en el lienzo. */
+  scrollbar-width: none;
   white-space: pre;
   user-select: text;
   -webkit-user-select: text;
@@ -46,6 +49,11 @@
 
 .textEditor[wrap="soft"] {
   white-space: pre-wrap;
+}
+
+/* Safari antes de la 18.2 no entiende scrollbar-width. */
+.textEditor::-webkit-scrollbar {
+  display: none;
 }
 
 /* Capa que tapa el lienzo mientras se escribe un texto (el color lo pone

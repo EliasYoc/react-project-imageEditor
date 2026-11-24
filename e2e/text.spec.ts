@@ -474,3 +474,69 @@ test("mientras se escribe, una capa tapa el lienzo, y al terminar se quita", asy
     .poll(async () => colorChange(await screenColor(page, probe), before))
     .toBeLessThan(5);
 });
+
+test.describe("Texto con el teclado del móvil", () => {
+  /** Alto del teclado falso, en píxeles (como el de un móvil, con sugerencias). */
+  const KEYBOARD_HEIGHT = 340;
+
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!isMobile, "El teclado virtual es del móvil");
+    // Playwright no abre teclado: un visualViewport falso que se encoge al
+    // "abrirlo" y avisa con resize, como el del navegador.
+    await page.addInitScript(() => {
+      const viewport = new EventTarget();
+      let keyboardHeight = 0;
+      Object.defineProperties(viewport, {
+        offsetTop: { get: () => 0 },
+        offsetLeft: { get: () => 0 },
+        width: { get: () => window.innerWidth },
+        height: { get: () => window.innerHeight - keyboardHeight },
+        scale: { get: () => 1 },
+      });
+      Object.defineProperty(window, "visualViewport", { value: viewport });
+      Object.defineProperty(window, "openFakeKeyboard", {
+        value: (height: number) => {
+          keyboardHeight = height;
+          viewport.dispatchEvent(new Event("resize"));
+        },
+      });
+    });
+    await openBlankCanvas(page);
+    await page.getByRole("radio", { name: "Texto" }).click();
+  });
+
+  test("un texto largo no queda debajo del teclado: el editor sube y, si no cabe, se desplaza por dentro", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Agregar texto" }).click();
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toBeFocused();
+    await page.evaluate((height) => {
+      (
+        window as unknown as { openFakeKeyboard: (height: number) => void }
+      ).openFakeKeyboard(height);
+    }, KEYBOARD_HEIGHT);
+    const keyboardTop =
+      (await page.evaluate(() => window.innerHeight)) - KEYBOARD_HEIGHT;
+    const editorBox = async () => (await editor.boundingBox()) as Rect;
+
+    // Unas líneas: el editor sube para que la última se vea.
+    await page.keyboard.insertText("Una línea\n".repeat(6));
+    let box = await editorBox();
+    expect(box.y + box.height).toBeLessThanOrEqual(keyboardTop);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+
+    // Muchas más: no cabe ni subiendo; se desplaza dentro y se ve el final.
+    await page.keyboard.insertText("Otra línea\n".repeat(20));
+    box = await editorBox();
+    expect(box.y + box.height).toBeLessThanOrEqual(keyboardTop);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    const scroll = await editor.evaluate((textarea: HTMLTextAreaElement) => ({
+      top: textarea.scrollTop,
+      hidden: textarea.scrollHeight - textarea.clientHeight,
+    }));
+    expect(scroll.hidden).toBeGreaterThan(0);
+    // Al final: lo que queda oculto es lo de arriba.
+    expect(scroll.top).toBeGreaterThanOrEqual(scroll.hidden - 1);
+  });
+});

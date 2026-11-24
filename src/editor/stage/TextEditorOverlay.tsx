@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
+import { useVisualViewport } from "../../lib/useVisualViewport";
 import { getFont } from "../elements/fonts";
 import { DARK_BACKDROP, readableBackdrop } from "../elements/readableBackdrop";
 import { textPadding } from "../elements/nodeConfig";
@@ -18,7 +19,7 @@ import { maxTextWidth } from "../elements/textWidth";
 import { visibleArea } from "../engine/viewport";
 import { rgbaToCss } from "../model/color";
 import { defaultFontSize } from "../model/factories";
-import { isTextElement, type TextElement } from "../model/types";
+import { isTextElement, type Size, type TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
 import styles from "./EditorStage.module.css";
@@ -48,6 +49,9 @@ const editingBackdropColor = (element: TextElement) => {
  * pequeño. Al terminar, el texto sigue donde estaba y con su tamaño; uno
  * recién escrito se queda donde estaba el editor.
  *
+ * En el móvil no queda debajo del teclado: sube lo justo para verse y, si el
+ * texto no cabe, se desplaza por dentro (`textEditingBox`).
+ *
  * Se confirma al salir (tocar fuera) o con Ctrl/⌘ + Enter; Escape cancela.
  * Un texto nuevo que se deja vacío se descarta sin dejar rastro.
  */
@@ -60,8 +64,13 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   // Un texto nuevo se crea vacío: ese es el único momento en que lo está.
   const isNewText = element.text === "";
   const [draft, setDraft] = useState(element.text);
-  // Ancho del textarea sin escalar: si no cabe en pantalla, se encoge.
-  const [contentWidth, setContentWidth] = useState(0);
+  // Tamaño del textarea sin escalar, con todo el texto: si no cabe a lo
+  // ancho, se encoge; si no cabe a lo alto, sube o se desplaza por dentro.
+  const [contentSize, setContentSize] = useState<Size>({ width: 0, height: 0 });
+  const viewport = useVisualViewport();
+  // Dónde empieza el área del lienzo en la ventana: la franja que se ve viene
+  // en píxeles de la ventana y el editor se coloca en los del área.
+  const [stageTop, setStageTop] = useState(0);
   const padding = textPadding(element);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isFinishedRef = useRef(false);
@@ -74,6 +83,11 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     // El cursor va al final y no se selecciona el texto: escribir no lo borra.
     const end = textarea.value.length;
     textarea.setSelectionRange(end, end);
+  }, []);
+
+  useLayoutEffect(function measureStageTop() {
+    const stage = textareaRef.current?.offsetParent;
+    if (stage) setStageTop(stage.getBoundingClientRect().top);
   }, []);
 
   useLayoutEffect(
@@ -103,15 +117,33 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       }
       textarea.style.height = "0px";
       textarea.style.height = `${textarea.scrollHeight}px`;
-      setContentWidth(textarea.offsetWidth);
+      // scrollHeight: todo el texto, aunque el editor tenga un alto máximo.
+      setContentSize({
+        width: textarea.offsetWidth,
+        height: textarea.scrollHeight,
+      });
     },
     [draft, element.width, element.fontSize, padding, maxWidth]
   );
 
-  const { scale, ...position } = textEditingBox(
-    contentWidth,
+  const { scale, maxHeight, ...position } = textEditingBox(
+    contentSize,
     textEditingScale(element.fontSize, defaultFontSize(canvasSize), view.scale),
-    visibleArea(stageSize, insets)
+    visibleArea(stageSize, insets),
+    { top: viewport.top - stageTop, bottom: viewport.bottom - stageTop }
+  );
+
+  useLayoutEffect(
+    function keepCaretInView() {
+      const textarea = textareaRef.current;
+      if (!textarea || maxHeight === undefined) return;
+      // Con el texto desplazándose dentro del editor, la línea donde se
+      // escribe (al final) tiene que verse, también al abrirse el teclado.
+      if (textarea.selectionEnd === textarea.value.length) {
+        textarea.scrollTop = textarea.scrollHeight;
+      }
+    },
+    [maxHeight, draft]
   );
 
   const finish = (save: boolean) => {
@@ -136,7 +168,12 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       isNewText
         ? {
             text,
-            ...newTextPosition(position, contentWidth, element.scale, view),
+            ...newTextPosition(
+              position,
+              contentSize.width,
+              element.scale,
+              view
+            ),
           }
         : { text }
     );
@@ -182,6 +219,9 @@ const TextEditor = ({ element }: { element: TextElement }) => {
         spellCheck={false}
         style={{
           ...position,
+          maxHeight,
+          // Solo si no cabe: el resto se desplaza dentro del editor.
+          overflowY: maxHeight === undefined ? undefined : "auto",
           width: element.width ?? undefined,
           padding,
           font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
