@@ -52,6 +52,14 @@ export const selectSelectedElement = (
     (element) => element.id === state.selectedElementId
   ) ?? null;
 
+/** El texto que se está escribiendo, o null si no se edita ninguno. */
+export const selectEditingText = (state: EditorStore) => {
+  const element = selectElements(state).find(
+    (candidate) => candidate.id === state.editingTextId
+  );
+  return isTextElement(element) ? element : null;
+};
+
 /** El texto seleccionado, o null si no hay selección o es una imagen. */
 export const selectSelectedText = (state: EditorStore) => {
   const element = selectSelectedElement(state);

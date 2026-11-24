@@ -46,3 +46,15 @@
     animation: none;
   }
 }
+
+/* Volviendo al lienzo (el texto ya está guardado): no responden, y un toque
+   llega al lienzo. */
+.editor[data-closing],
+.backdrop[data-closing] {
+  pointer-events: none;
+}
+
+/* Sin el borde del editor: lo que vuelve a su sitio es el texto. */
+.editor[data-closing] {
+  outline-color: transparent;
+}

@@ -7,15 +7,18 @@ import {
 } from "react";
 import { getFont } from "../../elements/fonts";
 import { textPadding } from "../../elements/nodeConfig";
-import { newTextPosition } from "../../elements/textEditorBox";
+import { newTextPosition, type EditingBox } from "../../elements/textEditorBox";
+import { elementPose } from "../../elements/textEditorMotion";
 import { textEditorPaint } from "../../elements/textGradient";
 import { maxTextWidth } from "../../elements/textWidth";
 import type { TextElement } from "../../model/types";
 import { editorStore, useEditorStore } from "../../store/editorStore";
+import { selectEditingText } from "../../store/selectors";
 import { useViewStore } from "../viewStore";
 import { editingBackdropColor } from "./editingBackdrop";
 import styles from "./TextEditor.module.css";
 import { useEditingBox } from "./useEditingBox";
+import { useEditorMotion } from "./useEditorMotion";
 import { useFitTextarea } from "./useFitTextarea";
 
 /**
@@ -30,16 +33,27 @@ import { useFitTextarea } from "./useFitTextarea";
  * Una capa tapa el lienzo mientras se escribe. Se confirma al salir (tocar
  * fuera o la capa) o con Ctrl/⌘ + Enter; Escape cancela. Un texto nuevo que
  * se deja vacío se descarta sin dejar rastro.
+ *
+ * Al volver a editar un texto, el editor sale de donde está en el lienzo; al
+ * terminar, vuelve a él (`useEditorMotion`). Mientras vuelve, el texto ya
+ * está guardado y la edición no termina hasta que llega: el texto del lienzo
+ * sigue oculto y el editor ya no responde.
  */
 const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
   const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
-  // Un texto nuevo se crea vacío: ese es el único momento en que lo está.
-  const isNewText = element.text === "";
+  // Un texto nuevo se crea vacío: ese es el único momento en que lo está
+  // (al guardarlo, mientras el editor vuelve al lienzo, ya no lo está).
+  const [isNewText] = useState(element.text === "");
   const [draft, setDraft] = useState(element.text);
   const padding = textPadding(element);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const isFinishedRef = useRef(false);
+  // Al terminar, el editor vuelve al lienzo desde donde estaba: aunque se
+  // cierre el teclado y cambie la zona libre, ya no se mueve.
+  const [closingBox, setClosingBox] = useState<EditingBox | null>(null);
+  const isClosing = closingBox !== null;
 
   const contentSize = useFitTextarea(textareaRef, {
     draft,
@@ -48,11 +62,16 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     padding,
     maxWidth,
   });
-  const { scale, maxHeight, ...position } = useEditingBox(
+  const liveBox = useEditingBox(textareaRef, element, contentSize);
+  const box = closingBox ?? liveBox;
+  const { scale, maxHeight, ...position } = box;
+  const { leaveTo } = useEditorMotion({
     textareaRef,
-    element,
-    contentSize
-  );
+    backdropRef,
+    placement: box,
+    contentWidth: contentSize.width,
+    enterFrom: isNewText ? null : elementPose(element, view),
+  });
 
   useLayoutEffect(function focusOnOpen() {
     const textarea = textareaRef.current;
@@ -83,31 +102,44 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     const { editElement, removeElement, discardNewText, stopTextEditing } =
       editorStore.getState();
     const text = save ? draft : element.text;
-    stopTextEditing();
     if (!text.trim()) {
       // Vacío: un texto nuevo desaparece; uno que ya existía se elimina
-      // (se puede deshacer).
+      // (se puede deshacer). Sin transición: no queda nada a lo que volver.
+      stopTextEditing();
       if (isNewText) discardNewText(element.id);
       else removeElement(element.id);
       return;
     }
-    if (text === element.text) return;
-    // Un texto nuevo se queda donde estaba el editor, no donde se creó; en el
-    // mismo cambio, así que no añade un paso al historial.
-    editElement(
-      element.id,
-      isNewText
-        ? {
-            text,
-            ...newTextPosition(
-              position,
-              contentSize.width,
-              element.scale,
-              view
-            ),
-          }
-        : { text }
-    );
+    if (text !== element.text) {
+      // Un texto nuevo se queda donde estaba el editor, no donde se creó; en
+      // el mismo cambio, así que no añade un paso al historial.
+      editElement(
+        element.id,
+        isNewText
+          ? {
+              text,
+              ...newTextPosition(
+                position,
+                contentSize.width,
+                element.scale,
+                view
+              ),
+            }
+          : { text }
+      );
+    }
+    returnToCanvas();
+  };
+
+  /** Vuelve al texto (ya guardado) en el lienzo y, al llegar, termina la edición. */
+  const returnToCanvas = () => {
+    const saved = selectEditingText(editorStore.getState()) ?? element;
+    setClosingBox(box);
+    leaveTo(elementPose(saved, view), () => {
+      // Si mientras tanto se empezó a editar otro texto, esa edición sigue.
+      const { editingTextId, stopTextEditing } = editorStore.getState();
+      if (editingTextId === element.id) stopTextEditing();
+    });
   };
 
   // Tocar la capa confirma el texto (el textarea pierde el foco al apretar)
@@ -135,15 +167,19 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   return (
     <>
       <div
+        ref={backdropRef}
         className={styles.backdrop}
+        data-closing={isClosing || undefined}
         style={{ backgroundColor: editingBackdropColor(element) }}
         onMouseDown={onBackdropMouseDown}
       />
       <textarea
         ref={textareaRef}
         className={styles.editor}
+        data-closing={isClosing || undefined}
         aria-label="Texto"
         value={draft}
+        readOnly={isClosing}
         wrap={element.width === null ? "off" : "soft"}
         spellCheck={false}
         style={{

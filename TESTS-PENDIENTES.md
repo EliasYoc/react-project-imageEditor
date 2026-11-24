@@ -3,6 +3,18 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
+## Transición entre el texto del lienzo y el editor
+
+- **e2e:** un texto girado sale girado del lienzo y llega horizontal al
+  editor (y al revés al terminar).
+- **e2e:** con Escape (cancelar), el editor vuelve animado al texto, que no
+  cambia.
+- **e2e:** al vaciar un texto y salir, desaparece sin transición.
+- **e2e:** con «reducir movimiento» (`page.emulateMedia({ reducedMotion:
+"reduce" })`), el editor abre y cierra sin transición.
+- **e2e:** mientras el editor vuelve al lienzo, tocar otro texto lo
+  selecciona, y el texto que se cerraba aparece al llegar.
+
 ## El teclado del móvil no tapa el texto que se escribe
 
 - **e2e:** con el teclado abierto, un texto corto no se mueve (no salta al

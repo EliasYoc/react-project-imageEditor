@@ -73,6 +73,9 @@ export const textEditingBox = (
   };
 };
 
+/** Dónde y a qué escala se ve el editor (`textEditingBox`). */
+export type EditingBox = ReturnType<typeof textEditingBox>;
+
 /** La escala del editor, encogida si no cabe a lo ancho (nunca agrandada). */
 const editingScaleToFit = (
   contentWidth: number,

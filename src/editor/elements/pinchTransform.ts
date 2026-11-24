@@ -1,4 +1,5 @@
 import type { Point } from "../model/types";
+import { normalizeDegrees } from "./angles";
 import type { ElementTransform } from "./nodeConfig";
 
 /**
@@ -17,12 +18,6 @@ export type Fingers = [Point, Point];
 
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
-
-/** Lleva un ángulo en grados al intervalo (-180, 180]. */
-const normalizeDegrees = (degrees: number) => {
-  const turned = ((degrees % 360) + 360) % 360;
-  return turned > 180 ? turned - 360 : turned;
-};
 
 /**
  * Transformación de un elemento mientras se pellizca: los dos dedos lo
