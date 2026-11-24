@@ -155,7 +155,10 @@ const useElementHandlers = (
         if (isText) editorStore.getState().startTextEditing(id);
       };
       return {
-        onPointerDown: () => {
+        onPointerDown: (event: KonvaEventObject<PointerEvent>) => {
+          // El segundo dedo de un pellizco no cambia la selección: el
+          // pellizco es para el elemento que tocó el primero.
+          if (!event.evt.isPrimary) return;
           const { selectedElementId, selectElement } = editorStore.getState();
           wasSelectedRef.current = selectedElementId === id;
           selectElement(id);

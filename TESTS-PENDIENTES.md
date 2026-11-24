@@ -5,8 +5,12 @@ pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
 ## Pellizcar un elemento lo agranda y lo gira
 
-- **e2e:** pellizcar un elemento que NO estaba seleccionado hace zoom del
-  lienzo (y no cambia el elemento).
+- **e2e:** un pellizco que empieza con los dos dedos en una zona vacía hace
+  zoom del lienzo (y no cambia el elemento seleccionado).
+- **e2e:** el segundo dedo de un pellizco que cae sobre otro elemento no lo
+  selecciona: se pellizca el del primer dedo.
+- **e2e:** arrastrar el texto con un dedo y pellizcarlo después deja dos pasos
+  en el historial (el arrastre y el pellizco).
 - **e2e:** girar los dos dedos sobre el texto seleccionado lo gira.
 - **e2e:** pellizcar una imagen, un GIF y un sticker seleccionados (no solo un
   texto).

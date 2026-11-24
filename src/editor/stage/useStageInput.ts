@@ -59,9 +59,9 @@ interface StageInputOptions {
   onPinchStart?: () => void;
   /**
    * Pellizcar un elemento en lugar de hacer zoom (modo Texto). Se prueba con
-   * el elemento que estaba seleccionado ANTES de apoyar el primer dedo: un
-   * elemento sin seleccionar no se pellizca, el pellizco es zoom. Devuelve
-   * null si los dedos no están sobre él.
+   * el elemento seleccionado al apoyar el segundo dedo (el primero puede
+   * haberlo seleccionado al tocarlo). Devuelve null si los dedos no están
+   * sobre él: entonces el pellizco es zoom.
    */
   startElementPinch?: (
     elementId: string,
@@ -123,8 +123,6 @@ export function useStageInput({
     let isSpaceDown = false;
     let isPointerOver = false;
     let lastTwoFingerTap = 0;
-    /** Elemento seleccionado justo antes de apoyar el primer dedo. */
-    let selectionAtFirstTouch: string | null = null;
     let rect = container.getBoundingClientRect();
 
     const local = (event: { clientX: number; clientY: number }) =>
@@ -165,9 +163,10 @@ export function useStageInput({
 
     const startPinch = () => {
       const [[idA, a], [idB, b]] = [...touches];
+      const { selectedElementId } = editorStore.getState();
       const elementPinch =
-        selectionAtFirstTouch &&
-        startElementPinch?.(selectionAtFirstTouch, [
+        selectedElementId &&
+        startElementPinch?.(selectedElementId, [
           { id: idA, point: a },
           { id: idB, point: b },
         ]);
@@ -366,12 +365,6 @@ export function useStageInput({
       }
     };
 
-    // En la fase de captura, antes de que Konva seleccione lo que toca el dedo.
-    const rememberSelection = (event: PointerEvent) => {
-      if (event.pointerType !== "touch" || touches.size > 0) return;
-      selectionAtFirstTouch = editorStore.getState().selectedElementId;
-    };
-
     const onPointerUp = (event: PointerEvent) => release(event, true);
     // El sistema interrumpió el puntero (p. ej. una notificación): se descarta.
     const onPointerCancel = (event: PointerEvent) => release(event, false);
@@ -440,12 +433,6 @@ export function useStageInput({
       EventListener,
       AddEventListenerOptions?,
     ][] = [
-      [
-        container,
-        "pointerdown",
-        rememberSelection as EventListener,
-        { capture: true },
-      ],
       [container, "pointerdown", onPointerDown as EventListener],
       [container, "pointermove", onPointerMove as EventListener],
       [container, "pointerup", onPointerUp as EventListener],

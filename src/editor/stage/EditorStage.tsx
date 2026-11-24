@@ -303,8 +303,10 @@ const EditorStage = () => {
   });
 
   // Tocar el fondo (fuera de cualquier elemento) quita la selección.
+  // Solo el primer dedo: el segundo de un pellizco puede caer fuera del
+  // elemento que se está pellizcando.
   const onStagePointerDown = (event: KonvaEventObject<PointerEvent>) => {
-    if (event.target === event.target.getStage()) {
+    if (event.evt.isPrimary && event.target === event.target.getStage()) {
       editorStore.getState().selectElement(null);
     }
   };

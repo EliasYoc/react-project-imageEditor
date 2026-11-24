@@ -312,39 +312,86 @@ test.describe("Texto", () => {
   });
 });
 
+/** Ancho de lo oscuro (el texto) dentro del documento. */
+const textWidth = async (page: Page, doc: Rect) => {
+  const bounds = await darkBounds(page, doc);
+  return bounds.right - bounds.left;
+};
+
+/**
+ * No hubo zoom: el borde de arriba del documento sigue en su sitio (blanco
+ * justo debajo, el fondo de la app justo encima).
+ */
+const expectNoZoom = async (page: Page, doc: Rect) => {
+  const edgeX = doc.x + 10;
+  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y + 3 }))).toBe(
+    true
+  );
+  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y - 3 }))).toBe(
+    false
+  );
+};
+
 test.describe("Texto con dos dedos", () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!isMobile, "El pellizco con dos dedos es del móvil");
     await openBlankCanvas(page);
     await page.getByRole("radio", { name: "Texto" }).click();
   });
 
   test("pellizcar el texto seleccionado lo agranda, sin zoom ni abrir su editor", async ({
     page,
-    isMobile,
   }) => {
-    test.skip(!isMobile, "El pellizco con dos dedos es del móvil");
     const doc = await documentRect(page);
     const where = await addText(page, doc, true);
     const center = centerOf(where);
     await tapAt(page, center, true); // lo selecciona
-    const textWidth = async () => {
-      const bounds = await darkBounds(page, doc);
-      return bounds.right - bounds.left;
-    };
-    const before = await textWidth();
+    const before = await textWidth(page, doc);
 
     await pinch(page, center, 40, 120);
 
-    await expect.poll(textWidth).toBeGreaterThan(before * 2);
-    // No hubo zoom: el borde de arriba del documento sigue en su sitio
-    // (blanco justo debajo, el fondo de la app justo encima).
-    const edgeX = doc.x + 10;
-    expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y + 3 }))).toBe(
-      true
-    );
-    expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y - 3 }))).toBe(
-      false
-    );
+    await expect.poll(() => textWidth(page, doc)).toBeGreaterThan(before * 2);
+    await expectNoZoom(page, doc);
     await expect(page.getByRole("textbox", { name: "Texto" })).toBeHidden();
+  });
+
+  test("un dedo arrastra el texto sin seleccionar y un segundo dedo, fuera de él, lo agranda", async ({
+    page,
+  }) => {
+    const doc = await documentRect(page);
+    const where = await addText(page, doc, true);
+    const center = centerOf(where);
+    const before = await textWidth(page, doc);
+
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (
+      type: "touchStart" | "touchMove" | "touchEnd",
+      points: Point[]
+    ) =>
+      cdp.send("Input.dispatchTouchEvent", {
+        type,
+        touchPoints: points.map((point, id) => ({ ...point, id })),
+      });
+    // El primer dedo selecciona el texto y lo arrastra un poco, sin soltarlo.
+    let first = { x: center.x - 10, y: center.y };
+    await touch("touchStart", [first]);
+    for (let step = 1; step <= 5; step++) {
+      first = { x: center.x - 10 - step * 2, y: center.y };
+      await touch("touchMove", [first]);
+    }
+    // El segundo dedo cae fuera del texto y los dos se separan.
+    const second = { x: center.x + 80, y: center.y };
+    await touch("touchStart", [first, second]);
+    for (let step = 1; step <= 12; step++) {
+      await touch("touchMove", [
+        { x: first.x - step * 8, y: first.y },
+        { x: second.x + step * 8, y: second.y },
+      ]);
+    }
+    await touch("touchEnd", []);
+    await cdp.detach();
+
+    await expect.poll(() => textWidth(page, doc)).toBeGreaterThan(before * 2);
+    await expectNoZoom(page, doc);
   });
 });
