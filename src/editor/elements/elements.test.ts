@@ -48,7 +48,11 @@ describe("textNodeConfig", () => {
   });
 
   it("traduce el estilo a Konva: familia, peso, color y ancho automático", () => {
-    expect(textNodeConfig(text()).text).toMatchObject({
+    // Sin caja de fondo: el margen es el del texto suelto y el Tag no se pinta.
+    const noBox = {
+      background: { ...createDefaultTextStyle().background, isEnabled: false },
+    };
+    expect(textNodeConfig(text(noBox)).text).toMatchObject({
       text: "Hola",
       fontFamily: "Pacifico, cursive",
       fontSize: 100,
@@ -61,7 +65,7 @@ describe("textNodeConfig", () => {
       strokeEnabled: false,
       shadowEnabled: false,
     });
-    expect(textNodeConfig(text()).tag.fill).toBeUndefined();
+    expect(textNodeConfig(text(noBox)).tag.fill).toBeUndefined();
     expect(textNodeConfig(text({ width: 400 })).text.width).toBe(400);
   });
 

@@ -7,6 +7,7 @@ import { getLocalPoint, getPointerSamples } from "../engine/pointer";
 import { pinchView, type View } from "../engine/viewport";
 import type { Point } from "../model/types";
 import { editorStore } from "../store/editorStore";
+import type { ElementPinch, Touch } from "./elementPinch";
 import { createStrokeSession, type LiveBlur } from "./strokeSession";
 import { selectZoomLimits, viewStore } from "./viewStore";
 
@@ -33,7 +34,8 @@ type Gesture =
       start: { view: View; mid: Point; distance: number };
       startedAt: number;
       hasMoved: boolean;
-    };
+    }
+  | { kind: "pinchingElement"; ids: [number, number]; pinch: ElementPinch };
 
 interface StageInputOptions {
   containerRef: RefObject<HTMLDivElement | null>;
@@ -55,6 +57,16 @@ interface StageInputOptions {
    * estuviera arrastrando con el primer dedo.
    */
   onPinchStart?: () => void;
+  /**
+   * Pellizcar un elemento en lugar de hacer zoom (modo Texto). Se prueba con
+   * el elemento seleccionado al apoyar el segundo dedo (el primero puede
+   * haberlo seleccionado al tocarlo). Devuelve null si los dedos no están
+   * sobre él: entonces el pellizco es zoom.
+   */
+  startElementPinch?: (
+    elementId: string,
+    touches: [Touch, Touch]
+  ) => ElementPinch | null;
 }
 
 const midpoint = (a: Point, b: Point): Point => ({
@@ -70,6 +82,7 @@ const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
  * - dibujar: botón principal, un dedo o la punta del lápiz;
  * - desplazar: espacio + arrastrar, botón central o la rueda;
  * - zoom: Ctrl/⌘ + rueda, pellizco del trackpad o con dos dedos;
+ * - escalar y girar el elemento seleccionado: pellizcarlo con dos dedos;
  * - ajustar a pantalla: doble toque con dos dedos.
  *
  * Es una pequeña máquina de estados (`gesture`): así un gesto nunca deja un
@@ -88,6 +101,7 @@ export function useStageInput({
   requestDraw,
   liveBlur,
   onPinchStart,
+  startElementPinch,
 }: StageInputOptions) {
   useEffect(() => {
     const container = containerRef.current;
@@ -149,6 +163,21 @@ export function useStageInput({
 
     const startPinch = () => {
       const [[idA, a], [idB, b]] = [...touches];
+      const { selectedElementId } = editorStore.getState();
+      const elementPinch =
+        selectedElementId &&
+        startElementPinch?.(selectedElementId, [
+          { id: idA, point: a },
+          { id: idB, point: b },
+        ]);
+      if (elementPinch) {
+        gesture = {
+          kind: "pinchingElement",
+          ids: [idA, idB],
+          pinch: elementPinch,
+        };
+        return;
+      }
       gesture = {
         kind: "pinching",
         ids: [idA, idB],
@@ -292,6 +321,12 @@ export function useStageInput({
         case "pinching":
           updatePinch();
           return;
+        case "pinchingElement": {
+          const a = touches.get(gesture.ids[0]);
+          const b = touches.get(gesture.ids[1]);
+          if (a && b) gesture.pinch.update(a, b);
+          return;
+        }
         case "idle":
           // Ratón o lápiz en el aire: el círculo muestra el tamaño del pincel.
           if (isHoverDevice && !isSpaceDown) showBrushCursor(point);
@@ -320,6 +355,13 @@ export function useStageInput({
         // inicia un trazo.
         if (commit) endPinch();
         else gesture = { kind: "idle" };
+      } else if (
+        gesture.kind === "pinchingElement" &&
+        gesture.ids.includes(event.pointerId)
+      ) {
+        if (commit) gesture.pinch.finish();
+        else gesture.pinch.cancel();
+        gesture = { kind: "idle" };
       }
     };
 
@@ -424,5 +466,6 @@ export function useStageInput({
     requestDraw,
     liveBlur,
     onPinchStart,
+    startElementPinch,
   ]);
 }

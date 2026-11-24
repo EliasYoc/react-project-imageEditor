@@ -1,8 +1,5 @@
-import { relativeLuminance } from "../../../editor/model/color";
-import type { Rgba, Size, TextStyle } from "../../../editor/model/types";
+import type { Size, TextStyle } from "../../../editor/model/types";
 import {
-  DARK_BACKDROP,
-  LIGHT_BACKDROP,
   PREVIEW_FONT_SIZE,
   PREVIEW_MAX_LINES,
   PREVIEW_MAX_LINE_LENGTH,
@@ -26,56 +23,6 @@ export const previewText = (text: string): string => {
   const shown = lines.slice(0, PREVIEW_MAX_LINES).map(cutLine);
   if (lines.length > PREVIEW_MAX_LINES) shown[shown.length - 1] += ELLIPSIS;
   return shown.join("\n");
-};
-
-type PaintedStyle = Pick<
-  TextStyle,
-  "color" | "gradient" | "stroke" | "background"
->;
-
-const average = (values: number[]) =>
-  values.reduce((sum, value) => sum + value, 0) / values.length;
-
-/**
- * Luminosidad de los colores que se ven pintados junto al fondo: con caja,
- * solo la de la caja (las letras quedan dentro de ella); sin caja, el
- * relleno (la media de los colores de un degradado) y el contorno.
- */
-const paintedLuminances = ({
-  color,
-  gradient,
-  stroke,
-  background,
-}: PaintedStyle): number[] => {
-  if (background.isEnabled) return [relativeLuminance(background.color)];
-  const fill = gradient
-    ? average(gradient.stops.map((stop) => relativeLuminance(stop.color)))
-    : relativeLuminance(color);
-  return stroke.isEnabled ? [fill, relativeLuminance(stroke.color)] : [fill];
-};
-
-/** Contraste de WCAG entre dos luminosidades (de 1 a 21). */
-const contrast = (a: number, b: number) =>
-  (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-
-/**
- * Fondo de la vista previa: blanco, salvo que los colores del texto se vean
- * mejor sobre gris oscuro. Gana el fondo donde el color peor visto tiene más
- * contraste: un texto negro con contorno blanco (el de por defecto) se ve
- * sobre gris, donde ese contorno no desaparece. La sombra y la transparencia
- * no cuentan.
- */
-export const previewBackdrop = (style: PaintedStyle): Rgba => {
-  const luminances = paintedLuminances(style);
-  const worstContrast = (backdrop: Rgba) =>
-    Math.min(
-      ...luminances.map((luminance) =>
-        contrast(luminance, relativeLuminance(backdrop))
-      )
-    );
-  return worstContrast(LIGHT_BACKDROP) >= worstContrast(DARK_BACKDROP)
-    ? LIGHT_BACKDROP
-    : DARK_BACKDROP;
 };
 
 /**

@@ -5,7 +5,9 @@ import {
   drag,
   isColorful,
   isDark,
+  isWhite,
   openBlankCanvas,
+  pinch,
   pointIn,
   screenColor,
   screenPixels,
@@ -69,6 +71,26 @@ const addText = async (page: Page, doc: Rect, touch: boolean) => {
   await tapAt(page, pointIn(doc, 0.5, 0.9), touch);
   await expect(editor).toBeHidden();
   return where;
+};
+
+/** Ancho de las letras (lo oscuro) dentro de `area`. */
+const textWidth = async (page: Page, doc: Rect) => {
+  const bounds = await darkBounds(page, doc);
+  return bounds.right - bounds.left;
+};
+
+/**
+ * No hubo zoom: el borde de arriba del documento sigue en su sitio (blanco
+ * justo debajo, el fondo de la app justo encima).
+ */
+const expectNoZoom = async (page: Page, doc: Rect) => {
+  const edgeX = doc.x + 10;
+  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y + 3 }))).toBe(
+    true
+  );
+  expect(isWhite(await screenColor(page, { x: edgeX, y: doc.y - 3 }))).toBe(
+    false
+  );
 };
 
 test.describe("Texto", () => {
@@ -276,24 +298,70 @@ test.describe("Texto", () => {
       return screenColor(page, { x: x + 24, y: y + 10 });
     };
 
-    // Texto negro: se ve sobre blanco.
-    await expect
-      .poll(async () => countPixels(page, await previewRect(), isDark))
-      .toBeGreaterThan(50);
-    expect(isLight(await backdrop())).toBe(true);
-
-    // El contorno por defecto es blanco: el fondo pasa a gris oscuro y el
-    // contorno se ve. La vista previa sigue a la vista al bajar a «Contorno».
-    await panel.getByRole("checkbox", { name: "Contorno" }).check();
+    // Por defecto, texto negro en una caja blanca: la caja no se vería sobre
+    // blanco, así que la vista previa usa el fondo gris oscuro. La caja (blanca
+    // al 60 % sobre ese gris) queda en un gris medio.
+    const isBoxOnDark = ({ r, g, b }: Rgba) =>
+      Math.min(r, g, b) > 140 && Math.max(r, g, b) < 200;
     await expect.poll(async () => isDark(await backdrop())).toBe(true);
     await expect
-      .poll(async () => countPixels(page, await previewRect(), isLight))
+      .poll(async () => countPixels(page, await previewRect(), isBoxOnDark))
+      .toBeGreaterThan(50);
+
+    // Sin la caja, el texto negro se ve sobre blanco: el fondo se aclara.
+    await panel.getByRole("checkbox", { name: "Caja de fondo" }).uncheck();
+    await expect.poll(async () => isLight(await backdrop())).toBe(true);
+    await expect
+      .poll(async () => countPixels(page, await previewRect(), isDark))
       .toBeGreaterThan(50);
 
     await panel.getByRole("checkbox", { name: "Degradado" }).check();
     await expect
       .poll(async () => countPixels(page, await previewRect(), isColorful))
       .toBeGreaterThan(50);
+  });
+
+  test("un texto agrandado se edita al tamaño de uno nuevo y vuelve con su tamaño", async ({
+    page,
+    isMobile,
+  }) => {
+    // Lee muchos píxeles de pantalla: con toda la suite en paralelo, en
+    // escritorio no le bastan 30 s.
+    test.slow();
+    const doc = await documentRect(page);
+    const where = await addText(page, doc, isMobile);
+    const center = centerOf(where);
+    // Solo la franja del texto (crece hacia abajo y a la derecha): medir
+    // todo el documento es lento en escritorio.
+    const band = {
+      x: where.x,
+      width: doc.x + doc.width - where.x,
+      y: where.y,
+      height: Math.min(where.height * 3, doc.y + doc.height - where.y),
+    };
+    // El texto se pinta en el siguiente frame: sin él, el ancho sería NaN.
+    await expect.poll(() => textWidth(page, band)).toBeGreaterThan(0);
+    const original = await textWidth(page, band);
+    await tapAt(page, center, isMobile); // lo selecciona
+    const slider = page.getByRole("slider", { name: "Tamaño del texto" });
+    // Cada RePág sube un paso del slider (86 → 110 px con dos).
+    for (let press = 0; press < 4; press++) await slider.press("PageUp");
+    await expect
+      .poll(() => textWidth(page, band))
+      .toBeGreaterThan(original * 1.5);
+    const enlarged = await textWidth(page, band);
+
+    // Tocar el texto ya seleccionado abre su editor.
+    await tapAt(page, center, isMobile);
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toHaveValue("Hola");
+    const box = (await editor.boundingBox()) as Rect;
+    // Con un margen: el de la caja se redondea a píxeles enteros.
+    expect(Math.abs(box.height - where.height)).toBeLessThan(2);
+
+    await tapAt(page, pointIn(doc, 0.5, 0.97), isMobile);
+    await expect(editor).toBeHidden();
+    await expect.poll(() => textWidth(page, band)).toBeCloseTo(enlarged, 0);
   });
 
   test("mueve el texto arrastrándolo", async ({ page, isMobile }) => {
@@ -308,4 +376,101 @@ test.describe("Texto", () => {
       .toBeGreaterThan(50);
     expect(await countPixels(page, where, isDark)).toBe(0);
   });
+});
+
+test.describe("Texto con dos dedos", () => {
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!isMobile, "El pellizco con dos dedos es del móvil");
+    await openBlankCanvas(page);
+    await page.getByRole("radio", { name: "Texto" }).click();
+  });
+
+  test("pellizcar el texto seleccionado lo agranda, sin zoom ni abrir su editor", async ({
+    page,
+  }) => {
+    const doc = await documentRect(page);
+    const where = await addText(page, doc, true);
+    const center = centerOf(where);
+    await tapAt(page, center, true); // lo selecciona
+    const before = await textWidth(page, doc);
+
+    await pinch(page, center, 40, 120);
+
+    await expect.poll(() => textWidth(page, doc)).toBeGreaterThan(before * 2);
+    await expectNoZoom(page, doc);
+    await expect(page.getByRole("textbox", { name: "Texto" })).toBeHidden();
+  });
+
+  test("un dedo arrastra el texto sin seleccionar y un segundo dedo, fuera de él, lo agranda", async ({
+    page,
+  }) => {
+    const doc = await documentRect(page);
+    const where = await addText(page, doc, true);
+    const center = centerOf(where);
+    const before = await textWidth(page, doc);
+
+    const cdp = await page.context().newCDPSession(page);
+    const touch = (
+      type: "touchStart" | "touchMove" | "touchEnd",
+      points: Point[]
+    ) =>
+      cdp.send("Input.dispatchTouchEvent", {
+        type,
+        touchPoints: points.map((point, id) => ({ ...point, id })),
+      });
+    // El primer dedo selecciona el texto y lo arrastra un poco, sin soltarlo.
+    let first = { x: center.x - 10, y: center.y };
+    await touch("touchStart", [first]);
+    for (let step = 1; step <= 5; step++) {
+      first = { x: center.x - 10 - step * 2, y: center.y };
+      await touch("touchMove", [first]);
+    }
+    // El segundo dedo cae fuera del texto y los dos se separan.
+    const second = { x: center.x + 80, y: center.y };
+    await touch("touchStart", [first, second]);
+    for (let step = 1; step <= 12; step++) {
+      await touch("touchMove", [
+        { x: first.x - step * 8, y: first.y },
+        { x: second.x + step * 8, y: second.y },
+      ]);
+    }
+    await touch("touchEnd", []);
+    await cdp.detach();
+
+    await expect.poll(() => textWidth(page, doc)).toBeGreaterThan(before * 2);
+    await expectNoZoom(page, doc);
+  });
+});
+
+/** Cuánto se diferencian dos colores (el canal que más cambia). */
+const colorChange = (a: Rgba, b: Rgba) =>
+  Math.max(Math.abs(a.r - b.r), Math.abs(a.g - b.g), Math.abs(a.b - b.b));
+
+test("mientras se escribe, una capa tapa el lienzo, y al terminar se quita", async ({
+  page,
+  isMobile,
+}) => {
+  // Con la caja de fondo por defecto, la capa es oscura: el lienzo en blanco
+  // se oscurece.
+  await openBlankCanvas(page);
+  await page.getByRole("radio", { name: "Texto" }).click();
+  const doc = await documentRect(page);
+  // Por debajo del editor y por encima de la barra de abajo.
+  const probe = pointIn(doc, 0.3, 0.7);
+  const before = await screenColor(page, probe);
+
+  await page.getByRole("button", { name: "Agregar texto" }).click();
+  const editor = page.getByRole("textbox", { name: "Texto" });
+  await expect(editor).toBeFocused();
+  await expect
+    .poll(async () => colorChange(await screenColor(page, probe), before))
+    .toBeGreaterThan(30);
+
+  await page.keyboard.type("Hola");
+  // Tocar la capa confirma el texto.
+  await tapAt(page, probe, isMobile);
+  await expect(editor).toBeHidden();
+  await expect
+    .poll(async () => colorChange(await screenColor(page, probe), before))
+    .toBeLessThan(5);
 });

@@ -3,6 +3,50 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
+## Un texto nuevo es negro con caja de fondo blanca
+
+- **e2e:** un texto nuevo sobre una foto se ve: letras negras dentro de la
+  caja blanca, también exportado.
+- **e2e:** al quitar la caja a un texto negro mientras se escribe, la capa
+  pasa de oscura a clara.
+
+## Una capa tapa el lienzo mientras se escribe
+
+- **e2e:** con un texto claro la capa es oscura, y con uno oscuro, clara; si
+  se cambia el color mientras se escribe, la capa cambia con él.
+- **e2e (escritorio):** doble clic sobre un texto ya seleccionado abre el
+  editor y no lo cierra el segundo clic.
+- **e2e:** tocar la capa confirma el texto y quita la selección; la cabecera
+  y las barras siguen funcionando con la capa puesta.
+
+## El texto se edita al tamaño de uno nuevo
+
+- **e2e:** un texto encogido con el slider se edita al tamaño de uno nuevo.
+- **e2e:** un texto agrandado con las asas o con el pellizco (escala, no
+  tamaño de letra) se edita al tamaño de uno nuevo.
+- **e2e:** un texto con ancho fijo (asas laterales) corta las líneas en el
+  editor igual que en el lienzo.
+- **e2e:** cambiar el tamaño con el slider mientras se escribe no cambia el
+  editor, y al terminar el texto tiene el tamaño nuevo.
+
+## Pellizcar un elemento lo agranda y lo gira
+
+- **e2e:** un pellizco que empieza con los dos dedos en una zona vacía hace
+  zoom del lienzo (y no cambia el elemento seleccionado).
+- **e2e:** el segundo dedo de un pellizco que cae sobre otro elemento no lo
+  selecciona: se pellizca el del primer dedo.
+- **e2e:** arrastrar el texto con un dedo y pellizcarlo después deja dos pasos
+  en el historial (el arrastre y el pellizco).
+- **e2e:** girar los dos dedos sobre el texto seleccionado lo gira.
+- **e2e:** pellizcar una imagen, un GIF y un sticker seleccionados (no solo un
+  texto).
+- **e2e:** un pellizco del elemento se deshace con un solo "Deshacer", y un
+  toque con dos dedos sin moverlos no deja ningún paso en el historial.
+- **e2e:** al soltar los dedos después del pellizco no se abre el editor del
+  texto, y el texto se puede seguir arrastrando con un dedo.
+- **e2e:** el pellizco empieza con los dedos fuera del elemento pero cerca
+  (margen de 16 px) o con su punto medio encima.
+
 ## El selector de color del pincel ya no entra en bucle
 
 - **e2e:** arrastrar rápido por el selector de color del pincel con la página

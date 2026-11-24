@@ -1,6 +1,7 @@
 import { Layer } from "konva/lib/Layer";
 import { Stage } from "konva/lib/Stage";
 import { useCallback, useLayoutEffect, useRef } from "react";
+import { readableBackdrop } from "../../../../editor/elements/readableBackdrop";
 import { createTextLabel } from "../../../../editor/elements/textShape";
 import { maxTextWidth } from "../../../../editor/elements/textWidth";
 import { rgbaToCss } from "../../../../editor/model/color";
@@ -8,12 +9,7 @@ import type { TextElement } from "../../../../editor/model/types";
 import { useFontReady } from "../../../../editor/stage/elementHooks";
 import { useEditorStore } from "../../../../editor/store/editorStore";
 import { PREVIEW_HEIGHT, PREVIEW_PADDING } from "../../constants/textPreview";
-import {
-  previewBackdrop,
-  previewLayout,
-  previewText,
-  textBleed,
-} from "../../utils/textPreview";
+import { previewLayout, previewText, textBleed } from "../../utils/textPreview";
 import styles from "./TextPreview.module.css";
 
 /**
@@ -109,7 +105,7 @@ const TextPreview = ({ text }: { text: TextElement }) => {
         className={styles.preview}
         role="img"
         aria-label="Vista previa del texto"
-        style={{ backgroundColor: rgbaToCss(previewBackdrop(text)) }}
+        style={{ backgroundColor: rgbaToCss(readableBackdrop(text)) }}
       >
         {/* Con su alto desde el principio: el panel no salta al crearse Konva. */}
         <div
