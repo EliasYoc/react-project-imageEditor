@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import {
   countPixels,
   documentRect,
@@ -19,6 +19,15 @@ import {
 } from "./helpers";
 
 const isLight = ({ r, g, b }: Rgba) => r > 200 && g > 200 && b > 200;
+
+/**
+ * Espera a que el editor llegue a su sitio: al volver a editar un texto, sale
+ * de donde está el texto en el lienzo con una transición.
+ */
+const waitForEditorAtRest = (editor: Locator) =>
+  expect
+    .poll(() => editor.evaluate((element) => element.getAnimations().length))
+    .toBe(0);
 
 const centerOf = ({ x, y, width, height }: Rect): Point => ({
   x: x + width / 2,
@@ -238,6 +247,7 @@ test.describe("Texto", () => {
     }
     const editor = page.getByRole("textbox", { name: "Texto" });
     await expect(editor).toBeFocused();
+    await waitForEditorAtRest(editor);
 
     // Sale centrado en horizontal y por encima de donde estaba el texto.
     const stage = await stageRect(page);
@@ -355,6 +365,7 @@ test.describe("Texto", () => {
     await tapAt(page, center, isMobile);
     const editor = page.getByRole("textbox", { name: "Texto" });
     await expect(editor).toHaveValue("Hola");
+    await waitForEditorAtRest(editor);
     const box = (await editor.boundingBox()) as Rect;
     // Con un margen: el de la caja se redondea a píxeles enteros.
     expect(Math.abs(box.height - where.height)).toBeLessThan(2);
@@ -473,4 +484,153 @@ test("mientras se escribe, una capa tapa el lienzo, y al terminar se quita", asy
   await expect
     .poll(async () => colorChange(await screenColor(page, probe), before))
     .toBeLessThan(5);
+});
+
+test.describe("Texto con el teclado del móvil", () => {
+  /** Alto del teclado falso, en píxeles (como el de un móvil, con sugerencias). */
+  const KEYBOARD_HEIGHT = 340;
+
+  test.beforeEach(async ({ page, isMobile }) => {
+    test.skip(!isMobile, "El teclado virtual es del móvil");
+    // Playwright no abre teclado: un visualViewport falso que se encoge al
+    // "abrirlo" y avisa con resize, como el del navegador.
+    await page.addInitScript(() => {
+      const viewport = new EventTarget();
+      let keyboardHeight = 0;
+      Object.defineProperties(viewport, {
+        offsetTop: { get: () => 0 },
+        offsetLeft: { get: () => 0 },
+        width: { get: () => window.innerWidth },
+        height: { get: () => window.innerHeight - keyboardHeight },
+        scale: { get: () => 1 },
+      });
+      Object.defineProperty(window, "visualViewport", { value: viewport });
+      Object.defineProperty(window, "openFakeKeyboard", {
+        value: (height: number) => {
+          keyboardHeight = height;
+          viewport.dispatchEvent(new Event("resize"));
+        },
+      });
+    });
+    await openBlankCanvas(page);
+    await page.getByRole("radio", { name: "Texto" }).click();
+  });
+
+  test("un texto largo no queda debajo del teclado: el editor sube y, si no cabe, se desplaza por dentro", async ({
+    page,
+  }) => {
+    await page.getByRole("button", { name: "Agregar texto" }).click();
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    await expect(editor).toBeFocused();
+    await page.evaluate((height) => {
+      (
+        window as unknown as { openFakeKeyboard: (height: number) => void }
+      ).openFakeKeyboard(height);
+    }, KEYBOARD_HEIGHT);
+    const keyboardTop =
+      (await page.evaluate(() => window.innerHeight)) - KEYBOARD_HEIGHT;
+    const editorBox = async () => (await editor.boundingBox()) as Rect;
+
+    // Unas líneas: el editor sube para que la última se vea.
+    await page.keyboard.insertText("Una línea\n".repeat(6));
+    let box = await editorBox();
+    expect(box.y + box.height).toBeLessThanOrEqual(keyboardTop);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+
+    // Muchas más: no cabe ni subiendo; se desplaza dentro y se ve el final.
+    await page.keyboard.insertText("Otra línea\n".repeat(20));
+    box = await editorBox();
+    expect(box.y + box.height).toBeLessThanOrEqual(keyboardTop);
+    expect(box.y).toBeGreaterThanOrEqual(0);
+    const scroll = await editor.evaluate((textarea: HTMLTextAreaElement) => ({
+      top: textarea.scrollTop,
+      hidden: textarea.scrollHeight - textarea.clientHeight,
+    }));
+    expect(scroll.hidden).toBeGreaterThan(0);
+    // Al final: lo que queda oculto es lo de arriba.
+    expect(scroll.top).toBeGreaterThanOrEqual(scroll.hidden - 1);
+  });
+});
+
+test.describe("Transición del editor de texto", () => {
+  test.beforeEach(async ({ page }) => {
+    await openBlankCanvas(page);
+    await page.getByRole("radio", { name: "Texto" }).click();
+  });
+
+  test("un texto nuevo se abre sin transición; al volver a editarlo, el editor sale del texto y, al terminar, vuelve a él", async ({
+    page,
+    isMobile,
+  }) => {
+    const editor = page.getByRole("textbox", { name: "Texto" });
+    const animations = () =>
+      editor.evaluate((element) => element.getAnimations().length);
+    const editorCenterX = async () => {
+      const box = (await editor.boundingBox()) as Rect;
+      return box.x + box.width / 2;
+    };
+
+    // Antes de abrir el editor: su capa oscurece el documento.
+    const doc = await documentRect(page);
+
+    // Un texto nuevo aparece directamente en el editor.
+    await page.getByRole("button", { name: "Agregar texto" }).click();
+    await expect(editor).toBeFocused();
+    expect(await animations()).toBe(0);
+    await page.keyboard.type("Hola");
+    const where = (await editor.boundingBox()) as Rect;
+    await tapAt(page, pointIn(doc, 0.5, 0.9), isMobile);
+    await expect(editor).toBeHidden();
+
+    // Se lleva lejos del sitio del editor, para ver de dónde sale.
+    const start = centerOf(where);
+    const far = pointIn(doc, 0.75, 0.8);
+    await drag(page, [start, far], isMobile);
+    const moved = shifted(where, start, far);
+    await expect
+      .poll(() => countPixels(page, moved, isDark))
+      .toBeGreaterThan(50);
+
+    // A cámara lenta (× 0,05, veinte veces más lenta): se puede mirar a mitad
+    // de camino, por lento que vaya el equipo.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send("Animation.enable");
+    const setSpeed = (playbackRate: number) =>
+      cdp.send("Animation.setPlaybackRate", { playbackRate });
+    await setSpeed(0.05);
+
+    // Tras arrastrarlo ya está seleccionado: un toque (o doble clic) lo edita.
+    if (isMobile) await tapAt(page, far, true);
+    else await page.mouse.dblclick(far.x, far.y);
+    await expect(editor).toBeFocused();
+    // En el móvil dura el doble: allí la misma transición se ve muy rápida.
+    expect(
+      await editor.evaluate(
+        (element) => element.getAnimations()[0].effect?.getTiming().duration
+      )
+    ).toBe(isMobile ? 440 : 220);
+    const stage = await stageRect(page);
+    const restX = stage.x + stage.width / 2;
+    // Empieza cerca del texto, no en su sitio (centrado).
+    const enteringX = await editorCenterX();
+    expect(Math.abs(enteringX - far.x)).toBeLessThan(
+      Math.abs(enteringX - restX)
+    );
+    await setSpeed(1);
+    await waitForEditorAtRest(editor);
+    expect(Math.abs((await editorCenterX()) - restX)).toBeLessThan(3);
+
+    // Al terminar, vuelve al texto: el editor sigue en pantalla, moviéndose.
+    await setSpeed(0.05);
+    await tapAt(page, pointIn(doc, 0.15, 0.15), isMobile);
+    expect(await animations()).toBeGreaterThan(0);
+    await expect(editor).toBeVisible();
+    await setSpeed(1);
+    // Al llegar, se va y el texto del lienzo vuelve a verse en su sitio.
+    await expect(editor).toBeHidden();
+    await expect
+      .poll(() => countPixels(page, moved, isDark))
+      .toBeGreaterThan(50);
+    await cdp.detach();
+  });
 });

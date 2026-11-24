@@ -181,21 +181,24 @@ describe("snapToDocument", () => {
 
 describe("textEditingBox", () => {
   const area = { x: 0, y: 100, width: 400, height: 600 };
+  /** Un texto de ese ancho y de una línea baja (cabe a lo alto). */
+  const wide = (width: number) => ({ width, height: 10 });
 
   it("coloca el editor horizontal, centrado y un poco por encima del centro de la zona libre", () => {
-    const { scale, ...position } = textEditingBox(100, 0.5, area);
+    const { scale, ...position } = textEditingBox(wide(100), 0.5, area);
     expect(scale).toBe(0.5);
     expect(position).toEqual({
       left: 200,
       // A un 40 % del alto libre (600), contando desde donde empieza (100).
       top: 340,
+      maxHeight: undefined,
       transform: "translateX(-50%) scale(0.5)",
       transformOrigin: "50% 0",
     });
   });
 
   it("centra en la parte libre cuando algo tapa los lados", () => {
-    const { left } = textEditingBox(100, 1, {
+    const { left } = textEditingBox(wide(100), 1, {
       x: 50,
       y: 0,
       width: 300,
@@ -206,18 +209,79 @@ describe("textEditingBox", () => {
 
   it("se encoge si es más ancho que la zona libre (con su margen)", () => {
     // 400 de ancho menos 16 de margen por lado = 368 para un texto de 1000.
-    const { scale } = textEditingBox(1000, 1, area);
+    const { scale } = textEditingBox(wide(1000), 1, area);
     expect(scale).toBeCloseTo(0.368);
     expect(1000 * scale).toBeLessThanOrEqual(400 - 2 * 16);
   });
 
   it("no lo agranda: un texto que cabe se ve con su tamaño", () => {
-    expect(textEditingBox(100, 0.3, area).scale).toBe(0.3);
+    expect(textEditingBox(wide(100), 0.3, area).scale).toBe(0.3);
   });
 
   it("sin zona medida (ancho 0) o sin ancho de texto, no lo encoge", () => {
-    expect(textEditingBox(1000, 0.4, { ...area, width: 0 }).scale).toBe(0.4);
-    expect(textEditingBox(0, 0.4, area).scale).toBe(0.4);
+    expect(textEditingBox(wide(1000), 0.4, { ...area, width: 0 }).scale).toBe(
+      0.4
+    );
+    expect(textEditingBox(wide(0), 0.4, area).scale).toBe(0.4);
+  });
+
+  describe("con el teclado abierto (se ve hasta y = 500)", () => {
+    const keyboard = { top: -Infinity, bottom: 500 };
+
+    it("un texto que cabe encima del teclado no se mueve", () => {
+      // De 340 a 440: por encima de 500 - 8 de margen.
+      const box = textEditingBox(
+        { width: 100, height: 100 },
+        1,
+        area,
+        keyboard
+      );
+      expect(box.top).toBe(340);
+      expect(box.maxHeight).toBeUndefined();
+    });
+
+    it("un texto que llegaría debajo del teclado sube lo justo", () => {
+      // 200 × 1 de alto: termina a 8 del teclado, en 492.
+      const box = textEditingBox(
+        { width: 100, height: 200 },
+        1,
+        area,
+        keyboard
+      );
+      expect(box.top).toBe(292);
+      expect(box.maxHeight).toBeUndefined();
+    });
+
+    it("un texto más alto que todo lo que se ve empieza arriba y se desplaza por dentro", () => {
+      // Se ve de 100 (bajo la cabecera) a 492: 392 de sitio en pantalla, que
+      // con la escala 0,5 son 784 píxeles del editor.
+      const box = textEditingBox(
+        { width: 100, height: 2000 },
+        0.5,
+        area,
+        keyboard
+      );
+      expect(box.top).toBe(100);
+      expect(box.maxHeight).toBe(784);
+    });
+
+    it("si el navegador desplazó la vista, no sube por encima de lo que se ve", () => {
+      const scrolled = { top: 150, bottom: 500 };
+      const box = textEditingBox(
+        { width: 100, height: 2000 },
+        1,
+        area,
+        scrolled
+      );
+      expect(box.top).toBe(150);
+      expect(box.maxHeight).toBe(342);
+    });
+  });
+
+  it("sin teclado, un texto que se saldría por abajo también sube", () => {
+    // La zona libre acaba en 700: termina en 692.
+    const box = textEditingBox({ width: 100, height: 500 }, 1, area);
+    expect(box.top).toBe(192);
   });
 });
 

@@ -39,12 +39,16 @@
 // - 120 / 146 / Video 119 / Stickers 59: la vista previa del texto en «Fuente
 //   y estilo» (el editor mide 144,4). Su lienzo de Konva, la elección del
 //   fondo y la colocación suman 1,6 kB.
+// - 120 / 147 / Video 119 / Stickers 59: el editor de texto no queda debajo
+//   del teclado del móvil y hay transición entre el texto y su editor (el
+//   editor mide 146,8). Saber qué se ve con el teclado (visualViewport) y
+//   colocar el editor suman 0,4 kB; la transición, 0,6 kB.
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const BUILD_DIR = "build";
-const BUDGETS_KB = { Inicio: 120, Editor: 146, Video: 119, Stickers: 59 };
+const BUDGETS_KB = { Inicio: 120, Editor: 147, Video: 119, Stickers: 59 };
 /** Los trozos que solo se descargan para exportar un video. */
 const VIDEO_CHUNK = /^assets\/(encodeVideo|VideoExportDialog)-/;
 /** Los trozos que solo se descargan con el primer sticker. */

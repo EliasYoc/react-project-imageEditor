@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { NO_INSETS } from "../engine/viewport";
-import type { TextElement } from "../model/types";
-import { createInitialState, editorStore } from "../store/editorStore";
-import { selectElements } from "../store/selectors";
+import { NO_INSETS } from "../../engine/viewport";
+import type { TextElement } from "../../model/types";
+import { createInitialState, editorStore } from "../../store/editorStore";
+import { selectElements } from "../../store/selectors";
 import TextEditorOverlay from "./TextEditorOverlay";
-import { viewStore } from "./viewStore";
+import { viewStore } from "../viewStore";
 
 const element = (id: string) =>
   selectElements(editorStore.getState()).find(
