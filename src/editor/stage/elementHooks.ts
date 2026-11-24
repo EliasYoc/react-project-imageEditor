@@ -7,7 +7,6 @@ import {
   loadImageAnimation,
 } from "../elements/imageAnimations";
 import { getLoadedImage, loadImage } from "../elements/imageCache";
-import { stickerResolution } from "../elements/stickerResolution";
 import { maxTextWidth } from "../elements/textWidth";
 import type { ImageElement } from "../model/types";
 import { useEditorStore } from "../store/editorStore";
@@ -85,8 +84,9 @@ const useOpenedAnimation = ({ src, animation }: ImageElement) => {
  * (en el inicio) o mientras se exporta un video, se para: no gasta lo que
  * necesita la exportación.
  *
- * `screenPixels` es el lado mayor con el que se ve: un sticker se pinta a esa
- * resolución (por escalones, para no repintarlo en cada paso del zoom).
+ * `resolution` es el lado mayor con el que se pinta un sticker
+ * (`stickerResolution`, por escalones para no repintarlo en cada paso del
+ * zoom).
  *
  * Devuelve el canvas con el fotograma actual, o null mientras se abre (o si
  * no se pudo): entonces un GIF se muestra quieto y un sticker no se ve.
@@ -94,14 +94,13 @@ const useOpenedAnimation = ({ src, animation }: ImageElement) => {
 export const useImageAnimation = (
   element: ImageElement,
   nodeRef: RefObject<KonvaImageNode | null>,
-  screenPixels: number
+  resolution: number
 ) => {
   const animation = useOpenedAnimation(element);
   const video = useEditorStore(selectVideo);
   const isPlaying = useEditorStore(
     (state) => state.mode !== "home" && state.status !== "exportingVideo"
   );
-  const resolution = stickerResolution(screenPixels);
 
   useEffect(() => {
     if (!animation) return;

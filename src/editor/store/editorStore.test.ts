@@ -509,6 +509,17 @@ describe("selectores", () => {
     expect(selectStrokes(state())).toBe(strokes);
   });
 
+  it("selectElements devuelve el mismo array si solo cambian los trazos", () => {
+    const id = addText();
+    const elements = selectElements(state());
+    state().addStroke(stroke());
+    expect(selectElements(state())).toBe(elements);
+    state().undo();
+    expect(selectElements(state())).toBe(elements);
+    state().editElement(id, { text: "Hola" });
+    expect(selectElements(state())).not.toBe(elements);
+  });
+
   it("selectStrokeLayers separa el resaltador de la pintura y se memoriza", () => {
     const highlighter = {
       ...createStroke({

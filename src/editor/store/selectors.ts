@@ -13,23 +13,39 @@ import type { EditorStore } from "./editorStore";
  * Selector que deriva algo del log y se memoriza por su referencia.
  *
  * Un selector que devuelve un array nuevo en cada llamada haría que el
- * componente se volviera a renderizar sin parar.
+ * componente se volviera a renderizar sin parar. Con `isEqual`, si el log
+ * cambió pero lo derivado es igual, se devuelve lo de antes.
  */
-const memoizeByLog = <T>(compute: (log: LogEntry[]) => T) => {
+const memoizeByLog = <T>(
+  compute: (log: LogEntry[]) => T,
+  isEqual?: (previous: T, next: T) => boolean
+) => {
   let cachedLog: LogEntry[] | null = null;
   let cached: T | undefined;
   return (state: EditorStore): T => {
     if (state.log !== cachedLog) {
+      const next = compute(state.log);
+      const isUnchanged = cachedLog !== null && isEqual?.(cached as T, next);
       cachedLog = state.log;
-      cached = compute(state.log);
+      if (!isUnchanged) cached = next;
     }
     return cached as T;
   };
 };
 
-/** Elementos (texto e imágenes) del documento. */
-export const selectElements = memoizeByLog<EditorElement[]>((log) =>
-  log.filter(isEditorElement)
+/** Los dos arrays tienen los mismos objetos y en el mismo orden. */
+const hasSameItems = <T>(previous: readonly T[], next: readonly T[]) =>
+  previous.length === next.length &&
+  previous.every((item, index) => item === next[index]);
+
+/**
+ * Elementos (texto e imágenes) del documento. Dibujar o deshacer un trazo
+ * cambia el log pero no los elementos: entonces devuelve el mismo array, y
+ * los textos e imágenes del lienzo no se vuelven a renderizar.
+ */
+export const selectElements = memoizeByLog<EditorElement[]>(
+  (log) => log.filter(isEditorElement),
+  hasSameItems
 );
 
 /** Trazos del documento, en el orden en que se pintan. */
