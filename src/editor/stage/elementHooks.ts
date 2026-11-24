@@ -8,10 +8,18 @@ import {
 } from "../elements/imageAnimations";
 import { getLoadedImage, loadImage } from "../elements/imageCache";
 import { stickerResolution } from "../elements/stickerResolution";
+import { maxTextWidth } from "../elements/textWidth";
 import type { ImageElement } from "../model/types";
 import { useEditorStore } from "../store/editorStore";
 import { selectVideo } from "../store/selectors";
 import { onAnimationTick } from "./animationClock";
+
+/**
+ * Ancho máximo de un texto en el documento abierto (`maxTextWidth`). Solo
+ * vuelve a renderizar si cambia el ancho del lienzo.
+ */
+export const useMaxTextWidth = () =>
+  useEditorStore((state) => maxTextWidth(state.canvasSize));
 
 /** Fuerza un render cuando termina algo asíncrono (carga de fuente o imagen). */
 const useForceRender = () => useReducer((count: number) => count + 1, 0)[1];

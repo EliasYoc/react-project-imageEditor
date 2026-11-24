@@ -29,7 +29,7 @@ import {
 import { imageNodeConfig, textNodeConfig } from "../elements/nodeConfig";
 import { snapToDocument } from "../elements/snapping";
 import { applyTextFill } from "../elements/textGradient";
-import { applyTextMaxWidth, maxTextWidth } from "../elements/textWidth";
+import { applyTextMaxWidth } from "../elements/textWidth";
 import type { View } from "../engine/viewport";
 import type { EditorElement, ImageElement, TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
@@ -38,6 +38,7 @@ import {
   useFontReady,
   useImageAnimation,
   useLoadedImage,
+  useMaxTextWidth,
 } from "./elementHooks";
 
 /** Un arrastre empieza tras moverse unos píxeles: un toque sigue siendo un toque. */
@@ -75,7 +76,7 @@ const TextNode = ({
   const fontReady = useFontReady(element.fontId, element.fontWeight);
   const config = textNodeConfig(element);
   const textRef = useRef<KonvaText>(null);
-  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
+  const maxWidth = useMaxTextWidth();
 
   // El tope de ancho y el degradado dependen del tamaño que Konva acaba de
   // medir: se aplican después de cada render, en este orden (barato: unos

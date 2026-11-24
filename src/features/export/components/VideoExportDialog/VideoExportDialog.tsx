@@ -9,6 +9,7 @@ import {
 } from "../../../../components/ui/Dialog";
 import { toast } from "../../../../components/ui/Toast";
 import { useEditorStore } from "../../../../editor/store/editorStore";
+import { selectHasPhoto } from "../../../../editor/store/selectors";
 import { getDownloadFileName } from "../../../../lib/helper";
 import { saveImage, sharesFile } from "../../../../lib/saveImage";
 import {
@@ -85,7 +86,7 @@ const DocumentVideoExportBody = (props: ExportBodyProps) => {
  * que lo carga bajo demanda desde este archivo).
  */
 export const AnimationExportBody = (props: ExportBodyProps) => {
-  const hasPhoto = useEditorStore((state) => state.photo.source !== null);
+  const hasPhoto = useEditorStore(selectHasPhoto);
   const fileName = useEditorStore((state) => state.photo.fileName);
   return (
     <VideoExportBody

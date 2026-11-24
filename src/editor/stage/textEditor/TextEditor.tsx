@@ -10,10 +10,10 @@ import { textPadding } from "../../elements/nodeConfig";
 import { newTextPosition, type EditingBox } from "../../elements/textEditorBox";
 import { elementPose } from "../../elements/textEditorMotion";
 import { textEditorPaint } from "../../elements/textGradient";
-import { maxTextWidth } from "../../elements/textWidth";
 import type { TextElement } from "../../model/types";
-import { editorStore, useEditorStore } from "../../store/editorStore";
+import { editorStore } from "../../store/editorStore";
 import { selectEditingText } from "../../store/selectors";
+import { useMaxTextWidth } from "../elementHooks";
 import { useViewStore } from "../viewStore";
 import { editingBackdropColor } from "./editingBackdrop";
 import styles from "./TextEditor.module.css";
@@ -41,7 +41,7 @@ import { useFitTextarea } from "./useFitTextarea";
  */
 const TextEditor = ({ element }: { element: TextElement }) => {
   const view = useViewStore((state) => state.view);
-  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
+  const maxWidth = useMaxTextWidth();
   // Un texto nuevo se crea vacío: ese es el único momento en que lo está
   // (al guardarlo, mientras el editor vuelve al lienzo, ya no lo está).
   const [isNewText] = useState(element.text === "");

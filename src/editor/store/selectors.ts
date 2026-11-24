@@ -92,9 +92,17 @@ export const selectHasAnimatedElements = (state: EditorStore) =>
     (element) => element.whatTask === "image" && element.animation !== "none"
   );
 
+/** El documento tiene de fondo una foto. */
+export const selectHasPhoto = (state: EditorStore) =>
+  state.photo.source !== null;
+
+/** El documento tiene de fondo un video. */
+export const selectHasVideo = (state: EditorStore) =>
+  state.photo.video !== null;
+
 /** El documento tiene de fondo una foto o un video (no es un lienzo en blanco). */
 export const selectHasBackground = (state: EditorStore) =>
-  state.photo.source !== null || state.photo.video !== null;
+  selectHasPhoto(state) || selectHasVideo(state);
 
 /**
  * Lo que el lienzo pinta de fondo: el `<video>` (su fotograma actual) o la

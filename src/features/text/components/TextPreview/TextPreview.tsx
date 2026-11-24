@@ -3,11 +3,12 @@ import { Stage } from "konva/lib/Stage";
 import { useCallback, useLayoutEffect, useRef } from "react";
 import { readableBackdrop } from "../../../../editor/elements/readableBackdrop";
 import { createTextLabel } from "../../../../editor/elements/textShape";
-import { maxTextWidth } from "../../../../editor/elements/textWidth";
 import { rgbaToCss } from "../../../../editor/model/color";
 import type { TextElement } from "../../../../editor/model/types";
-import { useFontReady } from "../../../../editor/stage/elementHooks";
-import { useEditorStore } from "../../../../editor/store/editorStore";
+import {
+  useFontReady,
+  useMaxTextWidth,
+} from "../../../../editor/stage/elementHooks";
 import { useResizeObserver } from "../../../../hooks/useResizeObserver";
 import { PREVIEW_HEIGHT, PREVIEW_PADDING } from "../../constants/textPreview";
 import { previewLayout, previewText, textBleed } from "../../utils/textPreview";
@@ -26,7 +27,7 @@ const TextPreview = ({ text }: { text: TextElement }) => {
   const sceneRef = useRef<{ stage: Stage; layer: Layer } | null>(null);
   const isFontReady = useFontReady(text.fontId, text.fontWeight);
   // El mismo tope de ancho que en el lienzo: se reparte en las mismas líneas.
-  const maxWidth = maxTextWidth(useEditorStore((state) => state.canvasSize));
+  const maxWidth = useMaxTextWidth();
 
   useLayoutEffect(function createScene() {
     const host = hostRef.current;
