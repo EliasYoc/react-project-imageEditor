@@ -38,7 +38,7 @@ import styles from "./EditorStage.module.css";
 import { startElementPinch, type Touch } from "./elementPinch";
 import ElementsLayer from "./ElementsLayer";
 import type { LiveBlur } from "./strokeSession";
-import TextEditorOverlay from "./TextEditorOverlay";
+import TextEditorOverlay from "./textEditor/TextEditorOverlay";
 import { useStageInput } from "./useStageInput";
 import { onVideoFrame } from "./videoFrames";
 import { useViewStore, viewStore } from "./viewStore";
