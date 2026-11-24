@@ -20,6 +20,7 @@ import { useUiStore } from "../../../app/uiStore";
 import type { IconComponent } from "../../../components/ui/Button";
 import { Dialog } from "../../../components/ui/Dialog";
 import { Kbd } from "../../../components/ui/Kbd";
+import { Section } from "../../../components/ui/Section";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { MOD_KEY, SHORTCUT_LABELS as KEYS } from "../constants/shortcutLabels";
 import styles from "./ShortcutsDialog.module.css";
@@ -94,8 +95,7 @@ const ShortcutsDialog = () => {
     >
       <div className={styles.groups}>
         {groups.map(({ title, items }) => (
-          <section key={title} aria-label={title}>
-            <h3 className={styles.groupTitle}>{title}</h3>
+          <Section key={title} title={title} className={styles.group}>
             <dl className={styles.list}>
               {items.map(([action, keys, Icon]) => (
                 <div key={action} className={styles.row}>
@@ -109,7 +109,7 @@ const ShortcutsDialog = () => {
                 </div>
               ))}
             </dl>
-          </section>
+          </Section>
         ))}
       </div>
     </Dialog>

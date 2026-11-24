@@ -26,6 +26,7 @@ import {
 } from "../../../../editor/store/selectors";
 import { InsertHelpDialog, useInsertImage } from "../../../images";
 import { SHORTCUT_LABELS } from "../../../shortcuts";
+import { ToolbarButton } from "../../../../components/ui/Toolbar";
 import TextPanel from "../TextPanel/TextPanel";
 import styles from "./TextToolbar.module.css";
 
@@ -76,26 +77,31 @@ const TextToolbar = () => {
 
   return (
     <>
-      <IconButton
-        icon={Type}
-        aria-label="Agregar texto"
-        onClick={addTextAtViewCenter}
-      />
+      <ToolbarButton>
+        <IconButton
+          icon={Type}
+          aria-label="Agregar texto"
+          onClick={addTextAtViewCenter}
+        />
+      </ToolbarButton>
       <Tooltip label="Fuente y estilo">
-        <Button
-          size="sm"
-          className={styles.fontButton}
-          style={{ fontFamily: font.family }}
-          disabled={!selectedText}
-          aria-haspopup="dialog"
-          aria-label={`Fuente: ${font.label}`}
-          onClick={() => setIsTextPanelOpen(true)}
-        >
-          {font.label}
-        </Button>
+        <ToolbarButton>
+          <Button
+            size="sm"
+            className={styles.fontButton}
+            style={{ fontFamily: font.family }}
+            disabled={!selectedText}
+            aria-haspopup="dialog"
+            aria-label={`Fuente: ${font.label}`}
+            onClick={() => setIsTextPanelOpen(true)}
+          >
+            {font.label}
+          </Button>
+        </ToolbarButton>
       </Tooltip>
       <ColorControl
         label="Color del texto"
+        isToolbarItem
         color={selectedText?.color ?? NO_COLOR}
         disabled={!selectedText}
         hasAlpha
@@ -106,17 +112,21 @@ const TextToolbar = () => {
           editElement(selectedText.id, { color }, `color:${selectedText.id}`)
         }
       />
-      <IconButton
-        icon={Trash2}
-        aria-label="Eliminar"
-        shortcut={SHORTCUT_LABELS.deleteElement}
-        disabled={!selectedElement}
-        onClick={() => selectedElement && removeElement(selectedElement.id)}
-      />
+      <ToolbarButton>
+        <IconButton
+          icon={Trash2}
+          aria-label="Eliminar"
+          shortcut={SHORTCUT_LABELS.deleteElement}
+          disabled={!selectedElement}
+          onClick={() => selectedElement && removeElement(selectedElement.id)}
+        />
+      </ToolbarButton>
       <Menu
         side="top"
         trigger={
-          <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
+          <ToolbarButton>
+            <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
+          </ToolbarButton>
         }
         items={moreOptions}
       />

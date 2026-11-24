@@ -1,5 +1,5 @@
 import { Popover } from "radix-ui";
-import { useState, type ComponentProps } from "react";
+import { useState, type ComponentProps, type ReactElement } from "react";
 import { HexColorInput, RgbColorPicker, RgbaColorPicker } from "react-colorful";
 import { hexToRgb, rgbaToCss, rgbaToHex } from "../../../editor/model/color";
 import type { Rgba } from "../../../editor/model/types";
@@ -7,6 +7,7 @@ import { classNames } from "../../../lib/classNames";
 import { DESKTOP_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { Panel } from "../Panel";
 import { Tooltip } from "../Tooltip";
+import { ToolbarButton } from "../Toolbar";
 import styles from "./ColorControl.module.css";
 
 export interface ColorPickerProps {
@@ -118,6 +119,8 @@ export interface ColorControlProps extends ColorPickerProps {
   /** Nombre del botón y título del selector, p. ej. "Color del pincel". */
   label: string;
   disabled?: boolean;
+  /** El botón entra en el recorrido con flechas de la `Toolbar` que lo contiene. */
+  isToolbarItem?: boolean;
 }
 
 /**
@@ -127,22 +130,27 @@ export interface ColorControlProps extends ColorPickerProps {
 export function ColorControl({
   label,
   disabled = false,
+  isToolbarItem = false,
   ...pickerProps
 }: ColorControlProps) {
   const isDesktop = useMediaQuery(DESKTOP_QUERY);
   const [isOpen, setIsOpen] = useState(false);
   const open = isOpen && !disabled;
   const picker = <ColorPicker {...pickerProps} />;
+  const asToolbarItem = (button: ReactElement) =>
+    isToolbarItem ? <ToolbarButton>{button}</ToolbarButton> : button;
 
   if (isDesktop) {
     return (
       <Popover.Root open={open} onOpenChange={setIsOpen}>
         <Popover.Trigger asChild>
-          <ColorButton
-            label={label}
-            color={disabled ? null : pickerProps.color}
-            disabled={disabled}
-          />
+          {asToolbarItem(
+            <ColorButton
+              label={label}
+              color={disabled ? null : pickerProps.color}
+              disabled={disabled}
+            />
+          )}
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content
@@ -161,13 +169,15 @@ export function ColorControl({
 
   return (
     <>
-      <ColorButton
-        label={label}
-        color={disabled ? null : pickerProps.color}
-        disabled={disabled}
-        aria-haspopup="dialog"
-        onClick={() => setIsOpen(true)}
-      />
+      {asToolbarItem(
+        <ColorButton
+          label={label}
+          color={disabled ? null : pickerProps.color}
+          disabled={disabled}
+          aria-haspopup="dialog"
+          onClick={() => setIsOpen(true)}
+        />
+      )}
       <Panel open={open} onOpenChange={setIsOpen} title={label}>
         {picker}
       </Panel>

@@ -1,0 +1,13 @@
+.title {
+  font-size: var(--font-size-sm);
+}
+
+.strong {
+  color: var(--color-text-strong);
+  font-weight: 600;
+}
+
+.subtle {
+  color: var(--color-text-active);
+  font-weight: 500;
+}

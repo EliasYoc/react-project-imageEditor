@@ -15,6 +15,7 @@ import { IconButton } from "../../../components/ui/Button";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
 import { Menu, type MenuItem } from "../../../components/ui/Menu";
 import { Panel } from "../../../components/ui/Panel";
+import { Toolbar, ToolbarButton } from "../../../components/ui/Toolbar";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../../editor/store/selectors";
 import { classNames } from "../../../lib/classNames";
@@ -113,24 +114,31 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
       // Oculta: fuera del orden de Tab y de los lectores de pantalla.
       inert={areBarsHidden}
     >
-      <div className={classNames(styles.start, styles.group)}>
+      <Toolbar
+        label="Deshacer y rehacer"
+        className={classNames(styles.start, styles.group)}
+      >
         {/* Siempre visibles (deshabilitados si no hay nada): así los botones
             no cambian de sitio mientras se dibuja. */}
-        <IconButton
-          icon={Undo2}
-          aria-label="Deshacer"
-          shortcut={SHORTCUT_LABELS.undo}
-          disabled={!canUndo}
-          onClick={undo}
-        />
-        <IconButton
-          icon={Redo2}
-          aria-label="Rehacer"
-          shortcut={SHORTCUT_LABELS.redo}
-          disabled={!canRedo}
-          onClick={redo}
-        />
-      </div>
+        <ToolbarButton>
+          <IconButton
+            icon={Undo2}
+            aria-label="Deshacer"
+            shortcut={SHORTCUT_LABELS.undo}
+            disabled={!canUndo}
+            onClick={undo}
+          />
+        </ToolbarButton>
+        <ToolbarButton>
+          <IconButton
+            icon={Redo2}
+            aria-label="Rehacer"
+            shortcut={SHORTCUT_LABELS.redo}
+            disabled={!canRedo}
+            onClick={redo}
+          />
+        </ToolbarButton>
+      </Toolbar>
 
       {center && (
         <div className={classNames(styles.center, styles.group)}>{center}</div>
@@ -138,21 +146,25 @@ const EditorHeader = ({ center }: { center?: ReactNode }) => {
 
       <div className={styles.end}>
         <UpdateButton />
-        <div className={styles.group}>
-          <IconButton
-            icon={Layers}
-            aria-label="Fondo"
-            title="Color o degradado de fondo"
-            aria-haspopup="dialog"
-            onClick={() => setIsBackdropOpen(true)}
-          />
+        <Toolbar label="Opciones del documento" className={styles.group}>
+          <ToolbarButton>
+            <IconButton
+              icon={Layers}
+              aria-label="Fondo"
+              title="Color o degradado de fondo"
+              aria-haspopup="dialog"
+              onClick={() => setIsBackdropOpen(true)}
+            />
+          </ToolbarButton>
           <Menu
             trigger={
-              <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
+              <ToolbarButton>
+                <IconButton icon={EllipsisVertical} aria-label="Más opciones" />
+              </ToolbarButton>
             }
             items={menuItems}
           />
-        </div>
+        </Toolbar>
       </div>
 
       <Panel

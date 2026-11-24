@@ -218,7 +218,7 @@ test.describe("Dibujo", () => {
   }) => {
     await openBlankCanvas(page);
     const undo = page.getByRole("button", { name: "Deshacer" });
-    const tools = page.getByRole("group", { name: "Herramientas de dibujo" });
+    const tools = page.getByRole("toolbar", { name: "Herramientas de dibujo" });
     const stage = await stageRect(page);
     // Justo debajo del borde de arriba, en el centro.
     const top = { x: stage.x + stage.width / 2, y: stage.y + 10 };

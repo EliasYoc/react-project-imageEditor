@@ -2,6 +2,7 @@ import { useState } from "react";
 import { IconButton } from "../../../../components/ui/Button";
 import { ColorControl } from "../../../../components/ui/ColorControl";
 import { Panel } from "../../../../components/ui/Panel";
+import { ToolbarButton } from "../../../../components/ui/Toolbar";
 import { getBrushPreset } from "../../../../editor/engine/brushes/presets";
 import { COLOR_PRESETS } from "../../../../editor/engine/fill/presets";
 import { useEditorStore } from "../../../../editor/store/editorStore";
@@ -39,27 +40,36 @@ const DrawingTools = () => {
 
   return (
     <>
-      <IconButton
-        icon={BRUSH_ICONS[lastDrawId]}
-        aria-label={`Pincel: ${drawBrush.name}`}
-        title={isErasing ? `Pincel: ${drawBrush.name}` : "Elegir otro pincel"}
-        shortcut={SHORTCUT_LABELS.drawBrush}
-        aria-pressed={!isErasing}
-        className={styles.tool}
-        onClick={() => (isErasing ? selectDrawBrush() : setIsLibraryOpen(true))}
-      />
-      <IconButton
-        icon={BRUSH_ICONS[lastEraserId]}
-        aria-label={`Borrador: ${eraser.name}`}
-        title={isErasing ? "Elegir otro borrador" : `Borrador: ${eraser.name}`}
-        shortcut={SHORTCUT_LABELS.eraser}
-        aria-pressed={isErasing}
-        className={styles.tool}
-        onClick={() => (isErasing ? setIsLibraryOpen(true) : selectEraser())}
-      />
+      <ToolbarButton>
+        <IconButton
+          icon={BRUSH_ICONS[lastDrawId]}
+          aria-label={`Pincel: ${drawBrush.name}`}
+          title={isErasing ? `Pincel: ${drawBrush.name}` : "Elegir otro pincel"}
+          shortcut={SHORTCUT_LABELS.drawBrush}
+          aria-pressed={!isErasing}
+          className={styles.tool}
+          onClick={() =>
+            isErasing ? selectDrawBrush() : setIsLibraryOpen(true)
+          }
+        />
+      </ToolbarButton>
+      <ToolbarButton>
+        <IconButton
+          icon={BRUSH_ICONS[lastEraserId]}
+          aria-label={`Borrador: ${eraser.name}`}
+          title={
+            isErasing ? "Elegir otro borrador" : `Borrador: ${eraser.name}`
+          }
+          shortcut={SHORTCUT_LABELS.eraser}
+          aria-pressed={isErasing}
+          className={styles.tool}
+          onClick={() => (isErasing ? setIsLibraryOpen(true) : selectEraser())}
+        />
+      </ToolbarButton>
       {/* Sin transparencia: la del trazo es la opacidad de cada pincel. */}
       <ColorControl
         label="Color del pincel"
+        isToolbarItem
         color={color}
         onChange={setBrushColor}
         swatches={COLOR_PRESETS}

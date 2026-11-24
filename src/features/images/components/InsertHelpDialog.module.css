@@ -10,11 +10,10 @@
   scrollbar-width: thin;
 }
 
-.title {
-  margin-bottom: var(--space-1);
-  color: var(--color-text-strong);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .text {
