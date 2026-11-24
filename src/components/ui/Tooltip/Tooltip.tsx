@@ -1,6 +1,6 @@
 import { Tooltip as RadixTooltip } from "radix-ui";
 import type { ReactElement, ReactNode } from "react";
-import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { HOVER_QUERY, useMediaQuery } from "../../../hooks/useMediaQuery";
 import { Kbd } from "../Kbd";
 import styles from "./Tooltip.module.css";
 

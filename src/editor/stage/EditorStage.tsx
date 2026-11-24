@@ -23,6 +23,7 @@ import {
   Rect,
   Stage,
 } from "react-konva/lib/ReactKonvaCore";
+import { useResizeObserver } from "../../hooks/useResizeObserver";
 import { createCanvas, get2dContext } from "../../lib/canvas";
 import { PaintRaster } from "../engine/PaintRaster";
 import { blurLayers, type BlurSource } from "../engine/brushes/blur";
@@ -188,16 +189,10 @@ const EditorStage = () => {
     if (canvas) canvas.style.mixBlendMode = "multiply";
   }, []);
 
-  useLayoutEffect(function measureStage() {
-    const container = containerRef.current;
-    if (!container) return;
-    const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      viewStore.getState().setStageSize({ width, height });
-    });
-    observer.observe(container);
-    return () => observer.disconnect();
-  }, []);
+  useResizeObserver(containerRef, function measureStage({ contentRect }) {
+    const { width, height } = contentRect;
+    viewStore.getState().setStageSize({ width, height });
+  });
 
   useEffect(
     function fitNewDocument() {

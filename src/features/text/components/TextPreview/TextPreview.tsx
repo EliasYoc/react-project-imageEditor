@@ -8,6 +8,7 @@ import { rgbaToCss } from "../../../../editor/model/color";
 import type { TextElement } from "../../../../editor/model/types";
 import { useFontReady } from "../../../../editor/stage/elementHooks";
 import { useEditorStore } from "../../../../editor/store/editorStore";
+import { useResizeObserver } from "../../../../hooks/useResizeObserver";
 import { PREVIEW_HEIGHT, PREVIEW_PADDING } from "../../constants/textPreview";
 import { previewLayout, previewText, textBleed } from "../../utils/textPreview";
 import styles from "./TextPreview.module.css";
@@ -88,16 +89,7 @@ const TextPreview = ({ text }: { text: TextElement }) => {
     [draw]
   );
 
-  useLayoutEffect(
-    function redrawOnResize() {
-      const host = hostRef.current;
-      if (!host) return;
-      const observer = new ResizeObserver(draw);
-      observer.observe(host);
-      return () => observer.disconnect();
-    },
-    [draw]
-  );
+  useResizeObserver(hostRef, draw);
 
   return (
     <div className={styles.bar}>

@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
-import { HOVER_QUERY } from "../../../lib/useMediaQuery";
+import { HOVER_QUERY } from "../../../hooks/useMediaQuery";
 import {
   editorPose,
   transformToPose,

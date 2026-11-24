@@ -11,7 +11,7 @@ import { ShortcutsDialog } from "../features/shortcuts";
 import { TextToolbar } from "../features/text";
 import { PlaybackBar } from "../features/video";
 import { ViewMenu } from "../features/view";
-import { DESKTOP_QUERY, useMediaQuery } from "../lib/useMediaQuery";
+import { DESKTOP_QUERY, useMediaQuery } from "../hooks/useMediaQuery";
 import styles from "./EditorShell.module.css";
 import { useUiStore } from "./uiStore";
 

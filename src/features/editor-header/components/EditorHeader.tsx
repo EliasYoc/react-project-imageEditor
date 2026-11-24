@@ -19,7 +19,7 @@ import { Toolbar, ToolbarButton } from "../../../components/ui/Toolbar";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectCanRedo, selectCanUndo } from "../../../editor/store/selectors";
 import { classNames } from "../../../lib/classNames";
-import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
+import { HOVER_QUERY, useMediaQuery } from "../../../hooks/useMediaQuery";
 import { BackdropPanel } from "../../backdrop";
 import { ExportDialog } from "../../export";
 import { SHORTCUT_LABELS } from "../../shortcuts";

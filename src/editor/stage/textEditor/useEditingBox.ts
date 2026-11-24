@@ -1,5 +1,5 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
-import { useVisualViewport } from "../../../lib/useVisualViewport";
+import { useVisualViewport } from "../../../hooks/useVisualViewport";
 import { textEditingBox, textEditingScale } from "../../elements/textEditorBox";
 import { visibleArea } from "../../engine/viewport";
 import { defaultFontSize } from "../../model/factories";
