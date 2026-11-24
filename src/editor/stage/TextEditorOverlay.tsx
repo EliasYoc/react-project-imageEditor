@@ -1,5 +1,12 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import { getFont } from "../elements/fonts";
+import { readableBackdrop } from "../elements/readableBackdrop";
 import { textPadding } from "../elements/nodeConfig";
 import {
   newTextPosition,
@@ -9,12 +16,23 @@ import {
 import { textEditorPaint } from "../elements/textGradient";
 import { maxTextWidth } from "../elements/textWidth";
 import { visibleArea } from "../engine/viewport";
+import { rgbaToCss } from "../model/color";
 import { defaultFontSize } from "../model/factories";
 import { isTextElement, type TextElement } from "../model/types";
 import { editorStore, useEditorStore } from "../store/editorStore";
 import { selectElements } from "../store/selectors";
 import styles from "./EditorStage.module.css";
 import { useViewStore } from "./viewStore";
+
+/** Opacidad de la capa que tapa el lienzo mientras se escribe. */
+const EDITING_BACKDROP_OPACITY = 0.45;
+
+/**
+ * Color de esa capa: oscura para un texto claro y clara para uno oscuro
+ * (`readableBackdrop`), para que el texto se lea sobre ella.
+ */
+const editingBackdropColor = (element: TextElement) =>
+  rgbaToCss({ ...readableBackdrop(element), a: EDITING_BACKDROP_OPACITY });
 
 /**
  * Textarea para escribir un texto, con la misma fuente, color y forma que el
@@ -107,6 +125,18 @@ const TextEditor = ({ element }: { element: TextElement }) => {
     );
   };
 
+  // Tocar la capa confirma el texto (el textarea pierde el foco al apretar)
+  // y quita la selección, como tocar el fondo. Salvo el segundo clic de un
+  // doble clic: sobre un texto ya seleccionado, el primero abre el editor y
+  // el segundo cae aquí; evitar que se pierda el foco lo deja abierto.
+  const onBackdropMouseDown = (event: MouseEvent) => {
+    if (event.detail >= 2) {
+      event.preventDefault();
+      return;
+    }
+    editorStore.getState().selectElement(null);
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -118,32 +148,41 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   };
 
   return (
-    <textarea
-      ref={textareaRef}
-      className={styles.textEditor}
-      aria-label="Texto"
-      value={draft}
-      wrap={element.width === null ? "off" : "soft"}
-      spellCheck={false}
-      style={{
-        ...position,
-        width: element.width ?? undefined,
-        padding: textPadding(element),
-        font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
-        lineHeight: element.lineHeight,
-        textAlign: element.align,
-        // Color o degradado, y la caja de fondo, también mientras se escribe.
-        ...textEditorPaint(element),
-        ...(element.background.isEnabled && {
-          borderRadius: element.fontSize * element.background.radius,
-        }),
-        // Se quita el escalado del borde: siempre 1 px en pantalla.
-        outlineWidth: `${1 / scale}px`,
-      }}
-      onChange={(event) => setDraft(event.target.value)}
-      onBlur={() => finish(true)}
-      onKeyDown={onKeyDown}
-    />
+    <>
+      {/* Oscurece (o aclara) el lienzo: se está escribiendo, y el texto del
+          lienzo vuelve a su sitio al terminar. */}
+      <div
+        className={styles.textEditorBackdrop}
+        style={{ backgroundColor: editingBackdropColor(element) }}
+        onMouseDown={onBackdropMouseDown}
+      />
+      <textarea
+        ref={textareaRef}
+        className={styles.textEditor}
+        aria-label="Texto"
+        value={draft}
+        wrap={element.width === null ? "off" : "soft"}
+        spellCheck={false}
+        style={{
+          ...position,
+          width: element.width ?? undefined,
+          padding: textPadding(element),
+          font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
+          lineHeight: element.lineHeight,
+          textAlign: element.align,
+          // Color o degradado, y la caja de fondo, también mientras se escribe.
+          ...textEditorPaint(element),
+          ...(element.background.isEnabled && {
+            borderRadius: element.fontSize * element.background.radius,
+          }),
+          // Se quita el escalado del borde: siempre 1 px en pantalla.
+          outlineWidth: `${1 / scale}px`,
+        }}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={() => finish(true)}
+        onKeyDown={onKeyDown}
+      />
+    </>
   );
 };
 

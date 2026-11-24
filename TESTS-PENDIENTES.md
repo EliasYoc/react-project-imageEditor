@@ -3,6 +3,15 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
+## Una capa tapa el lienzo mientras se escribe
+
+- **e2e:** con un texto claro la capa es oscura, y con uno oscuro, clara; si
+  se cambia el color mientras se escribe, la capa cambia con él.
+- **e2e (escritorio):** doble clic sobre un texto ya seleccionado abre el
+  editor y no lo cierra el segundo clic.
+- **e2e:** tocar la capa confirma el texto y quita la selección; la cabecera
+  y las barras siguen funcionando con la capa puesta.
+
 ## El texto se edita al tamaño de uno nuevo
 
 - **e2e:** un texto encogido con el slider se edita al tamaño de uno nuevo.

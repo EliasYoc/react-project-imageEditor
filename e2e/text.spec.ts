@@ -7,6 +7,7 @@ import {
   isDark,
   isWhite,
   openBlankCanvas,
+  openPhoto,
   pinch,
   pointIn,
   screenColor,
@@ -436,4 +437,41 @@ test.describe("Texto con dos dedos", () => {
     await expect.poll(() => textWidth(page, doc)).toBeGreaterThan(before * 2);
     await expectNoZoom(page, doc);
   });
+});
+
+/** Cuánto se diferencian dos colores (el canal que más cambia). */
+const colorChange = (a: Rgba, b: Rgba) =>
+  Math.max(Math.abs(a.r - b.r), Math.abs(a.g - b.g), Math.abs(a.b - b.b));
+
+test("mientras se escribe, una capa tapa el lienzo, y al terminar se quita", async ({
+  page,
+  isMobile,
+}) => {
+  // Sobre una foto: con el texto negro por defecto la capa es clara, y sobre
+  // el lienzo en blanco no se notaría.
+  await openPhoto(page);
+  await page.getByRole("radio", { name: "Texto" }).click();
+  const stage = await stageRect(page);
+  // En la mitad oscura de la foto (la izquierda), por debajo del editor y por
+  // encima de la barra de abajo.
+  const probe = {
+    x: Math.round(stage.x + stage.width * 0.3),
+    y: Math.round(stage.y + stage.height * 0.7),
+  };
+  const before = await screenColor(page, probe);
+
+  await page.getByRole("button", { name: "Agregar texto" }).click();
+  const editor = page.getByRole("textbox", { name: "Texto" });
+  await expect(editor).toBeFocused();
+  await expect
+    .poll(async () => colorChange(await screenColor(page, probe), before))
+    .toBeGreaterThan(30);
+
+  await page.keyboard.type("Hola");
+  // Tocar la capa confirma el texto.
+  await tapAt(page, probe, isMobile);
+  await expect(editor).toBeHidden();
+  await expect
+    .poll(async () => colorChange(await screenColor(page, probe), before))
+    .toBeLessThan(5);
 });
