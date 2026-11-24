@@ -25,13 +25,13 @@ import type {
 export const DEFAULT_CANVAS_SIZE: Size = { width: 1440, height: 2560 };
 
 /**
- * Estilo de un texto nuevo (el tamaño depende del documento): blanco sobre
- * una caja negra semitransparente, que se lee sobre cualquier foto.
+ * Estilo de un texto nuevo (el tamaño depende del documento): negro sobre
+ * una caja blanca semitransparente, que se lee sobre cualquier foto.
  */
 export const createDefaultTextStyle = (): Omit<TextStyle, "fontSize"> => ({
   fontId: DEFAULT_FONT_ID,
   fontWeight: 500,
-  color: { r: 255, g: 255, b: 255, a: 1 },
+  color: { r: 0, g: 0, b: 0, a: 1 },
   align: "left",
   lineHeight: 1.15,
   stroke: {
@@ -47,7 +47,7 @@ export const createDefaultTextStyle = (): Omit<TextStyle, "fontSize"> => ({
   },
   background: {
     isEnabled: true,
-    color: { r: 0, g: 0, b: 0, a: 0.6 },
+    color: { r: 255, g: 255, b: 255, a: 0.6 },
     padding: 0.25,
     radius: 0.2,
   },

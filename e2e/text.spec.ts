@@ -20,14 +20,6 @@ import {
 
 const isLight = ({ r, g, b }: Rgba) => r > 200 && g > 200 && b > 200;
 
-/**
- * La caja de fondo de un texto (por defecto, negra al 60 %): gris oscuro.
- * Sobre el lienzo blanco queda en unos 102; la capa que tapa el lienzo
- * mientras se escribe (unos 140) no cuenta.
- */
-const isTextBox = ({ r, g, b }: Rgba) =>
-  Math.max(r, g, b) < 125 && Math.max(r, g, b) - Math.min(r, g, b) < 30;
-
 const centerOf = ({ x, y, width, height }: Rect): Point => ({
   x: x + width / 2,
   y: y + height / 2,
@@ -40,8 +32,8 @@ const shifted = (area: Rect, from: Point, to: Point): Rect => ({
   y: area.y + to.y - from.y,
 });
 
-/** El rectángulo más pequeño que contiene la caja del texto dentro de `area`. */
-const textBounds = async (page: Page, area: Rect) => {
+/** El rectángulo más pequeño que contiene todos los píxeles oscuros de `area`. */
+const darkBounds = async (page: Page, area: Rect) => {
   const pixels = await screenPixels(page, area);
   let left = Infinity;
   let right = -Infinity;
@@ -49,7 +41,7 @@ const textBounds = async (page: Page, area: Rect) => {
   let bottom = -Infinity;
   for (let y = 0; y < pixels.height; y++) {
     for (let x = 0; x < pixels.width; x++) {
-      if (!isTextBox(pixels.at(x, y))) continue;
+      if (!isDark(pixels.at(x, y))) continue;
       left = Math.min(left, x);
       right = Math.max(right, x);
       top = Math.min(top, y);
@@ -81,9 +73,9 @@ const addText = async (page: Page, doc: Rect, touch: boolean) => {
   return where;
 };
 
-/** Ancho de la caja del texto dentro de `area`. */
+/** Ancho de las letras (lo oscuro) dentro de `area`. */
 const textWidth = async (page: Page, doc: Rect) => {
-  const bounds = await textBounds(page, doc);
+  const bounds = await darkBounds(page, doc);
   return bounds.right - bounds.left;
 };
 
@@ -112,7 +104,7 @@ test.describe("Texto", () => {
     const where = await addText(page, doc, isMobile);
     const center = centerOf(where);
     await expect
-      .poll(() => countPixels(page, where, isTextBox))
+      .poll(() => countPixels(page, where, isDark))
       .toBeGreaterThan(50);
 
     // Doble clic (o tocar un texto ya seleccionado) abre su editor.
@@ -147,17 +139,17 @@ test.describe("Texto", () => {
       height: box.height + 24,
     };
     // Dónde se ven las letras mientras se escribe.
-    const typed = await textBounds(page, area);
+    const typed = await darkBounds(page, area);
 
     await tapAt(page, pointIn(doc, 0.5, 0.9), isMobile);
     await expect(editor).toBeHidden();
     await expect
-      .poll(() => countPixels(page, area, isTextBox))
+      .poll(() => countPixels(page, area, isDark))
       .toBeGreaterThan(50);
 
     // Ya como texto del lienzo, las letras están en el mismo sitio (con un
     // margen: el navegador y Konva no dibujan la letra idéntica).
-    const placed = await textBounds(page, area);
+    const placed = await darkBounds(page, area);
     for (const side of ["left", "right", "top", "bottom"] as const) {
       expect(Math.abs(placed[side] - typed[side])).toBeLessThanOrEqual(4);
     }
@@ -197,7 +189,7 @@ test.describe("Texto", () => {
       ...rows,
     };
     await expect
-      .poll(() => countPixels(page, innerRight, isTextBox))
+      .poll(() => countPixels(page, innerRight, isDark))
       .toBeGreaterThan(20);
     const outsideLeft: Rect = {
       x: doc.x,
@@ -209,11 +201,11 @@ test.describe("Texto", () => {
       width: doc.x + doc.width - (box.x + box.width + 3),
       ...rows,
     };
-    expect(await countPixels(page, outsideLeft, isTextBox)).toBe(0);
-    expect(await countPixels(page, outsideRight, isTextBox)).toBe(0);
+    expect(await countPixels(page, outsideLeft, isDark)).toBe(0);
+    expect(await countPixels(page, outsideRight, isDark)).toBe(0);
     // Varias líneas: hay letras en la franja de la izquierda a lo alto de
     // casi toda la caja.
-    const firstLetters = await textBounds(page, {
+    const firstLetters = await darkBounds(page, {
       x: box.x,
       width: 30,
       ...rows,
@@ -234,7 +226,7 @@ test.describe("Texto", () => {
     await drag(page, [start, far], isMobile);
     const moved = shifted(where, start, far);
     await expect
-      .poll(() => countPixels(page, moved, isTextBox))
+      .poll(() => countPixels(page, moved, isDark))
       .toBeGreaterThan(50);
 
     // Se edita desde donde está. Tras arrastrarlo ya está seleccionado: en el
@@ -259,17 +251,17 @@ test.describe("Texto", () => {
     await tapAt(page, pointIn(doc, 0.15, 0.15), isMobile);
     await expect(editor).toBeHidden();
     await expect
-      .poll(() => countPixels(page, moved, isTextBox))
+      .poll(() => countPixels(page, moved, isDark))
       .toBeGreaterThan(50);
-    expect(await countPixels(page, where, isTextBox)).toBe(0);
+    expect(await countPixels(page, where, isDark)).toBe(0);
   });
 
   test("aplica un degradado al texto", async ({ page, isMobile }) => {
     const doc = await documentRect(page);
     const area = await addText(page, doc, isMobile);
-    // Blanco en una caja gris: sin color todavía.
+    // Negro: sin color todavía.
     await expect
-      .poll(() => countPixels(page, area, isTextBox))
+      .poll(() => countPixels(page, area, isDark))
       .toBeGreaterThan(50);
     expect(await countPixels(page, area, isColorful)).toBeLessThan(10);
 
@@ -306,18 +298,21 @@ test.describe("Texto", () => {
       return screenColor(page, { x: x + 24, y: y + 10 });
     };
 
-    // Por defecto, texto blanco en una caja oscura: la caja se ve sobre blanco.
-    await expect
-      .poll(async () => countPixels(page, await previewRect(), isTextBox))
-      .toBeGreaterThan(50);
-    expect(isLight(await backdrop())).toBe(true);
-
-    // Sin la caja, el texto blanco no se vería sobre blanco: el fondo pasa a
-    // gris oscuro y las letras se ven.
-    await panel.getByRole("checkbox", { name: "Caja de fondo" }).uncheck();
+    // Por defecto, texto negro en una caja blanca: la caja no se vería sobre
+    // blanco, así que la vista previa usa el fondo gris oscuro. La caja (blanca
+    // al 60 % sobre ese gris) queda en un gris medio.
+    const isBoxOnDark = ({ r, g, b }: Rgba) =>
+      Math.min(r, g, b) > 140 && Math.max(r, g, b) < 200;
     await expect.poll(async () => isDark(await backdrop())).toBe(true);
     await expect
-      .poll(async () => countPixels(page, await previewRect(), isLight))
+      .poll(async () => countPixels(page, await previewRect(), isBoxOnDark))
+      .toBeGreaterThan(50);
+
+    // Sin la caja, el texto negro se ve sobre blanco: el fondo se aclara.
+    await panel.getByRole("checkbox", { name: "Caja de fondo" }).uncheck();
+    await expect.poll(async () => isLight(await backdrop())).toBe(true);
+    await expect
+      .poll(async () => countPixels(page, await previewRect(), isDark))
       .toBeGreaterThan(50);
 
     await panel.getByRole("checkbox", { name: "Degradado" }).check();
@@ -377,9 +372,9 @@ test.describe("Texto", () => {
     const target = pointIn(doc, 0.5, 0.75);
     await drag(page, [start, target], isMobile);
     await expect
-      .poll(() => countPixels(page, shifted(where, start, target), isTextBox))
+      .poll(() => countPixels(page, shifted(where, start, target), isDark))
       .toBeGreaterThan(50);
-    expect(await countPixels(page, where, isTextBox)).toBe(0);
+    expect(await countPixels(page, where, isDark)).toBe(0);
   });
 });
 

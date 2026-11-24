@@ -3,10 +3,10 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
-## Un texto nuevo es blanco con caja de fondo
+## Un texto nuevo es negro con caja de fondo blanca
 
-- **e2e:** un texto nuevo sobre una foto se ve: letras blancas dentro de la
-  caja oscura, también exportado.
+- **e2e:** un texto nuevo sobre una foto se ve: letras negras dentro de la
+  caja blanca, también exportado.
 - **e2e:** al quitar la caja a un texto negro mientras se escribe, la capa
   pasa de oscura a clara.
 
