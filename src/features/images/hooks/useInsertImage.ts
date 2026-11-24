@@ -1,6 +1,7 @@
-import { useRef, type ChangeEvent, type ReactElement } from "react";
+import type { ReactElement } from "react";
 import { toast } from "../../../components/ui/Toast";
 import { IMAGE_OPEN_ERROR_MESSAGE } from "../../../lib/messages";
+import { useFilePicker } from "../../../lib/useFilePicker";
 import { isAnimatedImage } from "../../../editor/elements/animatedImage";
 import { loadImage } from "../../../editor/elements/imageCache";
 import type { ImageAnimation, Size } from "../../../editor/model/types";
@@ -68,14 +69,7 @@ interface InsertImage {
  * el input siga montado cuando el usuario elige el archivo.
  */
 export const useInsertImage = (): InsertImage => {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const handleChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    // Permite volver a elegir el mismo archivo.
-    event.target.value = "";
-    if (!file) return;
-
+  const insertFile = async (file: File) => {
     let url: Awaited<ReturnType<typeof objectUrlFor>> | null = null;
     try {
       url = await objectUrlFor(file);
@@ -111,16 +105,9 @@ export const useInsertImage = (): InsertImage => {
     }
   };
 
-  return {
-    pickImage: () => inputRef.current?.click(),
-    fileInput: (
-      <input
-        ref={inputRef}
-        hidden
-        type="file"
-        accept={INSERTABLE_FILE_TYPES}
-        onChange={handleChange}
-      />
-    ),
-  };
+  const { openPicker, fileInput } = useFilePicker({
+    accept: INSERTABLE_FILE_TYPES,
+    onFile: insertFile,
+  });
+  return { pickImage: openPicker, fileInput };
 };

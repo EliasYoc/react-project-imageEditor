@@ -1,6 +1,7 @@
 import { useId, useState } from "react";
 import { Button } from "../../../../components/ui/Button";
 import { ColorPicker } from "../../../../components/ui/ColorControl";
+import { Section } from "../../../../components/ui/Section";
 import { Segmented } from "../../../../components/ui/Segmented";
 import { Slider } from "../../../../components/ui/Slider";
 import { gradientToCss } from "../../../../editor/engine/fill/css";
@@ -26,7 +27,11 @@ import { useEditorStore } from "../../../../editor/store/editorStore";
 import styles from "./BackdropPanel.module.css";
 import GradientPreview from "../GradientPreview/GradientPreview";
 import { AngleDial } from "../../../../components/ui/AngleDial";
-import { GradientStopsBar } from "../../../../components/ui/GradientStopsBar";
+import {
+  GradientStopsBar,
+  useSelectedStop,
+} from "../../../../components/ui/GradientStopsBar";
+import { GradientPresets } from "../../../../components/ui/GradientPresets";
 
 type Tab = "none" | "color" | "gradient";
 
@@ -84,12 +89,7 @@ const BackdropPanel = () => {
     fill?.kind === "gradient" ? fill.gradient : GRADIENT_PRESETS[0].gradient
   );
   const gradient = fill?.kind === "gradient" ? fill.gradient : lastGradient;
-  const [selectedStopId, setSelectedStopId] = useState<string | null>(
-    gradient.stops[0]?.id ?? null
-  );
-  const selectedStop =
-    gradient.stops.find((stop) => stop.id === selectedStopId) ??
-    gradient.stops[0];
+  const { selectedStop, selectStop } = useSelectedStop(gradient);
 
   const update = (patch: Partial<Backdrop>, mergeKey?: string) =>
     setBackdrop({ ...backdrop, ...patch }, mergeKey);
@@ -187,7 +187,7 @@ const BackdropPanel = () => {
           <GradientStopsBar
             gradient={gradient}
             selectedId={selectedStop?.id ?? null}
-            onSelect={setSelectedStopId}
+            onSelect={selectStop}
             onChange={setGradient}
           />
 
@@ -216,28 +216,20 @@ const BackdropPanel = () => {
             </div>
           )}
 
-          <div className={styles.presets} role="group" aria-label="Degradados">
-            {GRADIENT_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                className={styles.preset}
-                style={{ backgroundImage: gradientToCss(preset.gradient) }}
-                aria-label={preset.label}
-                title={preset.label}
-                onClick={() => {
-                  setGradient(preset.gradient);
-                  setSelectedStopId(preset.gradient.stops[0].id);
-                }}
-              />
-            ))}
-          </div>
+          <GradientPresets
+            presets={GRADIENT_PRESETS}
+            toCss={gradientToCss}
+            minSize={48}
+            onSelect={(preset) => {
+              setGradient(preset);
+              selectStop(preset.stops[0].id);
+            }}
+          />
         </>
       )}
 
       {fill && (
-        <section className={styles.section} aria-label={layerTitle}>
-          <h3 className={styles.title}>{layerTitle}</h3>
+        <Section title={layerTitle} variant="subtle" className={styles.section}>
           <Slider
             label="Opacidad"
             min={5}
@@ -265,7 +257,7 @@ const BackdropPanel = () => {
               </select>
             </div>
           )}
-        </section>
+        </Section>
       )}
     </div>
   );

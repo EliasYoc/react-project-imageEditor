@@ -10,9 +10,11 @@ import { Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { hexToRgb, rgbaToHex } from "../../editor/model/color";
+import { GRADIENT_PRESETS } from "../../editor/engine/fill/presets";
 import type { Rgba } from "../../editor/model/types";
 import { DESKTOP_QUERY } from "../../lib/useMediaQuery";
 import { mockMediaQueries } from "../../test/media";
+import { IconButton } from "./Button";
 import { ColorControl, ColorPicker } from "./ColorControl";
 import { ConfirmDialog } from "./Dialog";
 import { ChoiceMenu, Menu } from "./Menu";
@@ -20,6 +22,9 @@ import { Panel } from "./Panel";
 import { Segmented } from "./Segmented";
 import { CardSection } from "./CardSection";
 import { ColorField } from "./ColorField";
+import { GradientPresets } from "./GradientPresets";
+import { Section } from "./Section";
+import { Toolbar, ToolbarButton } from "./Toolbar";
 import { VerticalSlider } from "./VerticalSlider";
 
 afterEach(() => mockMediaQueries(() => false));
@@ -426,5 +431,76 @@ describe("color", () => {
     );
     await user.click(screen.getByRole("button", { name: "Color del texto" }));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("GradientPresets", () => {
+  it("cada casilla es un botón con el nombre del degradado y lo entrega al pulsarla", async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const [first, second] = GRADIENT_PRESETS;
+    render(
+      <GradientPresets
+        presets={GRADIENT_PRESETS}
+        toCss={() => "none"}
+        minSize={48}
+        onSelect={onSelect}
+      />
+    );
+    const group = screen.getByRole("group", { name: "Degradados" });
+    expect(within(group).getAllByRole("button")).toHaveLength(
+      GRADIENT_PRESETS.length
+    );
+    await user.click(screen.getByRole("button", { name: second.label }));
+    expect(onSelect).toHaveBeenCalledWith(second.gradient);
+    expect(onSelect).not.toHaveBeenCalledWith(first.gradient);
+  });
+});
+
+describe("Section", () => {
+  it("el título es un h3 y da nombre a la región", () => {
+    render(
+      <Section title="Atajos">
+        <p>Contenido</p>
+      </Section>
+    );
+    const region = screen.getByRole("region", { name: "Atajos" });
+    expect(
+      within(region).getByRole("heading", { level: 3, name: "Atajos" })
+    ).toBeTruthy();
+    expect(within(region).getByText("Contenido")).toBeTruthy();
+  });
+});
+
+describe("Toolbar", () => {
+  it("Tab entra una sola vez y las flechas pasan de un botón a otro, saltando los deshabilitados", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button">Antes</button>
+        <Toolbar label="Herramientas">
+          <ToolbarButton>
+            <IconButton icon={Trash2} aria-label="Uno" />
+          </ToolbarButton>
+          <ToolbarButton>
+            <IconButton icon={Trash2} aria-label="Dos" disabled />
+          </ToolbarButton>
+          <ToolbarButton>
+            <IconButton icon={Trash2} aria-label="Tres" />
+          </ToolbarButton>
+        </Toolbar>
+        <button type="button">Después</button>
+      </>
+    );
+    expect(screen.getByRole("toolbar", { name: "Herramientas" })).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Antes" }));
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Uno" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    expect(screen.getByRole("button", { name: "Tres" })).toHaveFocus();
+    // Un solo Tab sale de la barra, sin recorrer cada botón.
+    await user.tab();
+    expect(screen.getByRole("button", { name: "Después" })).toHaveFocus();
   });
 });

@@ -1,4 +1,5 @@
 import { Slider } from "../../../../components/ui/Slider";
+import { Section } from "../../../../components/ui/Section";
 import { getBrushPreset } from "../../../../editor/engine/brushes/presets";
 import { BRUSH_SIZE_RANGE } from "../../../../editor/model/factories";
 import { useEditorStore } from "../../../../editor/store/editorStore";
@@ -29,13 +30,11 @@ const BrushSettingsPanel = () => {
   );
 
   return (
-    <section
+    <Section
+      title={`Ajustes de ${getBrushPreset(presetId).name}`}
+      variant="subtle"
       className={styles.settings}
-      aria-label={`Ajustes de ${getBrushPreset(presetId).name}`}
     >
-      <h3 className={styles.title}>
-        Ajustes de {getBrushPreset(presetId).name}
-      </h3>
       {/* Escala cuadrática, como el slider lateral: precisión en tamaños pequeños. */}
       <Slider
         label="Tamaño"
@@ -63,7 +62,7 @@ const BrushSettingsPanel = () => {
         valueText={percent(stabilizer)}
         onChange={(value) => setBrushStabilizer(value / 100)}
       />
-    </section>
+    </Section>
   );
 };
 

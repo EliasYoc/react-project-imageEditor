@@ -1,3 +1,4 @@
+import type { ReactElement } from "react";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -9,9 +10,14 @@ import {
 import { selectSelectedText } from "../../editor/store/selectors";
 import FontPicker from "./components/FontPicker/FontPicker";
 import TextPanel from "./components/TextPanel/TextPanel";
+import { Toolbar } from "../../components/ui/Toolbar";
 import TextToolbar from "./components/TextToolbar/TextToolbar";
 import TextStylePanel from "./components/TextStylePanel/TextStylePanel";
 import { DEFAULT_TEXT_GRADIENT } from "./constants/textGradientPresets";
+
+// Los botones de la barra solo funcionan dentro de una Toolbar, como en la app.
+const renderInToolbar = (ui: ReactElement) =>
+  render(<Toolbar label="Herramientas de texto">{ui}</Toolbar>);
 
 // Las fuentes no se descargan en los tests.
 vi.mock("../../editor/elements/fontLoader", () => ({
@@ -42,17 +48,26 @@ beforeEach(() => {
 describe("FontPicker", () => {
   it("muestra cada fuente en su tipo, marca la actual y la cambia", async () => {
     const { rerender } = render(<FontPicker text={text()} />);
-    expect(screen.getByRole("button", { name: "Sistema" })).toBeInTheDocument();
-    const pacifico = screen.getByRole("button", { name: "Pacifico" });
+    expect(screen.getByRole("radio", { name: "Sistema" })).toBeInTheDocument();
+    const pacifico = screen.getByRole("radio", { name: "Pacifico" });
     expect(pacifico.style.fontFamily).toContain("Pacifico");
 
     await userEvent.click(pacifico);
     expect(text().fontId).toBe("pacifico");
     rerender(<FontPicker text={text()} />);
-    expect(screen.getByRole("button", { name: "Pacifico" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
+    expect(screen.getByRole("radio", { name: "Pacifico" })).toBeChecked();
+  });
+
+  it("con el teclado, Tab entra en la fuente elegida y las flechas mueven el foco", async () => {
+    const user = userEvent.setup();
+    render(<FontPicker text={text()} />);
+    await user.tab();
+    expect(screen.getByRole("radio", { name: "Sistema" })).toHaveFocus();
+    await user.keyboard("{ArrowRight}");
+    const next = document.activeElement as HTMLElement;
+    expect(next).not.toBe(screen.getByRole("radio", { name: "Sistema" }));
+    await user.keyboard("{Enter}");
+    expect(text().fontId).not.toBe("normal");
   });
 });
 
@@ -85,7 +100,7 @@ describe("TextPanel", () => {
     expect(
       screen.getByRole("radiogroup", { name: "Alineación" })
     ).toBeVisible();
-    expect(screen.getByRole("group", { name: "Fuentes" })).toBeVisible();
+    expect(screen.getByRole("radiogroup", { name: "Fuentes" })).toBeVisible();
     const style = screen.getByRole("region", { name: "Estilo" });
     expect(
       within(style).getByRole("slider", { name: "Interlineado" })
@@ -212,7 +227,7 @@ describe("TextStylePanel", () => {
 describe("TextToolbar", () => {
   it("un solo botón abre «Fuente y estilo»; ya no hay un botón aparte de estilo", async () => {
     const user = userEvent.setup();
-    render(<TextToolbar />);
+    renderInToolbar(<TextToolbar />);
     expect(
       screen.queryByRole("button", { name: "Estilo del texto" })
     ).toBeNull();
@@ -226,7 +241,7 @@ describe("TextToolbar", () => {
 
   it("«Insertar archivo» está en el menú «Más opciones» y abre el selector de archivos", async () => {
     const user = userEvent.setup();
-    const { container } = render(<TextToolbar />);
+    const { container } = renderInToolbar(<TextToolbar />);
     expect(
       screen.queryByRole("button", { name: "Insertar archivo" })
     ).toBeNull();
@@ -246,7 +261,7 @@ describe("TextToolbar", () => {
 
   it("«¿Qué puedo insertar?», encima de «Insertar archivo», explica los tipos de archivo", async () => {
     const user = userEvent.setup();
-    render(<TextToolbar />);
+    renderInToolbar(<TextToolbar />);
     await user.click(screen.getByRole("button", { name: "Más opciones" }));
     const items = screen
       .getAllByRole("menuitem")

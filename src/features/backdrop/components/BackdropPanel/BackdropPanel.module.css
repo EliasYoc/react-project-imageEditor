@@ -30,26 +30,6 @@
   align-self: center;
 }
 
-.presets {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
-  gap: var(--space-2);
-}
-
-/* Sin borde: el degradado llena el botón entero (bajo un borde transparente se
-   repetía y se veía un marco). */
-.preset {
-  aspect-ratio: 1;
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.preset:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-}
-
 .section {
   display: flex;
   flex-direction: column;
@@ -57,13 +37,6 @@
   padding: var(--space-2) var(--space-3) var(--space-3);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.04);
-}
-
-.title {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-active);
 }
 
 .field {

@@ -1,5 +1,5 @@
 import { ArrowRight, ImagePlus, Video } from "lucide-react";
-import { useRef, useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import { Button } from "../../../components/ui/Button";
 import { CardSection } from "../../../components/ui/CardSection";
 import { ConfirmDialog } from "../../../components/ui/Dialog";
@@ -8,6 +8,7 @@ import { classNames } from "../../../lib/classNames";
 import { IMAGE_OPEN_ERROR_MESSAGE } from "../../../lib/messages";
 import { useEditorStore } from "../../../editor/store/editorStore";
 import { selectHasDocumentContent } from "../../../editor/store/selectors";
+import { useFilePicker } from "../../../lib/useFilePicker";
 import { HOVER_QUERY, useMediaQuery } from "../../../lib/useMediaQuery";
 import { MOD_KEY } from "../../shortcuts";
 import styles from "./HomeScreen.module.css";
@@ -40,8 +41,6 @@ const HomeScreen = () => {
   const loadPhoto = useEditorStore((state) => state.loadPhoto);
   const newDocument = useEditorStore((state) => state.newDocument);
   const canHover = useMediaQuery(HOVER_QUERY);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   // Lo que se hará al confirmar "Descartar y abrir".
   const [pending, setPending] = useState<(() => void) | null>(null);
 
@@ -84,15 +83,8 @@ const HomeScreen = () => {
     runOrConfirm(() => void openFile(file))
   );
 
-  const onFileChosen =
-    (open: (file: File) => Promise<void>) =>
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const input = event.target;
-      const file = input.files?.[0];
-      // Permite volver a elegir el mismo archivo.
-      input.value = "";
-      if (file) void open(file);
-    };
+  const photoPicker = useFilePicker({ accept: "image/*", onFile: openFile });
+  const videoPicker = useFilePicker({ accept: "video/*", onFile: openVideo });
 
   return (
     <div className={styles.home}>
@@ -114,19 +106,11 @@ const HomeScreen = () => {
         )}
 
         <div className={styles.open}>
-          {/* El <input type="file"> está oculto; el botón visible lo abre. Así
-              el botón recibe foco y funciona con teclado (un <label> no). */}
-          <input
-            ref={fileInputRef}
-            hidden
-            type="file"
-            accept="image/*"
-            onChange={onFileChosen(openFile)}
-          />
+          {photoPicker.fileInput}
           <Button
             variant="primary"
             className={classNames(styles.action, styles.primaryAction)}
-            onClick={() => runOrConfirm(() => fileInputRef.current?.click())}
+            onClick={() => runOrConfirm(photoPicker.openPicker)}
           >
             <ImagePlus aria-hidden="true" />
             Abrir una foto
@@ -138,16 +122,10 @@ const HomeScreen = () => {
           )}
         </div>
 
-        <input
-          ref={videoInputRef}
-          hidden
-          type="file"
-          accept="video/*"
-          onChange={onFileChosen(openVideo)}
-        />
+        {videoPicker.fileInput}
         <Button
           className={styles.action}
-          onClick={() => runOrConfirm(() => videoInputRef.current?.click())}
+          onClick={() => runOrConfirm(videoPicker.openPicker)}
         >
           <Video aria-hidden="true" />
           Agregar video
