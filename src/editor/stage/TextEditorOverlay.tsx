@@ -57,6 +57,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
   const [draft, setDraft] = useState(element.text);
   // Ancho del textarea sin escalar: si no cabe en pantalla, se encoge.
   const [contentWidth, setContentWidth] = useState(0);
+  const padding = textPadding(element);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isFinishedRef = useRef(false);
 
@@ -78,9 +79,20 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       // Konva), hasta el máximo; desde ahí se reparte en líneas.
       if (element.width === null) {
         // Sin saltos de línea automáticos, para medir lo que ocuparía en una.
+        // Se mide sin márgenes y se suman los dos: con el contenido
+        // desbordado, Chrome no cuenta el de la derecha en scrollWidth (la
+        // caja de fondo salía sin margen a la derecha y el texto centrado,
+        // movido).
+        const inlinePadding = textarea.style.padding;
         textarea.style.whiteSpace = "";
+        textarea.style.padding = "0px";
         textarea.style.width = "0px";
-        const naturalWidth = Math.max(textarea.scrollWidth, element.fontSize);
+        const textWidth = textarea.scrollWidth;
+        textarea.style.padding = inlinePadding;
+        const naturalWidth = Math.max(
+          textWidth + 2 * padding,
+          element.fontSize
+        );
         textarea.style.whiteSpace = naturalWidth > maxWidth ? "pre-wrap" : "";
         textarea.style.width = `${Math.min(naturalWidth, maxWidth)}px`;
       }
@@ -88,7 +100,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
       textarea.style.height = `${textarea.scrollHeight}px`;
       setContentWidth(textarea.offsetWidth);
     },
-    [draft, element.width, element.fontSize, maxWidth]
+    [draft, element.width, element.fontSize, padding, maxWidth]
   );
 
   const { scale, ...position } = textEditingBox(
@@ -166,7 +178,7 @@ const TextEditor = ({ element }: { element: TextElement }) => {
         style={{
           ...position,
           width: element.width ?? undefined,
-          padding: textPadding(element),
+          padding,
           font: `${element.fontWeight} ${element.fontSize}px ${getFont(element.fontId).family}`,
           lineHeight: element.lineHeight,
           textAlign: element.align,
