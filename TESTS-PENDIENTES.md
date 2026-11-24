@@ -3,6 +3,16 @@
 Casos que se apuntan al hacer una tarea para escribirlos cuando el dueño lo
 pida (regla 4 de `CLAUDE.md`). Al escribir uno, se quita de la lista.
 
+## El texto se edita al tamaño de uno nuevo
+
+- **e2e:** un texto encogido con el slider se edita al tamaño de uno nuevo.
+- **e2e:** un texto agrandado con las asas o con el pellizco (escala, no
+  tamaño de letra) se edita al tamaño de uno nuevo.
+- **e2e:** un texto con ancho fijo (asas laterales) corta las líneas en el
+  editor igual que en el lienzo.
+- **e2e:** cambiar el tamaño con el slider mientras se escribe no cambia el
+  editor, y al terminar el texto tiene el tamaño nuevo.
+
 ## Pellizcar un elemento lo agranda y lo gira
 
 - **e2e:** un pellizco que empieza con los dos dedos en una zona vacía hace
