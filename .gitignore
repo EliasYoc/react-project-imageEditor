@@ -29,3 +29,6 @@ yarn-error.log*
 
 # Configuración personal de Claude Code (no se comparte)
 .claude/settings.local.json
+
+# Textos de las PR que deja Claude para abrirlas (no se comparten)
+.pr/

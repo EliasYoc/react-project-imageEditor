@@ -91,30 +91,31 @@ Al pulsar el botón del pincel activo se abre la **biblioteca**: los ajustes del
 
 ## Uso
 
-| Acción                | Ratón / teclado                                                                       | Pantalla táctil                     |
-| --------------------- | ------------------------------------------------------------------------------------- | ----------------------------------- |
-| Dibujar               | Clic izquierdo y arrastrar                                                            | Un dedo o el lápiz                  |
-| Acercar / alejar      | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / −, o menú …                    | Pellizcar con dos dedos o menú …    |
-| Desplazar             | Rueda, espacio + arrastrar o botón central                                            | Arrastrar con dos dedos             |
-| Ajustar a la pantalla | Ctrl/⌘ + 0 o menú … → "Ajustar a la pantalla"                                         | Doble toque con dos dedos o menú …  |
-| Ocultar las barras    | O (otra vez para mostrarlas), o el botón del ojo junto al menú … (abajo a la derecha) | Botón del ojo junto al menú …       |
-| Deshacer / rehacer    | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)                                          | Botones de la cabecera              |
-| Editar un texto       | Doble clic, o clic en un texto ya seleccionado                                        | Tocar un texto ya seleccionado      |
-| Eliminar un elemento  | Supr / Retroceso (modo Texto)                                                         | Botón de la papelera                |
-| Negrita               | Ctrl/⌘ + B (modo Texto)                                                               | Panel "Fuente y estilo"             |
-| Pincel / borrador     | B / E (pulsa el botón activo para elegir otro preset)                                 | Barra inferior                      |
-| Figura de "Formas"    | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                                   | Igual                               |
-| Tamaño del pincel     | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón)               | Tocar el slider del borde izquierdo |
-| Exportar              | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                                | Menú ⋮ → "Exportar"                 |
-| Volver al inicio      | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                                   | Igual                               |
-| Borrar el dibujo      | Menú ⋮ → "Borrar el dibujo" (se puede deshacer)                                       | Igual                               |
-| Borrar todo           | Menú ⋮ → "Borrar todo definitivamente" (también el color de fondo; no se deshace)     | Igual                               |
-| Cerrar un panel       | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo     |
-| Lista de atajos       | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                   |
-| Abrir una foto        | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"              |
-| Abrir un video        | En el inicio: botón "Agregar video"                                                   | Igual                               |
-| Reproducir / pausar   | K, o el botón de la barra de reproducción (encima de las herramientas)                | Botón de la barra de reproducción   |
-| Ir a otro momento     | Arrastrar la barra de tiempo, o con el foco en ella: flechas, Inicio y Fin            | Arrastrar la barra de tiempo        |
+| Acción                       | Ratón / teclado                                                                       | Pantalla táctil                       |
+| ---------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- |
+| Dibujar                      | Clic izquierdo y arrastrar                                                            | Un dedo o el lápiz                    |
+| Acercar / alejar             | Ctrl/⌘ + rueda (o pellizco del trackpad), Ctrl/⌘ + = / −, o menú …                    | Pellizcar con dos dedos o menú …      |
+| Desplazar                    | Rueda, espacio + arrastrar o botón central                                            | Arrastrar con dos dedos               |
+| Ajustar a la pantalla        | Ctrl/⌘ + 0 o menú … → "Ajustar a la pantalla"                                         | Doble toque con dos dedos o menú …    |
+| Ocultar las barras           | O (otra vez para mostrarlas), o el botón del ojo junto al menú … (abajo a la derecha) | Botón del ojo junto al menú …         |
+| Deshacer / rehacer           | Ctrl/⌘ + Z / Ctrl/⌘ + Shift + Z (o Ctrl + Y)                                          | Botones de la cabecera                |
+| Agrandar y girar un elemento | Asas del marco de selección (modo Texto)                                              | Pellizcar el elemento ya seleccionado |
+| Editar un texto              | Doble clic, o clic en un texto ya seleccionado                                        | Tocar un texto ya seleccionado        |
+| Eliminar un elemento         | Supr / Retroceso (modo Texto)                                                         | Botón de la papelera                  |
+| Negrita                      | Ctrl/⌘ + B (modo Texto)                                                               | Panel "Fuente y estilo"               |
+| Pincel / borrador            | B / E (pulsa el botón activo para elegir otro preset)                                 | Barra inferior                        |
+| Figura de "Formas"           | Botón ⋮ de su tarjeta, en la biblioteca de pinceles                                   | Igual                                 |
+| Tamaño del pincel            | [ / ], o el slider del borde izquierdo (se despliega al pasar el ratón)               | Tocar el slider del borde izquierdo   |
+| Exportar                     | Ctrl/⌘ + S o menú ⋮ → "Exportar" (Enter en el diálogo)                                | Menú ⋮ → "Exportar"                   |
+| Volver al inicio             | Menú ⋮ → "Volver al inicio" (el dibujo se conserva)                                   | Igual                                 |
+| Borrar el dibujo             | Menú ⋮ → "Borrar el dibujo" (se puede deshacer)                                       | Igual                                 |
+| Borrar todo                  | Menú ⋮ → "Borrar todo definitivamente" (también el color de fondo; no se deshace)     | Igual                                 |
+| Cerrar un panel              | Escape o ✕                                                                            | ✕, tocar fuera o deslizar abajo       |
+| Lista de atajos              | ? (o menú ⋮ → "Atajos de teclado")                                                    | —                                     |
+| Abrir una foto               | En el inicio: botón, arrastrarla a la ventana o Ctrl/⌘ + V                            | Botón "Abrir una foto"                |
+| Abrir un video               | En el inicio: botón "Agregar video"                                                   | Igual                                 |
+| Reproducir / pausar          | K, o el botón de la barra de reproducción (encima de las herramientas)                | Botón de la barra de reproducción     |
+| Ir a otro momento            | Arrastrar la barra de tiempo, o con el foco en ella: flechas, Inicio y Fin            | Arrastrar la barra de tiempo          |
 
 El zoom funciona en modo Dibujar y en modo Texto. En modo Texto, un dedo mueve el elemento y dos dedos hacen zoom. Al exportar desde el móvil se abre la hoja de "Compartir" del sistema. Con un video abierto, Exportar guarda el video en MP4 (ver [Video](#video)).
 
@@ -168,7 +169,7 @@ Un video se abre como **fondo del documento**, igual que una foto: se dibuja, se
 ## Textos
 
 - **Fuentes propias** con [@fontsource](https://fontsource.org) (WOFF2), registradas en `editor/elements/fonts.ts`. Cada una se carga **bajo demanda** (import dinámico de su CSS) cuando un texto la usa o al abrir el selector, y solo se descarga el subconjunto latino: no hay peticiones a Google Fonts. Konva espera a que la fuente esté lista (`fontLoader.ts`) antes de medir el texto.
-- **Estilos**: grosor, alineación, interlineado, degradado, contorno, sombra y caja de fondo, todos en un solo panel («Fuente y estilo») junto con la lista de fuentes. Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
+- **Estilos**: grosor, alineación, interlineado, degradado, contorno, sombra y caja de fondo, todos en un solo panel («Fuente y estilo») junto con la lista de fuentes. Un texto nuevo es negro sobre una caja blanca semitransparente, que se lee sobre cualquier foto. Mientras se escribe, una capa oscurece el lienzo (clara si el texto, sin caja, solo se lee sobre claro). Las medidas se guardan en proporción al tamaño de letra, así que se mantienen al escalar el texto.
 - **Escribir un texto** (`TextEditorOverlay`, `editor/elements/textEditorBox.ts`): mientras se edita, el texto del lienzo y su marco se ocultan y el editor no se pone encima: sale **horizontal, centrado en la zona libre del lienzo y un poco por encima del centro** (a un 40 % del alto libre), aunque el texto esté girado o lejos; así se lee, también con el teclado del móvil abierto. Mide en pantalla lo mismo que el texto del lienzo y solo se encoge si es más ancho que la zona libre. No toca el documento: al terminar, el texto sigue donde estaba, con su giro. Un texto **recién escrito** es la excepción: se queda donde estaba el editor (`newTextPosition`, que se guarda en el mismo cambio que el texto, sin añadir un paso al historial) y no donde se creó, para que no salte al terminar.
 - **Ancho máximo** (`editor/elements/textWidth.ts`): un texto de ancho automático crece con lo que se escribe hasta el **90 % del ancho del lienzo** (`maxTextWidth`) y desde ahí se reparte en líneas. No se guarda ningún ancho: el texto sigue con `width: null` y el tope se aplica al dibujarlo (`applyTextMaxWidth`: lienzo, exportación y vista previa, que comparten `createTextLabel`) y en el editor (`white-space: pre-wrap` desde el máximo), así que si se acorta vuelve a encogerse. Un texto con un ancho fijado con las asas laterales conserva el suyo.
 - **Vista previa del texto**: arriba del panel «Fuente y estilo», fija mientras se hace scroll, se ve el texto real (las 3 primeras líneas, encogido si no cabe) con su estilo. Es un lienzo pequeño de Konva que se crea con `createTextLabel` (`editor/elements/textShape.ts`), la misma función que usa la exportación sobre `textNodeConfig`, así que el contorno, la sombra, el degradado y la caja se ven igual que en el lienzo. No representa el documento: el fondo es blanco o, si los colores del texto (relleno o caja, y contorno) se ven mejor sobre gris oscuro, gris oscuro; la sombra no cuenta.

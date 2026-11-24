@@ -13,6 +13,19 @@ const EDITOR_TOP_RATIO = 0.4;
 const EDITOR_SIDE_MARGIN = 16;
 
 /**
+ * Cuánto mide en pantalla cada píxel del editor: el texto se escribe siempre
+ * al tamaño de un texto nuevo (`defaultFontSize`, en píxeles del documento),
+ * aunque sea más grande o más pequeño o esté escalado; al terminar vuelve a
+ * su tamaño. El editor conserva las medidas del texto (tamaño de letra,
+ * ancho, márgenes), así que las líneas se cortan igual: solo cambia la escala.
+ */
+export const textEditingScale = (
+  fontSize: number,
+  defaultFontSize: number,
+  viewScale: number
+) => viewScale * (defaultFontSize / fontSize);
+
+/**
  * Dónde se escribe un texto: horizontal (sin el giro del texto), centrado en
  * la zona libre del lienzo y un poco arriba, aunque el texto esté girado o
  * en una esquina. En el móvil, así queda por encima del teclado y se lee
@@ -20,7 +33,7 @@ const EDITOR_SIDE_MARGIN = 16;
  * sigue donde estaba.
  *
  * `contentWidth` es el ancho del `textarea` sin escalar y `onScreenScale` lo
- * que mide en pantalla cada uno de sus píxeles (vista × elemento). Si no cabe
+ * que mide en pantalla cada uno de sus píxeles (`textEditingScale`). Si no cabe
  * a lo ancho de la zona libre, se encoge; nunca se agranda. `scale` es la
  * escala final: el resto son las propiedades de CSS.
  */
