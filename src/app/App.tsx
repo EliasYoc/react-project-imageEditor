@@ -4,6 +4,7 @@ import { Toaster, toast } from "../components/ui/Toast";
 import { TooltipProvider } from "../components/ui/Tooltip";
 import type { Status } from "../editor/model/types";
 import { editorStore, useEditorStore } from "../editor/store/editorStore";
+import { selectIsEditorOpen } from "../editor/store/selectors";
 import { HomeScreen, usePreventFileDropNavigation } from "../features/home";
 import { useKeyboardShortcuts } from "../features/shortcuts";
 import styles from "./App.module.css";
@@ -39,6 +40,15 @@ const whenIdle = (callback: () => void) => {
 type EditorShellComponent = Awaited<ReturnType<typeof loadEditor>>["default"];
 
 /**
+ * El indicador de carga mientras se abre o se exporta algo. Va aparte para
+ * que solo él se vuelva a renderizar al cambiar el estado, no toda la app.
+ */
+const StatusSpinner = () => {
+  const label = useEditorStore((state) => STATUS_LABELS[state.status]);
+  return label ? <Spinner label={label} /> : null;
+};
+
+/**
  * Shell de la aplicación: la pantalla de inicio y el editor.
  *
  * El inicio se pinta con lo mínimo y, en cuanto el navegador está libre, el
@@ -48,9 +58,7 @@ type EditorShellComponent = Awaited<ReturnType<typeof loadEditor>>["default"];
  * perder el documento ni sus rasters.
  */
 function App() {
-  const mode = useEditorStore((state) => state.mode);
-  const status = useEditorStore((state) => state.status);
-  const isEditorOpen = mode !== "home";
+  const isEditorOpen = useEditorStore(selectIsEditorOpen);
   const [EditorShell, setEditorShell] = useState<EditorShellComponent | null>(
     null
   );
@@ -97,7 +105,7 @@ function App() {
         {isEditorOpen && !EditorShell && <Spinner label="Cargando el editor" />}
         {!isEditorOpen && <HomeScreen />}
 
-        {STATUS_LABELS[status] && <Spinner label={STATUS_LABELS[status]} />}
+        <StatusSpinner />
         <Toaster />
       </div>
     </TooltipProvider>
